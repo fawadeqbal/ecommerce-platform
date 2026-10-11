@@ -123,7 +123,7 @@ export const emptyPageForm: PageFormValues = {
   blocks: [emptyBlockRow('paragraph')],
 };
 
-function blockToRow(b: PageBlock): PageBlockRow {
+export function blockToRow(b: PageBlock): PageBlockRow {
   const row = emptyBlockRow(b.type);
   switch (b.type) {
     case 'heading':

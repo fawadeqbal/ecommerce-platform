@@ -786,6 +786,78 @@ async function seedCms() {
   console.log('  ✓ cms pages, menus, faqs');
 }
 
+async function seedBlog() {
+  const news = await prisma.blogCategory.upsert({
+    where: { slug: 'news' },
+    update: {},
+    create: { name: 'News', slug: 'news' },
+  });
+  const guides = await prisma.blogCategory.upsert({
+    where: { slug: 'buying-guides' },
+    update: {},
+    create: { name: 'Buying guides', slug: 'buying-guides' },
+  });
+  const admin = await prisma.user.findUnique({
+    where: { email: process.env.SEED_ADMIN_EMAIL ?? 'admin@example.com' },
+  });
+  const posts = [
+    {
+      slug: 'welcome-to-our-marketplace',
+      title: 'Welcome to our marketplace',
+      excerpt:
+        'Trusted sellers, cash on delivery and easy returns — here is how shopping with us works.',
+      categoryId: news.id,
+      tags: ['announcements'],
+      blocks: [
+        p('We built this store so you can buy from many trusted sellers in one checkout.'),
+        h('How it works'),
+        p(
+          'Every seller is reviewed before they can sell. You pay once, and each seller ships their items separately with tracking.',
+        ),
+        { type: 'button', label: 'Start shopping', url: '/products' } as SeedBlock,
+      ],
+    },
+    {
+      slug: 'how-to-choose-a-smartphone',
+      title: 'How to choose a smartphone in 2026',
+      excerpt: 'Screen, camera, battery and storage: the five things to compare before you buy.',
+      categoryId: guides.id,
+      tags: ['smartphones', 'guides'],
+      blocks: [
+        p(
+          'Phones look alike on paper. These are the specs that actually change your day-to-day experience.',
+        ),
+        h('Battery and charging'),
+        p(
+          'Look for at least a full day of use and fast charging. Reviews tell you more than the battery size.',
+        ),
+        h('Storage'),
+        p(
+          'Photos and apps fill phones fast. 256GB is a comfortable minimum if you keep a phone for several years.',
+        ),
+      ],
+    },
+  ];
+  for (const post of posts) {
+    await prisma.blogPost.upsert({
+      where: { slug: post.slug },
+      update: {},
+      create: {
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        categoryId: post.categoryId,
+        tags: post.tags,
+        authorId: admin?.id ?? null,
+        content: { blocks: post.blocks } as Prisma.InputJsonValue,
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+      },
+    });
+  }
+  console.log('  ✓ blog categories & posts');
+}
+
 async function main() {
   console.log('Seeding database…');
   await seedRbac();
@@ -800,6 +872,7 @@ async function main() {
   await seedInventory();
   await seedShipping();
   await seedCms();
+  await seedBlog();
   console.log('Done.');
 }
 

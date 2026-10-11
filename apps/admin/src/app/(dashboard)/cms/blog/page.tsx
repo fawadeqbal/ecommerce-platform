@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { BlogAdmin } from '@/features/cms/blog-admin';
 
 export const metadata: Metadata = { title: 'Blog' };
 
-export default function Page() {
-  return <PagePlaceholder title="Blog" features={['Posts, categories, tags, authors']} />;
+export default function BlogPage() {
+  return <BlogAdmin />;
 }

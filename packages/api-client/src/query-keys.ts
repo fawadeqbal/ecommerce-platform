@@ -131,6 +131,9 @@ export const queryKeys = {
     menus: ['cms', 'menus'] as const,
     menu: (handle: string) => ['cms', 'menu', handle] as const,
     faqs: ['cms', 'faqs'] as const,
+    blogPosts: ['cms', 'blog-posts'] as const,
+    blogPost: (id: string) => ['cms', 'blog-post', id] as const,
+    blogCategories: ['cms', 'blog-categories'] as const,
   },
   attributes: {
     all: ['attributes'] as const,

@@ -42,3 +42,5 @@ export * from './schemas/loyalty.schema';
 export * from './cms/cms';
 export * from './schemas/cms.schema';
 export * from './reports/report';
+export * from './cms/blog';
+export * from './schemas/blog.schema';
