@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+'use client';
 
-export const metadata: Metadata = { title: 'Payout details' };
+import { StoreLoader } from '@/features/store/store-loader';
+import { PayoutForm } from '@/features/store/payout-form';
 
-export default function Page() {
-  return <PagePlaceholder title="Payout details" features={['Bank account details']} />;
+export default function PayoutSettingsPage() {
+  return <StoreLoader>{(store) => <PayoutForm key={store.id} store={store} />}</StoreLoader>;
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { MyOrders } from '@/components/orders/my-orders';
 
 export const metadata: Metadata = { title: 'My orders' };
 
-export default function Page() {
-  return <PagePlaceholder title="My orders" features={['Order history with status']} />;
+export default function MyOrdersPage() {
+  return <MyOrders />;
 }

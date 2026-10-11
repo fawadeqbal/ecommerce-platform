@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { Suspense } from 'react';
+import { TrackOrder } from '@/components/orders/track-order';
 
-export const metadata: Metadata = { title: 'Track order' };
+export const metadata: Metadata = { title: 'Track order', robots: { index: false } };
 
-export default function Page() {
+export default function TrackOrderPage() {
   return (
-    <PagePlaceholder
-      title="Track order"
-      features={['Lookup by order number + email (guests)', 'Status timeline and courier link']}
-    />
+    <Suspense>
+      <TrackOrder />
+    </Suspense>
   );
 }

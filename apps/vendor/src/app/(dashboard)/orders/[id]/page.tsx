@@ -1,15 +1,9 @@
-import { PagePlaceholder } from '@ecommerce/ui';
+import type { Metadata } from 'next';
+import { VendorOrderDetail } from '@/features/orders/order-detail';
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export const metadata: Metadata = { title: 'Order' };
+
+export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return (
-    <PagePlaceholder
-      title={`Order: ${id}`}
-      features={[
-        'Update status: confirmed, packed, shipped (tracking), delivered',
-        'Packing slip and invoice',
-        'Cancellations',
-      ]}
-    />
-  );
+  return <VendorOrderDetail id={id} />;
 }

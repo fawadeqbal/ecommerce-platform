@@ -1,8 +1,23 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { AuthLayout } from '@/components/auth-layout';
+import { LoginForm } from './login-form';
 
-export const metadata: Metadata = { title: 'Seller sign in' };
+export const metadata: Metadata = { title: 'Sign in' };
 
-export default function Page() {
-  return <PagePlaceholder title="Seller sign in" features={['Email + password']} />;
+export default function LoginPage() {
+  return (
+    <AuthLayout title="Sign in" subtitle="Manage your store, products and orders.">
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+      <p className="mt-6 text-center text-sm text-gray-600">
+        New seller?{' '}
+        <Link href="/register" className="font-medium text-brand-700 hover:underline">
+          Apply to sell
+        </Link>
+      </p>
+    </AuthLayout>
+  );
 }

@@ -16,6 +16,7 @@ export class SearchService {
       where: {
         status: 'PUBLISHED',
         deletedAt: null,
+        vendor: { status: 'APPROVED' },
         name: { contains: q.trim(), mode: 'insensitive' },
       },
       select: { id: true, name: true, slug: true, basePrice: true },

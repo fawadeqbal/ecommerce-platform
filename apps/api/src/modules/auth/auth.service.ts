@@ -80,7 +80,8 @@ export class AuthService {
     });
   }
 
-  private async issueTokens(userId: string): Promise<AuthTokens> {
+  /** Issues an access + refresh token pair (also used after a vendor application). */
+  async issueTokens(userId: string): Promise<AuthTokens> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
       include: {

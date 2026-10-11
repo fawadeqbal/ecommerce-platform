@@ -44,6 +44,7 @@ export const EmailTemplateKey = {
   VENDOR_APPLICATION_RECEIVED: 'vendor.application-received',
   VENDOR_APPROVED: 'vendor.approved',
   VENDOR_REJECTED: 'vendor.rejected',
+  VENDOR_SUSPENDED: 'vendor.suspended',
   VENDOR_NEW_ORDER: 'vendor.new-order',
   VENDOR_PRODUCT_APPROVED: 'vendor.product-approved',
   VENDOR_PRODUCT_REJECTED: 'vendor.product-rejected',

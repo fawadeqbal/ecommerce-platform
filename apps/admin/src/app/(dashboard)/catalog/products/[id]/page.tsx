@@ -1,11 +1,9 @@
-import { PagePlaceholder } from '@ecommerce/ui';
+import type { Metadata } from 'next';
+import { AdminProductDetail } from '@/features/products/product-detail';
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export const metadata: Metadata = { title: 'Product' };
+
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return (
-    <PagePlaceholder
-      title={`Edit product: ${id}`}
-      features={['Variants, attributes, images, SEO fields, translations']}
-    />
-  );
+  return <AdminProductDetail id={id} />;
 }

@@ -1,20 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { CheckoutView } from '@/components/checkout/checkout-view';
 
-export const metadata: Metadata = { title: 'Checkout' };
+export const metadata: Metadata = { title: 'Checkout', robots: { index: false } };
 
-export default function Page() {
-  return (
-    <PagePlaceholder
-      title="Checkout"
-      features={[
-        'Guest or logged-in checkout',
-        'Address entry / selection',
-        'Shipping method per vendor',
-        'Payment: online gateway, bank transfer, Cash on Delivery',
-        'Apply coupons, gift cards, loyalty points',
-        'Order review and place order (idempotent)',
-      ]}
-    />
-  );
+export default function CheckoutPage() {
+  return <CheckoutView />;
 }

@@ -377,6 +377,7 @@ model Vendor {
   description       String?      @db.Text
   policies          Json?
   status            VendorStatus @default(PENDING)
+  statusReason      String?      @db.Text // why rejected / suspended (shown to the vendor)
   commissionRate    Decimal?     @db.Decimal(5, 2)
   bankAccountName   String?
   bankAccountNumber String?
@@ -515,6 +516,7 @@ model Product {
   specifications   Json?
   status           ProductStatus @default(DRAFT)
   isFeatured       Boolean       @default(false)
+  rejectionReason  String?       @db.Text // set when an admin rejects / unpublishes
   basePrice        Decimal       @db.Decimal(12, 2)
   compareAtPrice   Decimal?      @db.Decimal(12, 2)
   currency         String        @default("USD") @db.Char(3)

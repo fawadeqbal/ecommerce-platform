@@ -17,11 +17,26 @@ export interface AppShellProps {
   activePath?: string;
   /** Render prop so each app can use next/link. */
   renderLink: (item: NavItem, className: string) => React.ReactNode;
+  /** Optional bar above the page content (user menu, search…). */
+  topBar?: React.ReactNode;
   children: React.ReactNode;
 }
 
+/** The nav item whose href is the longest prefix of the current path ("/catalog/categories/new" -> Categories). */
+function findActiveHref(nav: NavGroup[], path?: string): string | undefined {
+  if (!path) return undefined;
+  let best: string | undefined;
+  for (const item of nav.flatMap((g) => g.items)) {
+    const matches =
+      item.href === '/' ? path === '/' : path === item.href || path.startsWith(`${item.href}/`);
+    if (matches && (!best || item.href.length > best.length)) best = item.href;
+  }
+  return best;
+}
+
 /** Sidebar layout shared by the admin panel and vendor dashboard. */
-export function AppShell({ brand, nav, activePath, renderLink, children }: AppShellProps) {
+export function AppShell({ brand, nav, activePath, renderLink, topBar, children }: AppShellProps) {
+  const activeHref = findActiveHref(nav, activePath);
   return (
     <div className="flex min-h-screen bg-gray-50">
       <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-white md:block">
@@ -35,28 +50,28 @@ export function AppShell({ brand, nav, activePath, renderLink, children }: AppSh
                 {group.title}
               </p>
               <ul className="space-y-1">
-                {group.items.map((item) => {
-                  const active = activePath === item.href;
-                  return (
-                    <li key={item.href}>
-                      {renderLink(
-                        item,
-                        cn(
-                          'block rounded-lg px-2 py-1.5 text-sm',
-                          active
-                            ? 'bg-brand-50 font-medium text-brand-700'
-                            : 'text-gray-700 hover:bg-gray-100',
-                        ),
-                      )}
-                    </li>
-                  );
-                })}
+                {group.items.map((item) => (
+                  <li key={item.href}>
+                    {renderLink(
+                      item,
+                      cn(
+                        'block rounded-lg px-2 py-1.5 text-sm',
+                        item.href === activeHref
+                          ? 'bg-brand-50 font-medium text-brand-700'
+                          : 'text-gray-700 hover:bg-gray-100',
+                      ),
+                    )}
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
         </nav>
       </aside>
-      <main className="flex-1">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        {topBar}
+        <main className="flex-1">{children}</main>
+      </div>
     </div>
   );
 }

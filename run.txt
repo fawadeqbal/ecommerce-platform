@@ -1,0 +1,6 @@
+pnpm install
+docker compose down -v
+pnpm infra:up
+pnpm db:migrate --name init
+pnpm db:seed
+pnpm dev

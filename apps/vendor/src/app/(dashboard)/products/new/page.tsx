@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { ProductEditor } from '@/features/products/product-editor';
 
 export const metadata: Metadata = { title: 'Add product' };
 
-export default function Page() {
-  return (
-    <PagePlaceholder
-      title="Add product"
-      features={['Variants, attributes, images, SEO fields', 'Submit for review']}
-    />
-  );
+export default function NewProductPage() {
+  return <ProductEditor />;
 }

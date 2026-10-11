@@ -1,17 +1,12 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { ProductListing } from '@/components/catalog/product-listing';
 
 export const metadata: Metadata = { title: 'All products' };
 
-export default function Page() {
-  return (
-    <PagePlaceholder
-      title="All products"
-      features={[
-        'Product grid with pagination / infinite scroll',
-        'Filters: price, brand, vendor, rating, availability, dynamic attributes',
-        'Sorting: relevance, price, newest, popularity, rating',
-      ]}
-    />
-  );
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return <ProductListing searchParams={await searchParams} title="All products" />;
 }

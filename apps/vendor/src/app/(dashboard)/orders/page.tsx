@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { VendorOrderList } from '@/features/orders/order-list';
 
 export const metadata: Metadata = { title: 'Orders' };
 
-export default function Page() {
-  return <PagePlaceholder title="Orders" features={['Vendor sub-orders']} />;
+export default function OrdersPage() {
+  return <VendorOrderList />;
 }

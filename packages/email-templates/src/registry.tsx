@@ -138,6 +138,7 @@ export const templateRegistry: Record<EmailTemplateKey, TemplateDefinition> = {
   [EmailTemplateKey.VENDOR_APPLICATION_RECEIVED]: generic('We received your seller application'),
   [EmailTemplateKey.VENDOR_APPROVED]: generic('Your seller account is approved'),
   [EmailTemplateKey.VENDOR_REJECTED]: generic('Update on your seller application'),
+  [EmailTemplateKey.VENDOR_SUSPENDED]: generic('Your seller account has been suspended'),
   [EmailTemplateKey.VENDOR_NEW_ORDER]: generic((d) => `New order ${order(d)}`),
   [EmailTemplateKey.VENDOR_PRODUCT_APPROVED]: generic('Your product was approved'),
   [EmailTemplateKey.VENDOR_PRODUCT_REJECTED]: generic('Your product needs changes'),

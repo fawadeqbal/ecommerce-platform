@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { CategoryList } from '@/features/categories/category-list';
 
 export const metadata: Metadata = { title: 'Categories' };
 
-export default function Page() {
-  return <PagePlaceholder title="Categories" features={['Nested categories, ordering, SEO']} />;
+export default function CategoriesPage() {
+  return <CategoryList />;
 }

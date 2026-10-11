@@ -1,0 +1,207 @@
+import type { Prisma } from '@ecommerce/database';
+import {
+  CANCELLABLE_STATUSES,
+  VENDOR_ORDER_TRANSITIONS,
+  type AdminOrderListItem,
+  type OrderDto,
+  type OrderHistoryEntry,
+  type OrderItemDto,
+  type OrderStatus,
+  type OrderSummaryDto,
+  type PaymentMethod,
+  type PaymentStatus,
+  type ShipmentDto,
+  type ShippingAddress,
+  type VendorOrderDetailDto,
+  type VendorOrderListItem,
+} from '@ecommerce/types';
+
+const itemInclude = {
+  variant: {
+    select: {
+      product: {
+        select: {
+          slug: true,
+          images: { orderBy: { position: 'asc' }, take: 1, select: { url: true } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.OrderItemInclude;
+
+export const orderInclude = {
+  vendorOrders: {
+    orderBy: { createdAt: 'asc' },
+    include: {
+      vendor: { select: { id: true, name: true, slug: true } },
+      items: { include: itemInclude },
+      shipments: { orderBy: { createdAt: 'desc' }, take: 1 },
+    },
+  },
+  statusHistory: {
+    orderBy: { createdAt: 'asc' },
+    include: { vendorOrder: { select: { vendor: { select: { name: true } } } } },
+  },
+} satisfies Prisma.OrderInclude;
+
+export const orderSummaryInclude = {
+  items: { take: 1, include: itemInclude },
+  _count: { select: { items: true, vendorOrders: true } },
+} satisfies Prisma.OrderInclude;
+
+export const vendorOrderInclude = {
+  order: true,
+  items: { include: itemInclude },
+  shipments: { orderBy: { createdAt: 'desc' }, take: 1 },
+  statusHistory: { orderBy: { createdAt: 'asc' } },
+} satisfies Prisma.VendorOrderInclude;
+
+export type OrderFull = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
+export type OrderSummaryRow = Prisma.OrderGetPayload<{ include: typeof orderSummaryInclude }>;
+export type VendorOrderFull = Prisma.VendorOrderGetPayload<{ include: typeof vendorOrderInclude }>;
+type ItemRow = Prisma.OrderItemGetPayload<{ include: typeof itemInclude }>;
+type ShipmentRow = OrderFull['vendorOrders'][number]['shipments'][number];
+
+const n = (v: Prisma.Decimal | number) => Number(v);
+
+function toItemDto(i: ItemRow): OrderItemDto {
+  return {
+    id: i.id,
+    productName: i.productName,
+    productSlug: i.variant.product.slug,
+    variantName: i.variantName,
+    sku: i.sku,
+    imageUrl: i.variant.product.images[0]?.url ?? null,
+    quantity: i.quantity,
+    unitPrice: n(i.unitPrice),
+    total: n(i.total),
+  };
+}
+
+function toShipmentDto(s: ShipmentRow | undefined): ShipmentDto | null {
+  if (!s) return null;
+  return {
+    trackingNumber: s.trackingNumber,
+    shippedAt: s.shippedAt?.toISOString() ?? null,
+    deliveredAt: s.deliveredAt?.toISOString() ?? null,
+  };
+}
+
+export function toOrderDto(o: OrderFull): OrderDto {
+  return {
+    id: o.id,
+    orderNumber: o.orderNumber,
+    status: o.status as OrderStatus,
+    paymentMethod: o.paymentMethod as PaymentMethod,
+    paymentStatus: o.paymentStatus as PaymentStatus,
+    email: o.email,
+    currency: o.currency,
+    subtotal: n(o.subtotal),
+    shippingTotal: n(o.shippingTotal),
+    discountTotal: n(o.discountTotal),
+    taxTotal: n(o.taxTotal),
+    grandTotal: n(o.grandTotal),
+    shippingAddress: o.shippingAddress as unknown as ShippingAddress,
+    customerNote: o.customerNote,
+    placedAt: o.placedAt.toISOString(),
+    cancelledAt: o.cancelledAt?.toISOString() ?? null,
+    cancelReason: o.cancelReason,
+    canCancel:
+      o.vendorOrders.length > 0 &&
+      o.vendorOrders.every((v) => CANCELLABLE_STATUSES.includes(v.status as OrderStatus)),
+    vendorOrders: o.vendorOrders.map((v) => ({
+      id: v.id,
+      vendor: v.vendor,
+      status: v.status as OrderStatus,
+      subtotal: n(v.subtotal),
+      shippingTotal: n(v.shippingTotal),
+      items: v.items.map(toItemDto),
+      shipment: toShipmentDto(v.shipments[0]),
+    })),
+    history: o.statusHistory.map(
+      (h): OrderHistoryEntry => ({
+        status: h.toStatus as OrderStatus,
+        note: h.note,
+        vendorName: h.vendorOrder?.vendor.name ?? null,
+        createdAt: h.createdAt.toISOString(),
+      }),
+    ),
+  };
+}
+
+export function toOrderSummary(o: OrderSummaryRow): OrderSummaryDto {
+  return {
+    id: o.id,
+    orderNumber: o.orderNumber,
+    status: o.status as OrderStatus,
+    paymentMethod: o.paymentMethod as PaymentMethod,
+    paymentStatus: o.paymentStatus as PaymentStatus,
+    grandTotal: n(o.grandTotal),
+    currency: o.currency,
+    itemCount: o._count.items,
+    imageUrl: o.items[0]?.variant.product.images[0]?.url ?? null,
+    vendorCount: o._count.vendorOrders,
+    placedAt: o.placedAt.toISOString(),
+  };
+}
+
+export function toAdminListItem(o: OrderSummaryRow): AdminOrderListItem {
+  const address = o.shippingAddress as unknown as ShippingAddress;
+  return {
+    ...toOrderSummary(o),
+    email: o.email,
+    customerName: address.fullName,
+    city: address.city,
+  };
+}
+
+export function toVendorListItem(
+  v: Prisma.VendorOrderGetPayload<{
+    include: { order: true; _count: { select: { items: true } } };
+  }>,
+): VendorOrderListItem {
+  const address = v.order.shippingAddress as unknown as ShippingAddress;
+  return {
+    id: v.id,
+    orderNumber: v.order.orderNumber,
+    status: v.status as OrderStatus,
+    itemCount: v._count.items,
+    subtotal: n(v.subtotal),
+    netAmount: n(v.netAmount),
+    currency: v.order.currency,
+    customerName: address.fullName,
+    city: address.city,
+    paymentMethod: v.order.paymentMethod as PaymentMethod,
+    placedAt: v.order.placedAt.toISOString(),
+  };
+}
+
+export function toVendorDetail(v: VendorOrderFull): VendorOrderDetailDto {
+  const address = v.order.shippingAddress as unknown as ShippingAddress;
+  const status = v.status as OrderStatus;
+  return {
+    id: v.id,
+    orderNumber: v.order.orderNumber,
+    status,
+    currency: v.order.currency,
+    items: v.items.map(toItemDto),
+    subtotal: n(v.subtotal),
+    shippingTotal: n(v.shippingTotal),
+    commissionAmount: n(v.commissionAmount),
+    netAmount: n(v.netAmount),
+    customer: { name: address.fullName, email: v.order.email, phone: address.phone },
+    shippingAddress: address,
+    paymentMethod: v.order.paymentMethod as PaymentMethod,
+    paymentStatus: v.order.paymentStatus as PaymentStatus,
+    customerNote: v.order.customerNote,
+    placedAt: v.order.placedAt.toISOString(),
+    shipment: toShipmentDto(v.shipments[0]),
+    history: v.statusHistory.map((h) => ({
+      status: h.toStatus as OrderStatus,
+      note: h.note,
+      vendorName: null,
+      createdAt: h.createdAt.toISOString(),
+    })),
+    nextStatuses: VENDOR_ORDER_TRANSITIONS[status] ?? [],
+  };
+}

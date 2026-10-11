@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { AddressesView } from '@/components/account/addresses-view';
 
 export const metadata: Metadata = { title: 'Addresses' };
 
-export default function Page() {
-  return <PagePlaceholder title="Addresses" features={['Saved addresses with default']} />;
+export default function AddressesPage() {
+  return <AddressesView />;
 }

@@ -1,13 +1,25 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import Link from 'next/link';
+import { AuthCard } from '@/components/auth/auth-card';
+import { RegisterForm } from '@/components/auth/register-form';
 
-export const metadata: Metadata = { title: 'Create account' };
+export const metadata: Metadata = { title: 'Create account', robots: { index: false } };
 
-export default function Page() {
+export default function RegisterPage() {
   return (
-    <PagePlaceholder
-      title="Create account"
-      features={['Registration form', 'Email verification']}
-    />
+    <AuthCard
+      title="Create your account"
+      subtitle="Track orders, save items for later and check out faster."
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-brand-700 hover:underline">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <RegisterForm />
+    </AuthCard>
   );
 }

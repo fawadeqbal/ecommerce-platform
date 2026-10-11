@@ -6,6 +6,11 @@ import type { Request } from 'express';
 import type { JwtPayload } from '@ecommerce/types';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
+/**
+ * Protected routes require a valid JWT.
+ * @Public() routes never fail, but still attach the user when a valid token is present
+ * (e.g. the cart works for guests and signed-in users).
+ */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
@@ -19,26 +24,32 @@ export class JwtAuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
-
     const request = context.switchToHttp().getRequest<Request & { user?: JwtPayload }>();
     const token = this.extractToken(request);
-    if (!token) throw new UnauthorizedException('Missing access token');
 
+    if (isPublic) {
+      if (token) request.user = await this.verify(token).catch(() => undefined);
+      return true;
+    }
+
+    if (!token) throw new UnauthorizedException('Missing access token');
     try {
-      request.user = await this.jwt.verifyAsync<JwtPayload>(token, {
-        secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
-      });
+      request.user = await this.verify(token);
     } catch {
       throw new UnauthorizedException('Invalid or expired access token');
     }
     return true;
   }
 
+  private verify(token: string): Promise<JwtPayload> {
+    return this.jwt.verifyAsync<JwtPayload>(token, {
+      secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+    });
+  }
+
   private extractToken(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     if (type === 'Bearer' && token) return token;
-    const cookieToken = (request.cookies as Record<string, string> | undefined)?.access_token;
-    return cookieToken;
+    return (request.cookies as Record<string, string> | undefined)?.access_token;
   }
 }

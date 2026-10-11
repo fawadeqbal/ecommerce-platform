@@ -11,6 +11,16 @@ const envSchema = z.object({
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().default(900),
   JWT_REFRESH_TTL_DAYS: z.coerce.number().default(30),
   NEXT_PUBLIC_SITE_URL: z.string().default('http://localhost:3000'),
+
+  // Object storage (MinIO locally, any S3-compatible service in production)
+  S3_ENDPOINT: z.string().default('http://localhost:9000'),
+  S3_REGION: z.string().default('us-east-1'),
+  S3_BUCKET: z.string().default('ecommerce-media'),
+  S3_ACCESS_KEY: z.string().default('minioadmin'),
+  S3_SECRET_KEY: z.string().default('minioadmin'),
+  S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).default('true'),
+  S3_AUTO_CREATE_BUCKET: z.enum(['true', 'false']).default('true'),
+  CDN_URL: z.string().default('http://localhost:9000/ecommerce-media'),
 });
 
 export type Env = z.infer<typeof envSchema>;

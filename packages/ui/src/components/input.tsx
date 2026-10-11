@@ -1,31 +1,23 @@
 import * as React from 'react';
 import { cn } from '../lib/cn';
+import { FieldShell, fieldControlClass, fieldErrorClass } from './field';
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.ComponentProps<'input'> {
   label?: string;
+  hint?: string;
   error?: string;
 }
 
-export function Input({ className, label, error, id, ...props }: InputProps) {
+export function Input({ className, label, hint, error, id, ...props }: InputProps) {
   const inputId = id ?? props.name;
   return (
-    <div className="space-y-1">
-      {label ? (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      ) : null}
+    <FieldShell id={inputId} label={label} hint={hint} error={error}>
       <input
         id={inputId}
-        className={cn(
-          'block h-10 w-full rounded-lg border border-gray-300 px-3 text-sm shadow-sm',
-          'focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500',
-          error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
-          className,
-        )}
+        aria-invalid={error ? true : undefined}
+        className={cn(fieldControlClass, 'h-10', error && fieldErrorClass, className)}
         {...props}
       />
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
-    </div>
+    </FieldShell>
   );
 }

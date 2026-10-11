@@ -1,13 +1,24 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import Link from 'next/link';
+import { AuthLayout } from '@/components/auth-layout';
+import { ApplicationForm } from './application-form';
 
 export const metadata: Metadata = { title: 'Become a seller' };
 
-export default function Page() {
+export default function RegisterPage() {
   return (
-    <PagePlaceholder
+    <AuthLayout
+      width="lg"
       title="Become a seller"
-      features={['Business details and documents', 'Pending admin approval email']}
-    />
+      subtitle="Tell us about you and your store. We review every application and reply by email."
+    >
+      <ApplicationForm />
+      <p className="mt-6 text-center text-sm text-gray-600">
+        Already applied?{' '}
+        <Link href="/login" className="font-medium text-brand-700 hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

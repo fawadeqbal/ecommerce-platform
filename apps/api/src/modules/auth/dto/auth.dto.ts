@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty()
@@ -33,10 +33,12 @@ export class LoginDto {
   password: string;
 }
 
+/** Refresh token may come from the body (mobile/API clients) or the refresh_token cookie (browsers). */
 export class RefreshDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export class ForgotPasswordDto {

@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { OnboardingStatus } from './onboarding-status';
 
-export const metadata: Metadata = { title: 'Seller onboarding' };
+export const metadata: Metadata = { title: 'Application status' };
 
-export default function Page() {
-  return (
-    <PagePlaceholder
-      title="Seller onboarding"
-      features={['Application status', 'Complete store profile and payout details']}
-    />
-  );
+export default function OnboardingPage() {
+  return <OnboardingStatus />;
 }

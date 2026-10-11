@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { LowStockReport } from '@/features/inventory/low-stock-report';
 
 export const metadata: Metadata = { title: 'Inventory' };
 
 export default function Page() {
-  return (
-    <PagePlaceholder
-      title="Inventory"
-      features={['Warehouses', 'Global stock view', 'Low-stock report']}
-    />
-  );
+  return <LowStockReport />;
 }

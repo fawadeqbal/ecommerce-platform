@@ -13,7 +13,7 @@
     "strictPropertyInitialization": false,
     "isolatedModules": false,
     "removeComments": true,
-    "incremental": true,
+    "incremental": false,
     "declarationMap": false,
     "declaration": false
   }

@@ -1,13 +1,10 @@
-import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+'use client';
 
-export const metadata: Metadata = { title: 'Store profile' };
+import { StoreLoader } from '@/features/store/store-loader';
+import { StoreProfileForm } from '@/features/store/store-profile-form';
 
-export default function Page() {
+export default function StoreSettingsPage() {
   return (
-    <PagePlaceholder
-      title="Store profile"
-      features={['Name, logo, banner, description, policies']}
-    />
+    <StoreLoader>{(store) => <StoreProfileForm key={store.updatedAt} store={store} />}</StoreLoader>
   );
 }

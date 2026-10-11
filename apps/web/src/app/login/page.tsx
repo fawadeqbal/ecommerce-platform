@@ -1,13 +1,28 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { AuthCard } from '@/components/auth/auth-card';
+import { LoginForm } from '@/components/auth/login-form';
 
-export const metadata: Metadata = { title: 'Sign in' };
+export const metadata: Metadata = { title: 'Sign in', robots: { index: false } };
 
-export default function Page() {
+export default function LoginPage() {
   return (
-    <PagePlaceholder
+    <AuthCard
       title="Sign in"
-      features={['Email + password', 'Email OTP login', 'Google sign-in']}
-    />
+      subtitle="Items in your cart are kept when you sign in."
+      footer={
+        <>
+          New here?{' '}
+          <Link href="/register" className="font-medium text-brand-700 hover:underline">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+    </AuthCard>
   );
 }

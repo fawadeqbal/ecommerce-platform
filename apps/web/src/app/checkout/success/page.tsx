@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { Suspense } from 'react';
+import { OrderPlaced } from '@/components/checkout/order-placed';
 
-export const metadata: Metadata = { title: 'Order placed' };
+export const metadata: Metadata = { title: 'Order placed', robots: { index: false } };
 
-export default function Page() {
+export default function OrderPlacedPage() {
   return (
-    <PagePlaceholder
-      title="Order placed"
-      features={['Order confirmation summary', 'Link to order tracking']}
-    />
+    <Suspense>
+      <OrderPlaced />
+    </Suspense>
   );
 }
