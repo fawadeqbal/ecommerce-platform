@@ -8,6 +8,7 @@ import { AppShell, Button } from '@ecommerce/ui';
 import { navigation } from '@/config/navigation';
 import { VendorStatusBadge } from '@/features/store/vendor-status-badge';
 import { useMyStore } from '@/hooks/use-my-store';
+import { filterSellerNav, useStaffAccess } from '@/hooks/use-staff-access';
 import { ApiClientError, authApi } from '@/lib/api-client';
 
 /** Pages a not-yet-approved seller may open (to finish their profile). */
@@ -18,6 +19,7 @@ export function SidebarShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: store, error } = useMyStore();
+  const { data: staffAccess } = useStaffAccess();
 
   useEffect(() => {
     if (error instanceof ApiClientError && (error.isUnauthorized || error.status === 403)) {
@@ -42,7 +44,7 @@ export function SidebarShell({ children }: { children: ReactNode }) {
   return (
     <AppShell
       brand="Seller Center"
-      nav={navigation}
+      nav={filterSellerNav(navigation, staffAccess)}
       activePath={pathname}
       renderLink={(item, className) => (
         <Link href={item.href} className={className}>

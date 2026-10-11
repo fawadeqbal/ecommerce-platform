@@ -243,6 +243,11 @@ export class CheckoutService {
   }
 
   async place(ctx: CartContext, dto: PlaceOrderDto): Promise<PlaceOrderResultDto> {
+    if (await readSetting(this.prisma, 'store.maintenanceMode', false)) {
+      throw new BadRequestException(
+        'The store is in maintenance mode. Please try again a little later.',
+      );
+    }
     // Same idempotency key = same order (double click / retry after a network error).
     const existing = await this.prisma.order.findUnique({
       where: { idempotencyKey: dto.idempotencyKey },

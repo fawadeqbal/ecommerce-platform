@@ -10,7 +10,7 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 24.** (Step 22 support is deferred: it will be built together with the RAG support assistant.)
+Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 25.** (Step 22 support is deferred: it will be built together with the RAG support assistant.)
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
@@ -61,8 +61,8 @@ shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.
 | 21  | **Search & discovery**             | Search page with typo-tolerant search + suggestions, brand pages, seller store pages, recently viewed, related / frequently bought together, product view tracking (3.2, 3.3) | **Done**                      |
 | 22  | **Support & disputes**             | Contact form → ticket, admin ticket inbox (assign, priority, email replies, internal notes), customer ↔ seller disputes (3.8, 5.15, 5.7)                                      | Deferred (RAG support import) |
 | 23  | **Customers admin**                | Customer list & profile (orders, addresses, points), segments (new, repeat, high-value, inactive), block / unblock (5.6)                                                      | **Done**                      |
-| 24  | **Roles, staff & system settings** | Roles & granular permissions, admin users, audit log viewer, store settings & maintenance mode, seller staff accounts (5.18, 4.6)                                             | Next                          |
-| 25  | **Commission rules**               | Global / per-category / per-seller commission applied at checkout (5.7)                                                                                                       |                               |
+| 24  | **Roles, staff & system settings** | Roles & granular permissions, admin users, audit log viewer, store settings & maintenance mode, seller staff accounts (5.18, 4.6)                                             | **Done**                      |
+| 25  | **Commission rules**               | Global / per-category / per-seller commission applied at checkout (5.7)                                                                                                       | Next                          |
 | 26  | **Taxes, currencies & languages**  | Tax classes & regional rates (inclusive / exclusive) at checkout, currency switcher with exchange rates, storefront languages (5.13)                                          |                               |
 | 27  | **Payment settings & logs**        | Enable / disable gateways, credentials, COD by zone, transaction & webhook logs (5.12)                                                                                        |                               |
 | 28  | **Email marketing**                | Newsletter subscribers, campaigns to segments with scheduling, abandoned-cart sequence, win-back (5.14)                                                                       |                               |

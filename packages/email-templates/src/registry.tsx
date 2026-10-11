@@ -66,6 +66,7 @@ export const templateRegistry: Record<EmailTemplateKey, TemplateDefinition> = {
   },
   [EmailTemplateKey.PASSWORD_CHANGED]: generic('Your password was changed'),
   [EmailTemplateKey.ACCOUNT_DELETED]: generic('Your account has been deleted'),
+  [EmailTemplateKey.STAFF_INVITATION]: generic('You have been invited to join the team'),
 
   // Orders
   [EmailTemplateKey.ORDER_CONFIRMATION]: {

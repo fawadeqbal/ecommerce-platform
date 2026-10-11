@@ -1,3 +1,4 @@
+import { ownedOrStaffed } from '../../common/utils/vendor-scope';
 import {
   BadRequestException,
   ConflictException,
@@ -452,7 +453,7 @@ export class ReturnsService {
   /** Seller account → its store (approved or suspended stores can still handle returns). */
   async vendorScope(userId: string): Promise<Scope> {
     const vendor = await this.prisma.vendor.findFirst({
-      where: { ownerId: userId },
+      where: ownedOrStaffed(userId),
       orderBy: { createdAt: 'asc' },
     });
     if (!vendor) throw new NotFoundException('No store is linked to this account');

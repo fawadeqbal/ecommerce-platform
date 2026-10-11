@@ -1,3 +1,4 @@
+import { ownedOrStaffed } from '../../common/utils/vendor-scope';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, type Vendor } from '@ecommerce/database';
 import {
@@ -343,7 +344,7 @@ export class ReportsService {
 
   private async vendorOf(userId: string): Promise<Vendor> {
     const vendor = await this.prisma.vendor.findFirst({
-      where: { ownerId: userId },
+      where: ownedOrStaffed(userId),
       orderBy: { createdAt: 'asc' },
     });
     if (!vendor) throw new NotFoundException('No store is linked to this account');

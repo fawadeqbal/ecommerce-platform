@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Providers } from './providers';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
+import { MaintenanceGate } from '@/components/layout/maintenance-gate';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,11 +16,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
-        <Providers>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
-        </Providers>
+        <MaintenanceGate>
+          <Providers>
+            <SiteHeader />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </Providers>
+        </MaintenanceGate>
       </body>
     </html>
   );

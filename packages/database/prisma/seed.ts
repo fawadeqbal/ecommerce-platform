@@ -91,7 +91,50 @@ async function seedRbac() {
       skipDuplicates: true,
     });
   }
-  console.log(`  ✓ ${ROLES.length} roles, ${permissionKeys.length} permissions`);
+  // Area permissions (view / manage) enforced by RolesGuard for custom roles (Step 24).
+  // Keep in sync with ADMIN_AREAS / BUILT_IN_ROLE_AREAS in packages/types/src/rbac/rbac.ts (the seed can't import types).
+  const AREAS = [
+    'catalog',
+    'orders',
+    'returns',
+    'customers',
+    'vendors',
+    'inventory',
+    'shipping',
+    'promotions',
+    'loyalty',
+    'cms',
+    'marketing',
+    'reviews',
+    'reports',
+    'settings',
+  ];
+  const ALL_PERMISSION_KEYS = AREAS.flatMap((a) => [`${a}.view`, `${a}.manage`]);
+  const BUILT_IN_ROLE_AREAS: Record<string, string[] | '*'> = {
+    SUPER_ADMIN: '*',
+    ADMIN: AREAS.filter((a) => a !== 'settings'),
+    CONTENT_MANAGER: ['cms'],
+    MARKETING_MANAGER: ['promotions', 'loyalty', 'marketing', 'reports', 'customers'],
+    SUPPORT_AGENT: ['orders', 'returns', 'customers', 'reviews'],
+    WAREHOUSE_STAFF: ['inventory'],
+  };
+  for (const key of ALL_PERMISSION_KEYS) {
+    await prisma.permission.upsert({ where: { key }, update: {}, create: { key } });
+  }
+  for (const [roleName, areas] of Object.entries(BUILT_IN_ROLE_AREAS)) {
+    const role = await prisma.role.findUnique({ where: { name: roleName } });
+    if (!role) continue;
+    const keys =
+      areas === '*' ? ALL_PERMISSION_KEYS : areas.flatMap((a) => [`${a}.view`, `${a}.manage`]);
+    const perms = await prisma.permission.findMany({ where: { key: { in: keys } } });
+    await prisma.rolePermission.createMany({
+      data: perms.map((p) => ({ roleId: role.id, permissionId: p.id })),
+      skipDuplicates: true,
+    });
+  }
+  console.log(
+    `  ✓ ${ROLES.length} roles, ${permissionKeys.length + ALL_PERMISSION_KEYS.length} permissions`,
+  );
 }
 
 async function seedAdmin() {
@@ -141,6 +184,14 @@ async function seedSettings() {
     { key: 'store.maintenanceMode', group: 'general', value: false },
     // IANA zone used for report day boundaries (e.g. 'UTC', 'Asia/Karachi', 'Europe/London').
     { key: 'store.timezone', group: 'general', value: 'Asia/Karachi' },
+    { key: 'store.logoUrl', group: 'general', value: '' },
+    { key: 'store.phone', group: 'general', value: '' },
+    { key: 'store.address', group: 'general', value: '' },
+    {
+      key: 'store.maintenanceMessage',
+      group: 'general',
+      value: "We're making some improvements and will be back shortly.",
+    },
     // Customer segments (Admin → Customers)
     { key: 'customers.newDays', group: 'customers', value: 30 },
     { key: 'customers.repeatOrders', group: 'customers', value: 2 },

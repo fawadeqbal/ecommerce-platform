@@ -11,6 +11,8 @@ const envSchema = z.object({
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().default(900),
   JWT_REFRESH_TTL_DAYS: z.coerce.number().default(30),
   NEXT_PUBLIC_SITE_URL: z.string().default('http://localhost:3000'),
+  NEXT_PUBLIC_ADMIN_URL: z.string().default('http://localhost:3001'),
+  NEXT_PUBLIC_VENDOR_URL: z.string().default('http://localhost:3002'),
 
   // Google sign-in (optional). Redirect URI: <API_PUBLIC_URL>/api/v1/auth/google/callback
   GOOGLE_CLIENT_ID: z.string().optional(),

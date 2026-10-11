@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { AuditLogPage } from '@/features/settings/audit-log-page';
 
-export const metadata: Metadata = { title: 'Audit logs' };
+export const metadata: Metadata = { title: 'Audit log' };
 
 export default function Page() {
-  return <PagePlaceholder title="Audit logs" features={['Admin and vendor action history']} />;
+  return <AuditLogPage />;
 }

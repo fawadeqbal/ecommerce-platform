@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { RbacController } from './rbac.controller';
+import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { AdminRbacController, RbacController } from './rbac.controller';
 import { RbacService } from './rbac.service';
 
 @Module({
-  controllers: [RbacController],
+  imports: [AuthModule, NotificationsModule],
+  controllers: [RbacController, AdminRbacController],
   providers: [RbacService],
   exports: [RbacService],
 })

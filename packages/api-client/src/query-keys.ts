@@ -119,6 +119,18 @@ export const queryKeys = {
   searchSuggest: (q: string) => ['search', 'suggest', q] as const,
   recentlyViewed: (slugs: string[]) => ['catalog', 'by-slugs', slugs.join(',')] as const,
   authProviders: ['auth', 'providers'] as const,
+  rbac: {
+    access: ['rbac', 'access'] as const,
+    roles: ['rbac', 'roles'] as const,
+    staff: ['rbac', 'staff'] as const,
+    audit: (q: object) => ['rbac', 'audit', q] as const,
+  },
+  settings: ['settings', 'admin'] as const,
+  publicSettings: ['settings', 'public'] as const,
+  vendorStaff: {
+    access: ['vendor-staff', 'me'] as const,
+    list: ['vendor-staff', 'list'] as const,
+  },
   customers: {
     all: ['customers'] as const,
     list: (q: object) => ['customers', 'list', q] as const,

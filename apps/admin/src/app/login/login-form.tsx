@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { STAFF_ROLES, loginSchema, type LoginFormValues } from '@ecommerce/types';
+import { NON_STAFF_ROLES, loginSchema, type LoginFormValues } from '@ecommerce/types';
 import { Alert, Button, Input } from '@ecommerce/ui';
 import { ApiClientError, authApi, queryKeys, usersApi } from '@/lib/api-client';
 
@@ -29,7 +29,8 @@ export function LoginForm() {
     try {
       await authApi.login(values);
       const me = await usersApi.me();
-      if (!me.roles.some((role) => STAFF_ROLES.includes(role))) {
+      // Built-in staff roles and custom roles created in Settings → Roles.
+      if (!me.roles.some((role) => !NON_STAFF_ROLES.includes(role))) {
         await authApi.logout();
         setError('This account does not have admin access.');
         return;

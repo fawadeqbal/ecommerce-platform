@@ -1,3 +1,4 @@
+import { ownedOrStaffed } from '../../common/utils/vendor-scope';
 import {
   BadRequestException,
   ForbiddenException,
@@ -26,7 +27,7 @@ type ListParams = Pick<ReviewQueryDto, 'page' | 'limit' | 'status' | 'rating'>;
 /** Seller account → its store id (approved or suspended stores can still reply). */
 export async function vendorIdOf(prisma: PrismaService, userId: string): Promise<string> {
   const vendor = await prisma.vendor.findFirst({
-    where: { ownerId: userId },
+    where: ownedOrStaffed(userId),
     orderBy: { createdAt: 'asc' },
   });
   if (!vendor) throw new NotFoundException('No store is linked to this account');

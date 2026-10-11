@@ -10,6 +10,7 @@ export const EmailTemplateKey = {
   PASSWORD_RESET: 'account.password-reset',
   PASSWORD_CHANGED: 'account.password-changed',
   ACCOUNT_DELETED: 'account.deleted',
+  STAFF_INVITATION: 'account.staff-invitation',
 
   // Orders (customer)
   ORDER_CONFIRMATION: 'order.confirmation',

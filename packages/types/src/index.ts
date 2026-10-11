@@ -45,3 +45,4 @@ export * from './reports/report';
 export * from './cms/blog';
 export * from './schemas/blog.schema';
 export * from './users/customer';
+export * from './rbac/rbac';

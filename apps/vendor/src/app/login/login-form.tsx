@@ -29,7 +29,7 @@ export function LoginForm() {
     try {
       await authApi.login(values);
       const me = await usersApi.me();
-      if (!me.roles.includes(Role.VENDOR)) {
+      if (!me.roles.includes(Role.VENDOR) && !me.roles.includes(Role.VENDOR_STAFF)) {
         await authApi.logout();
         setError('This account is not a seller account. Apply to sell first.');
         return;

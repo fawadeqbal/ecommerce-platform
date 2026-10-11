@@ -200,6 +200,14 @@ export class AuthService {
     await this.passwordChangedEmail(user);
   }
 
+  /** Link for invited staff to choose their first password (72 hours). */
+  async passwordSetupUrl(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const token = newToken();
+    await this.storeCode(user, 'PASSWORD_RESET', token, 72 * 60 * MINUTE);
+    return `${this.siteUrl()}/reset-password?token=${token}`;
+  }
+
   // ================================================================ email one-time code
 
   /** Sends a 6-digit sign-in code to existing, active accounts. Silent otherwise. */

@@ -6,6 +6,7 @@ import { validateEnv } from './config/env';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PrismaModule } from './prisma/prisma.module';
+import { AccessModule } from './common/access/access.module';
 import { JobsModule } from './jobs/jobs.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -47,6 +48,7 @@ import { AuditModule } from './modules/audit/audit.module';
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
+    AccessModule,
     JobsModule,
     HealthModule,
     AuthModule,

@@ -25,3 +25,4 @@ export { cmsApi } from './endpoints/cms';
 export { reportsApi } from './endpoints/reports';
 export { blogApi } from './endpoints/blog';
 export { customersApi } from './endpoints/customers';
+export { rbacApi, settingsApi, vendorStaffApi } from './endpoints/rbac';

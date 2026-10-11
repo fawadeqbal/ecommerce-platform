@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { RolesPage } from '@/features/settings/roles-page';
 
-export const metadata: Metadata = { title: 'Roles & permissions' };
+export const metadata: Metadata = { title: 'Roles' };
 
 export default function Page() {
-  return (
-    <PagePlaceholder title="Roles & permissions" features={['Roles and granular permissions']} />
-  );
+  return <RolesPage />;
 }
