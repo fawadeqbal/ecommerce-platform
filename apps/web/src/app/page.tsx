@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { StorefrontProductCard } from '@ecommerce/types';
 import { buttonStyles } from '@ecommerce/ui';
 import { ProductCard } from '@/components/catalog/product-card';
+import { BannerStrip } from '@/components/cms/banner-strip';
+import { getBanners } from '@/lib/cms';
 import { storefrontApi } from '@/lib/api-client';
 
 async function section(
@@ -42,33 +44,39 @@ function Row({
 }
 
 export default async function HomePage() {
-  const [featured, latest] = await Promise.all([
+  const [featured, latest, hero, mid] = await Promise.all([
     section({ featured: true, limit: 4 }),
     section({ sort: 'newest', limit: 8 }),
+    getBanners('home.hero'),
+    getBanners('home.mid'),
   ]);
+
+  const defaultHero = (
+    <section className="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-500 px-8 py-14 text-white">
+      <h1 className="max-w-xl text-4xl font-bold">
+        Everything you need, from sellers you can trust
+      </h1>
+      <p className="mt-3 max-w-lg text-brand-50">
+        Phones, laptops, fashion and more, with cash on delivery.
+      </p>
+      <Link
+        href="/products"
+        className={buttonStyles({
+          variant: 'secondary',
+          size: 'lg',
+          className: 'mt-6 bg-white text-brand-800 hover:bg-brand-50',
+        })}
+      >
+        Shop now
+      </Link>
+    </section>
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-12 px-4 py-8">
-      {/* TODO: hero banners from the CMS module */}
-      <section className="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-500 px-8 py-14 text-white">
-        <h1 className="max-w-xl text-4xl font-bold">
-          Everything you need, from sellers you can trust
-        </h1>
-        <p className="mt-3 max-w-lg text-brand-50">
-          Phones, laptops, fashion and more, with cash on delivery.
-        </p>
-        <Link
-          href="/products"
-          className={buttonStyles({
-            variant: 'secondary',
-            size: 'lg',
-            className: 'mt-6 bg-white text-brand-800 hover:bg-brand-50',
-          })}
-        >
-          Shop now
-        </Link>
-      </section>
+      <BannerStrip banners={hero} variant="hero" fallback={defaultHero} />
       <Row title="Featured" href="/products?featured=true" products={featured} />
+      <BannerStrip banners={mid} variant="strip" />
       <Row title="New arrivals" href="/products?sort=newest" products={latest} />
       {featured.length === 0 && latest.length === 0 ? (
         <p className="text-center text-gray-500">

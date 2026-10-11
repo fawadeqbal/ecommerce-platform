@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { BannerList } from '@/features/cms/banner-list';
 
 export const metadata: Metadata = { title: 'Banners' };
 
-export default function Page() {
-  return <PagePlaceholder title="Banners" features={['Banners by placement with scheduling']} />;
+export default function BannersPage() {
+  return <BannerList />;
 }

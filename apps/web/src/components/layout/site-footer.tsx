@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { getMenu } from '@/lib/cms';
 
-const groups = [
+/** Used until the footer menu is set up in Admin → Content → Menus. */
+const fallbackGroups = [
   {
     title: 'Shop',
     links: [
@@ -29,10 +31,21 @@ const groups = [
   },
 ] as const;
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const menu = await getMenu('footer');
+  const groups: { title: string; links: (readonly [string, string])[] }[] =
+    menu.length > 0
+      ? menu.map((col) => ({
+          title: col.label,
+          links: (col.children.length > 0
+            ? col.children
+            : [{ label: col.label, url: col.url }]
+          ).map((l): readonly [string, string] => [l.label, l.url]),
+        }))
+      : fallbackGroups.map((g) => ({ title: g.title, links: [...g.links] }));
   return (
     <footer className="mt-16 border-t border-gray-200 bg-gray-50">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-3">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-4">
         {groups.map((g) => (
           <div key={g.title}>
             <p className="mb-3 text-sm font-semibold">{g.title}</p>

@@ -594,6 +594,196 @@ async function seedInventory() {
   console.log('  ✓ inventory (main warehouse + opening stock)');
 }
 
+// ---------------------------------------------------------------- CMS (Step 18)
+
+type SeedBlock =
+  | { type: 'heading'; text: string; level: 2 | 3 }
+  | { type: 'paragraph'; text: string }
+  | { type: 'button'; label: string; url: string };
+
+const h = (text: string): SeedBlock => ({ type: 'heading', text, level: 2 });
+const p = (text: string): SeedBlock => ({ type: 'paragraph', text });
+
+const SEED_PAGES: { slug: string; title: string; blocks: SeedBlock[] }[] = [
+  {
+    slug: 'about',
+    title: 'About us',
+    blocks: [
+      p(
+        'We bring trusted sellers and shoppers together in one place, with cash on delivery and easy returns.',
+      ),
+      h('What we stand for'),
+      p(
+        'Genuine products, honest prices and fast delivery. Every seller is reviewed before they can sell.',
+      ),
+      { type: 'button', label: 'Start shopping', url: '/products' },
+    ],
+  },
+  {
+    slug: 'shipping-policy',
+    title: 'Shipping policy',
+    blocks: [
+      p(
+        'Each seller ships their items separately. Delivery options and prices are shown at checkout.',
+      ),
+      h('Delivery times'),
+      p(
+        'Most orders arrive in 2–5 working days. You get an email with the tracking number when your parcel ships.',
+      ),
+    ],
+  },
+  {
+    slug: 'return-policy',
+    title: 'Return policy',
+    blocks: [
+      p('You can request a return from your order page within the return window after delivery.'),
+      h('Refunds'),
+      p('Once the seller receives the item, your refund is sent to the original payment method.'),
+    ],
+  },
+  {
+    slug: 'terms',
+    title: 'Terms of service',
+    blocks: [
+      p('By using this store you agree to these terms. Replace this text with your own terms.'),
+    ],
+  },
+  {
+    slug: 'privacy',
+    title: 'Privacy policy',
+    blocks: [
+      p(
+        'We only use your data to process orders and improve the store. Replace this text with your own policy.',
+      ),
+    ],
+  },
+];
+
+const SEED_MENUS: Record<
+  'header' | 'footer',
+  {
+    name: string;
+    items: { label: string; url: string; children?: { label: string; url: string }[] }[];
+  }
+> = {
+  header: {
+    name: 'Header menu',
+    items: [
+      { label: 'Shop', url: '/products' },
+      { label: 'Electronics', url: '/categories/electronics' },
+      { label: 'Fashion', url: '/categories/fashion' },
+      { label: 'Featured', url: '/products?featured=true' },
+    ],
+  },
+  footer: {
+    name: 'Footer menu',
+    items: [
+      {
+        label: 'Shop',
+        url: '/products',
+        children: [
+          { label: 'All products', url: '/products' },
+          { label: 'Track order', url: '/track-order' },
+        ],
+      },
+      {
+        label: 'Help',
+        url: '/faq',
+        children: [
+          { label: 'FAQ', url: '/faq' },
+          { label: 'Shipping policy', url: '/pages/shipping-policy' },
+          { label: 'Return policy', url: '/pages/return-policy' },
+        ],
+      },
+      {
+        label: 'Company',
+        url: '/pages/about',
+        children: [
+          { label: 'About', url: '/pages/about' },
+          { label: 'Terms', url: '/pages/terms' },
+          { label: 'Privacy', url: '/pages/privacy' },
+        ],
+      },
+    ],
+  },
+};
+
+const SEED_FAQS: { category: string; question: string; answer: string }[] = [
+  {
+    category: 'Orders',
+    question: 'How do I track my order?',
+    answer:
+      'Signed-in customers see every order under My orders. Guests can use Track order with the order number and email from the confirmation email.',
+  },
+  {
+    category: 'Orders',
+    question: 'Can I cancel my order?',
+    answer:
+      'Yes, as long as the seller has not shipped it yet. Open the order and choose Cancel order.',
+  },
+  {
+    category: 'Payments',
+    question: 'Which payment methods can I use?',
+    answer:
+      'Cash on delivery, card and other online methods shown at checkout. Cash on delivery has a maximum order value.',
+  },
+  {
+    category: 'Returns',
+    question: 'How do I return an item?',
+    answer:
+      'Open the delivered order and choose Return items. The seller reviews the request and you are refunded once they receive the item.',
+  },
+];
+
+async function seedCms() {
+  for (const page of SEED_PAGES) {
+    await prisma.page.upsert({
+      where: { slug_locale: { slug: page.slug, locale: 'en' } },
+      update: {},
+      create: {
+        slug: page.slug,
+        locale: 'en',
+        title: page.title,
+        content: { blocks: page.blocks } as Prisma.InputJsonValue,
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+      },
+    });
+  }
+
+  for (const [handle, menu] of Object.entries(SEED_MENUS)) {
+    const existing = await prisma.menu.findUnique({
+      where: { handle },
+      include: { _count: { select: { items: true } } },
+    });
+    if (existing && existing._count.items > 0) continue; // never overwrite an edited menu
+    const saved = existing ?? (await prisma.menu.create({ data: { handle, name: menu.name } }));
+    for (const [i, item] of menu.items.entries()) {
+      const parent = await prisma.menuItem.create({
+        data: { menuId: saved.id, label: item.label, url: item.url, position: i },
+      });
+      for (const [j, child] of (item.children ?? []).entries()) {
+        await prisma.menuItem.create({
+          data: {
+            menuId: saved.id,
+            parentId: parent.id,
+            label: child.label,
+            url: child.url,
+            position: j,
+          },
+        });
+      }
+    }
+  }
+
+  if ((await prisma.faq.count()) === 0) {
+    await prisma.faq.createMany({
+      data: SEED_FAQS.map((f, i) => ({ ...f, position: i })),
+    });
+  }
+  console.log('  ✓ cms pages, menus, faqs');
+}
+
 async function main() {
   console.log('Seeding database…');
   await seedRbac();
@@ -607,6 +797,7 @@ async function main() {
   await seedProducts();
   await seedInventory();
   await seedShipping();
+  await seedCms();
   console.log('Done.');
 }
 

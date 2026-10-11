@@ -31,3 +31,4 @@ Thumbs.db
 !.vscode/settings.json
 .idea/
 dump.rdb
+.sync/

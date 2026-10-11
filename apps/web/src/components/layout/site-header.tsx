@@ -1,14 +1,18 @@
 import Link from 'next/link';
+import { getMenu } from '@/lib/cms';
 import { HeaderActions } from './header-actions';
 
-const nav = [
+/** Used until the header menu is set up in Admin → Content → Menus. */
+const fallbackNav = [
   { href: '/products', label: 'Shop' },
   { href: '/categories/electronics', label: 'Electronics' },
   { href: '/categories/fashion', label: 'Fashion' },
   { href: '/products?featured=true', label: 'Featured' },
 ];
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const menu = await getMenu('header');
+  const nav = menu.length > 0 ? menu.map((i) => ({ href: i.url, label: i.label })) : fallbackNav;
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="bg-brand-700 py-1.5 text-center text-xs text-white">

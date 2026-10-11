@@ -115,6 +115,16 @@ export const queryKeys = {
     all: ['media'] as const,
     list: (folder?: string, page = 1) => ['media', 'list', folder ?? 'all', page] as const,
   },
+  cms: {
+    all: ['cms'] as const,
+    pages: ['cms', 'pages'] as const,
+    page: (id: string) => ['cms', 'page', id] as const,
+    banners: ['cms', 'banners'] as const,
+    banner: (id: string) => ['cms', 'banner', id] as const,
+    menus: ['cms', 'menus'] as const,
+    menu: (handle: string) => ['cms', 'menu', handle] as const,
+    faqs: ['cms', 'faqs'] as const,
+  },
   attributes: {
     all: ['attributes'] as const,
     adminList: ['attributes', 'admin-list'] as const,
