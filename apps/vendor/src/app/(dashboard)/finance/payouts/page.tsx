@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { PayoutList } from '@/features/payouts/payout-list';
 
 export const metadata: Metadata = { title: 'Payouts' };
 
 export default function Page() {
-  return (
-    <PagePlaceholder title="Payouts" features={['Settlement statements and payout history']} />
-  );
+  return <PayoutList />;
 }

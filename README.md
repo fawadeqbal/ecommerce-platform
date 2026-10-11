@@ -162,7 +162,7 @@ One NestJS module per domain under `apps/api/src/modules/`:
 `settings` · `audit` · `jobs`
 
 Implemented: `auth`, `users` (profile, addresses), `vendors`, `catalog` (categories, brands, attributes, products,
-storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `returns`, `reviews`, `wishlist`, `promotions`, `loyalty`, `notifications`, `audit`.
+storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `returns`, `reviews`, `wishlist`, `promotions`, `loyalty`, `payouts`, `notifications`, `audit`.
 
 ## Deployment
 

@@ -6,6 +6,13 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
   wishlist: ['wishlist'] as const,
+  payouts: {
+    all: ['payouts'] as const,
+    earnings: ['payouts', 'earnings'] as const,
+    vendorList: ['payouts', 'vendor-list'] as const,
+    adminList: (status: string) => ['payouts', 'admin-list', status] as const,
+    detail: (scope: string, id: string) => ['payouts', 'detail', scope, id] as const,
+  },
   loyalty: {
     all: ['loyalty'] as const,
     summary: ['loyalty', 'summary'] as const,

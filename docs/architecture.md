@@ -238,6 +238,18 @@ lines (seller, product, category, price × qty)
   when sub-orders are cancelled (customer / seller / admin / unpaid expiry).
 - Gift cards: admin issues (code `GC-XXXX-XXXX`, emailed), ledger `GiftCardTransaction` ISSUE / REDEEM / REFUND / ADJUST.
 
+### Vendor payouts
+
+- The store collects all money (online and COD via couriers) and pays sellers. Earnings per DELIVERED sub-order:
+  sales = net + commission; commission is given back in proportion to refunded items; minus PAID return refunds
+  (`payout-rules.ts`, integer cents).
+- A sub-order is **available** `payouts.holdDays` after delivery (the return period) and when it has no open
+  return; otherwise **on hold** with the reason.
+- `POST /admin/payouts/generate`: one PENDING payout per seller whose available total ≥ `payouts.minimumAmount`.
+  `PayoutItem.vendorOrderId` is unique, so a sub-order is never paid twice (re-runs are safe).
+- Status: PENDING → PROCESSING (transfer sent) → PAID (reference required, seller emailed); FAILED can be retried.
+  Cancelling a PENDING / FAILED payout deletes it and frees its sub-orders for the next run. All audited.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

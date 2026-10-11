@@ -142,6 +142,8 @@ async function seedSettings() {
     { key: 'marketplace.productApprovalRequired', group: 'vendors', value: true },
     { key: 'marketplace.defaultCommissionRate', group: 'vendors', value: 10 },
     { key: 'marketplace.payoutCycle', group: 'vendors', value: 'MONTHLY' },
+    { key: 'payouts.holdDays', group: 'vendors', value: 10 },
+    { key: 'payouts.minimumAmount', group: 'vendors', value: 10 },
     { key: 'checkout.guestCheckout', group: 'checkout', value: true },
     { key: 'checkout.reservationMinutes', group: 'checkout', value: 15 },
     { key: 'checkout.codFee', group: 'checkout', value: 0 },

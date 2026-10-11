@@ -49,21 +49,22 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 
 `pnpm db:seed` only creates missing keys; it never overwrites a value you changed.
 
-| Key                                   | Default                                                      | Effect                                                                                  |
-| ------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `checkout.guestCheckout`              | `true`                                                       | Allow checkout without an account                                                       |
-| `checkout.codFee`                     | `0`                                                          | Cash-on-delivery fee added to the total                                                 |
-| `checkout.codMaxOrderTotal`           | `5000`                                                       | COD hidden above this order total                                                       |
-| `checkout.reservationMinutes`         | `15`                                                         | Time to pay an online order before it is cancelled and stock released                   |
-| `payments.onlineMethods`              | `CARD,WALLET`                                                | Online methods offered (add `BANK_TRANSFER`; empty = COD only)                          |
-| `returns.windowDays`                  | `7`                                                          | Days after delivery a customer can request a return                                     |
-| `reviews.requireApproval`             | `false`                                                      | New / edited reviews wait for admin approval                                            |
-| `questions.requireApproval`           | `true`                                                       | Questions hidden until approved or answered by the seller                               |
-| `loyalty.*`                           | 1 pt / unit, 0.01 / pt, 50 %, 100 / 20 / 200 bonus, 365 days | Earn rate, point value, max share of an order, signup / review / referral bonus, expiry |
-| `shipping.flatRatePerVendor`          | `5`                                                          | Default shipping per seller when no shipping zone matches the address                   |
-| `shipping.freeShippingAbove`          | `50`                                                         | Seller subtotal at which that seller's shipping is free                                 |
-| `marketplace.productApprovalRequired` | `true`                                                       | New products go to admin review before publishing                                       |
-| `marketplace.defaultCommissionRate`   | `10`                                                         | % commission when a vendor has no own rate                                              |
+| Key                                          | Default                                                      | Effect                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `checkout.guestCheckout`                     | `true`                                                       | Allow checkout without an account                                                       |
+| `checkout.codFee`                            | `0`                                                          | Cash-on-delivery fee added to the total                                                 |
+| `checkout.codMaxOrderTotal`                  | `5000`                                                       | COD hidden above this order total                                                       |
+| `checkout.reservationMinutes`                | `15`                                                         | Time to pay an online order before it is cancelled and stock released                   |
+| `payments.onlineMethods`                     | `CARD,WALLET`                                                | Online methods offered (add `BANK_TRANSFER`; empty = COD only)                          |
+| `returns.windowDays`                         | `7`                                                          | Days after delivery a customer can request a return                                     |
+| `reviews.requireApproval`                    | `false`                                                      | New / edited reviews wait for admin approval                                            |
+| `questions.requireApproval`                  | `true`                                                       | Questions hidden until approved or answered by the seller                               |
+| `loyalty.*`                                  | 1 pt / unit, 0.01 / pt, 50 %, 100 / 20 / 200 bonus, 365 days | Earn rate, point value, max share of an order, signup / review / referral bonus, expiry |
+| `payouts.holdDays` / `payouts.minimumAmount` | `10` days / `10`                                             | Days after delivery before earnings can be paid out; smallest payout                    |
+| `shipping.flatRatePerVendor`                 | `5`                                                          | Default shipping per seller when no shipping zone matches the address                   |
+| `shipping.freeShippingAbove`                 | `50`                                                         | Seller subtotal at which that seller's shipping is free                                 |
+| `marketplace.productApprovalRequired`        | `true`                                                       | New products go to admin review before publishing                                       |
+| `marketplace.defaultCommissionRate`          | `10`                                                         | % commission when a vendor has no own rate                                              |
 
 ---
 
@@ -126,6 +127,14 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 3. Admin → Promotions → Gift cards → Issue (amount, recipient email). Checkout → Gift card code → Apply. If points +
    gift card cover everything, no payment method is needed. Cancel the order: balance and points come back.
 4. Admin → Loyalty: tier thresholds / multipliers, look up a customer and adjust points.
+
+**Vendor payouts**
+
+1. Deliver an order as the seller → Seller center → Finance → Earnings shows it **On hold** until
+   `payouts.holdDays` (10) days after delivery (set the setting to `0` to try it now).
+2. Admin → Sellers → Payouts → **Generate payouts** → open the payout (seller's bank details shown) →
+   Mark transfer sent → Mark paid with a reference: the seller gets an email and sees it under Finance → Payouts.
+3. Cancel a payout that is still To pay: its orders are available again for the next run.
 
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
