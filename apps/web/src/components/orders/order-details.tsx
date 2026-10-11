@@ -56,13 +56,28 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-5 py-3 text-sm">
                 <span>
                   Sold by <span className="font-semibold text-gray-900">{vo.vendor.name}</span>
+                  {vo.shippingMethod ? (
+                    <span className="text-gray-500"> · {vo.shippingMethod}</span>
+                  ) : null}
                 </span>
                 <OrderStatusBadge status={vo.status} />
               </div>
               {vo.shipment?.trackingNumber ? (
                 <p className="border-b border-gray-100 bg-gray-50 px-5 py-2 text-sm text-gray-700">
                   Tracking number{' '}
-                  <span className="font-mono font-medium">{vo.shipment.trackingNumber}</span>
+                  {vo.shipment.trackingUrl ? (
+                    <a
+                      href={vo.shipment.trackingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono font-medium text-brand-700 underline"
+                    >
+                      {vo.shipment.trackingNumber}
+                    </a>
+                  ) : (
+                    <span className="font-mono font-medium">{vo.shipment.trackingNumber}</span>
+                  )}
+                  {vo.shipment.courierName ? ` (${vo.shipment.courierName})` : ''}
                   {vo.shipment.shippedAt ? ` · shipped ${formatDate(vo.shipment.shippedAt)}` : ''}
                   {vo.shipment.deliveredAt
                     ? ` · delivered ${formatDate(vo.shipment.deliveredAt)}`

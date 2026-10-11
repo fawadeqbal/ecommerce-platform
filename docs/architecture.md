@@ -143,11 +143,32 @@ cancel a paid order (customer / admin) or sub-order (seller) → refund of the c
   `createPaymentProvider()`, set `PAYMENT_PROVIDER`, `PAYMENT_API_KEY`, `PAYMENT_WEBHOOK_SECRET`, and register
   `https://api.<domain>/api/v1/payments/webhooks/<name>` in the gateway dashboard. Nothing else changes.
 
+### Shipping
+
+Each seller ships its own parcel. `ShippingService.quote()` (`apps/api/src/modules/shipping`):
+
+```
+destination (saved address / typed country + province + city)
+  └─ matchZone(): most specific active zone — country + region (city or province) > country > all countries
+       └─ rates of that zone that fit the parcel: weight (Σ variant weight, else product weight) and seller subtotal
+            price: FREE → 0 · freeAbove reached → 0 · else rate price      → options, cheapest first
+no zone matches → store default "Standard delivery" (settings flat rate / free above)
+```
+
+- The customer may pick another option per seller (`shippingRateIds: { vendorId: rateId }` on quote and place);
+  the sub-order stores a snapshot (`VendorOrder.shippingMethod`, `shippingRateId`), so rates can change later.
+- COD: unavailable if a chosen option has `codAvailable = false`; COD fee = `checkout.codFee` + the options' `codFee`.
+- A seller with no fitting option blocks checkout ("cannot deliver … to this address").
+- Shipping: seller picks the courier (pre-selected from the chosen option); `Courier.trackingUrlTemplate` with
+  `{tracking}` becomes the customer's tracking link (order page + "shipped" email).
+- Courier APIs (rates / booking / labels) can be added later behind the courier record; today couriers are manual.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.
 
-- Shipping: `shipping.flatRatePerVendor` per seller, free when that seller's subtotal ≥ `shipping.freeShippingAbove`.
+- Shipping: per seller parcel from the matching shipping zone (see Shipping); no zone → `shipping.flatRatePerVendor`,
+  free when that seller's subtotal ≥ `shipping.freeShippingAbove`.
 - Cash on delivery: allowed while the total ≤ `checkout.codMaxOrderTotal`; fee `checkout.codFee` (only when COD is chosen).
 - Online methods: the gateway's methods ∩ setting `payments.onlineMethods` (`CARD,WALLET`; empty = COD only).
 - Guest checkout: `checkout.guestCheckout`. Commission per seller: the vendor's rate, else

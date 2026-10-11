@@ -1,4 +1,5 @@
 import type { OrderStatus, PaymentMethod, PaymentStatus } from '../enums';
+import type { ShippingDestination } from '../shipping/shipping';
 
 /**
  * Online payments go through a pluggable gateway (PaymentProvider in apps/api/src/modules/payments).
@@ -35,6 +36,11 @@ export interface PaymentOptionDto {
 export interface CheckoutQuoteInput {
   /** Totals are calculated for this method (COD adds its fee). Defaults to the first available. */
   paymentMethod?: PaymentMethod;
+  /** Saved address (signed-in) or typed destination; picks the shipping zone. */
+  addressId?: string;
+  destination?: ShippingDestination;
+  /** Chosen delivery option per seller: { vendorId: rateId }. */
+  shippingRateIds?: Record<string, string>;
 }
 
 /** Where to send the customer to pay (the gateway's hosted page). */

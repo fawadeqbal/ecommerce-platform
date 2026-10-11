@@ -24,6 +24,7 @@ import {
   type VendorOrderListItem,
   fromCents,
   toCents,
+  trackingUrlFor,
 } from '@ecommerce/types';
 import { paginate } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -41,6 +42,7 @@ import {
   toVendorListItem,
   vendorOrderInclude,
   type OrderFull,
+  type VendorOrderFull,
 } from './order.mapper';
 import { deriveOrderStatus } from './order-rules';
 import { commitStock, releaseStock } from './order-stock';
@@ -155,7 +157,7 @@ export class OrdersService {
 
   async vendorGet(userId: string, id: string): Promise<VendorOrderDetailDto> {
     const vendor = await this.vendorOf(userId);
-    return toVendorDetail(await this.ownVendorOrder(vendor.id, id));
+    return this.vendorDetail(await this.ownVendorOrder(vendor.id, id));
   }
 
   async vendorUpdateStatus(
@@ -178,6 +180,13 @@ export class OrdersService {
       throw new BadRequestException('Tell the customer why the order is cancelled');
     }
 
+    const courier =
+      dto.status === 'SHIPPED' && dto.courierId
+        ? await this.prisma.courier.findFirst({ where: { id: dto.courierId, isActive: true } })
+        : null;
+    if (dto.status === 'SHIPPED' && dto.courierId && !courier)
+      throw new BadRequestException('Choose an active courier');
+
     const variantIds = vo.items.map((i) => i.variantId);
     await this.prisma.$transaction(async (tx) => {
       await tx.vendorOrder.update({ where: { id: vo.id }, data: { status: dto.status } });
@@ -197,6 +206,7 @@ export class OrdersService {
         await tx.shipment.create({
           data: {
             vendorOrderId: vo.id,
+            courierId: courier?.id ?? null,
             trackingNumber: dto.trackingNumber,
             status: 'IN_TRANSIT',
             shippedAt: new Date(),
@@ -250,10 +260,11 @@ export class OrdersService {
     }
     await this.emailStatusChange(vo.orderId, dto.status, {
       trackingNumber: dto.trackingNumber,
+      trackingUrl: trackingUrlFor(courier?.trackingUrlTemplate, dto.trackingNumber) ?? undefined,
       reason: dto.note,
       vendorId: vendor.id,
     });
-    return toVendorDetail(await this.ownVendorOrder(vendor.id, id));
+    return this.vendorDetail(await this.ownVendorOrder(vendor.id, id));
   }
 
   // ================================================================ admin
@@ -383,7 +394,7 @@ export class OrdersService {
   private async emailStatusChange(
     orderId: string,
     status: OrderStatus,
-    extra: { trackingNumber?: string; reason?: string; vendorId?: string },
+    extra: { trackingNumber?: string; trackingUrl?: string; reason?: string; vendorId?: string },
   ) {
     const templates: Partial<Record<OrderStatus, EmailJobPayload['template']>> = {
       SHIPPED: EmailTemplateKey.ORDER_SHIPPED,
@@ -417,6 +428,7 @@ export class OrdersService {
           firstName: address.fullName.split(' ')[0],
           orderNumber: order.orderNumber,
           trackingNumber: extra.trackingNumber,
+          trackingUrl: extra.trackingUrl,
           message: extra.reason
             ? `your order was cancelled${vendorName ? ` by ${vendorName}` : ''}. Reason: ${extra.reason}`
             : vendorName
@@ -430,6 +442,17 @@ export class OrdersService {
     } catch (error) {
       this.logger.error(`Status email failed for order ${orderId}: ${String(error)}`);
     }
+  }
+
+  /** Seller view + the courier of the delivery option the customer chose (pre-selected when shipping). */
+  private async vendorDetail(vo: VendorOrderFull): Promise<VendorOrderDetailDto> {
+    const rate = vo.shippingRateId
+      ? await this.prisma.shippingRate.findUnique({
+          where: { id: vo.shippingRateId },
+          select: { courierId: true },
+        })
+      : null;
+    return { ...toVendorDetail(vo), suggestedCourierId: rate?.courierId ?? null };
   }
 
   private async vendorOf(userId: string): Promise<Vendor> {

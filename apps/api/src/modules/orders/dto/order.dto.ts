@@ -68,6 +68,10 @@ export class VendorOrderStatusDto implements VendorOrderStatusInput {
   @IsString()
   @MaxLength(100)
   trackingNumber?: string;
+  @ApiPropertyOptional({ description: 'Courier carrying the parcel (when shipping)' })
+  @IsOptional()
+  @IsString()
+  courierId?: string;
   @ApiPropertyOptional({ description: 'Required when cancelling' })
   @IsOptional()
   @Transform(trim)

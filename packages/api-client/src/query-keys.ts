@@ -5,6 +5,13 @@ export const queryKeys = {
   savedItems: ['cart', 'saved'] as const,
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
+  shipping: {
+    all: ['shipping'] as const,
+    zones: ['shipping', 'zones'] as const,
+    zone: (id: string) => ['shipping', 'zone', id] as const,
+    couriers: ['shipping', 'couriers'] as const,
+    vendorCouriers: ['shipping', 'vendor-couriers'] as const,
+  },
   payments: {
     all: ['payments'] as const,
     status: (paymentId: string) => ['payments', 'status', paymentId] as const,

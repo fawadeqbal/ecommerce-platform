@@ -20,6 +20,7 @@ import {
   DetailList,
   Input,
   Modal,
+  Select,
   PageHeader,
   Spinner,
   Textarea,
@@ -28,7 +29,7 @@ import {
   formatDateTime,
   formatMoney,
 } from '@ecommerce/ui';
-import { ordersApi, queryKeys } from '@/lib/api-client';
+import { ordersApi, queryKeys, shippingApi } from '@/lib/api-client';
 import { OrderStatusBadge } from './order-status-badge';
 
 const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
@@ -49,12 +50,19 @@ export function VendorOrderDetail({ id }: { id: string }) {
   const [target, setTarget] = useState<OrderStatus | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [note, setNote] = useState('');
+  const [courierId, setCourierId] = useState('');
+  const couriers = useQuery({
+    queryKey: queryKeys.shipping.vendorCouriers,
+    queryFn: shippingApi.vendorCouriers,
+    staleTime: 5 * 60_000,
+  });
 
   const update = useMutation({
     mutationFn: (status: OrderStatus) =>
       ordersApi.vendorUpdateStatus(id, {
         status,
         trackingNumber: status === 'SHIPPED' ? trackingNumber.trim() : undefined,
+        courierId: status === 'SHIPPED' && courierId ? courierId : undefined,
         note: note.trim() || undefined,
       }),
     onSuccess: async (updated) => {
@@ -68,6 +76,7 @@ export function VendorOrderDetail({ id }: { id: string }) {
     update.reset();
     setTrackingNumber('');
     setNote('');
+    setCourierId(o?.suggestedCourierId ?? '');
     setTarget(status);
   };
 
@@ -110,9 +119,25 @@ export function VendorOrderDetail({ id }: { id: string }) {
 
       <div className="mb-6 flex items-center gap-3">
         <OrderStatusBadge status={o.status} />
+        {o.shippingMethod ? (
+          <span className="text-sm text-gray-600">Delivery: {o.shippingMethod}</span>
+        ) : null}
         {o.shipment?.trackingNumber ? (
           <span className="text-sm text-gray-600">
-            Tracking <span className="font-mono">{o.shipment.trackingNumber}</span>
+            Tracking{' '}
+            {o.shipment.trackingUrl ? (
+              <a
+                href={o.shipment.trackingUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono text-brand-700 underline"
+              >
+                {o.shipment.trackingNumber}
+              </a>
+            ) : (
+              <span className="font-mono">{o.shipment.trackingNumber}</span>
+            )}
+            {o.shipment.courierName ? ` · ${o.shipment.courierName}` : ''}
             {o.shipment.shippedAt ? ` · shipped ${formatDate(o.shipment.shippedAt)}` : ''}
           </span>
         ) : null}
@@ -232,6 +257,16 @@ export function VendorOrderDetail({ id }: { id: string }) {
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               autoFocus
+            />
+          ) : null}
+          {target === 'SHIPPED' ? (
+            <Select
+              label="Courier"
+              hint={o.shippingMethod ? `Customer chose: ${o.shippingMethod}` : undefined}
+              placeholder="Not specified"
+              value={courierId}
+              onChange={(e) => setCourierId(e.target.value)}
+              options={(couriers.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
             />
           ) : null}
           <Textarea

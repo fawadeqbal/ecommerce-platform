@@ -3,6 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
+  IsObject,
   IsIn,
   IsOptional,
   IsString,
@@ -12,6 +13,9 @@ import {
 } from 'class-validator';
 import type { CheckoutQuoteInput, PaymentMethod, PlaceOrderInput } from '@ecommerce/types';
 
+import { DestinationDto } from '../../shipping/dto/shipping.dto';
+import { ShippingAddressDto } from '../../users/dto/address.dto';
+
 /** Methods the storefront can request; availability is decided by CheckoutService.quote(). */
 const CHECKOUT_METHODS: PaymentMethod[] = ['COD', 'CARD', 'WALLET', 'BANK_TRANSFER'];
 
@@ -20,8 +24,23 @@ export class QuoteRequestDto implements CheckoutQuoteInput {
   @IsOptional()
   @IsIn(CHECKOUT_METHODS)
   paymentMethod?: PaymentMethod;
+
+  @ApiPropertyOptional({ description: 'Saved address id (signed-in customers)' })
+  @IsOptional()
+  @IsString()
+  addressId?: string;
+
+  @ApiPropertyOptional({ type: DestinationDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DestinationDto)
+  destination?: DestinationDto;
+
+  @ApiPropertyOptional({ description: '{ vendorId: shippingRateId }' })
+  @IsOptional()
+  @IsObject()
+  shippingRateIds?: Record<string, string>;
 }
-import { ShippingAddressDto } from '../../users/dto/address.dto';
 
 export class PlaceOrderDto implements PlaceOrderInput {
   @ApiPropertyOptional({ description: 'Required for guest checkout' })
@@ -52,6 +71,11 @@ export class PlaceOrderDto implements PlaceOrderInput {
 
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() @MaxLength(500) customerNote?:
     string | null;
+
+  @ApiPropertyOptional({ description: '{ vendorId: shippingRateId } — cheapest when omitted' })
+  @IsOptional()
+  @IsObject()
+  shippingRateIds?: Record<string, string>;
 
   @ApiProperty({ description: 'Random id per checkout attempt' })
   @IsString()

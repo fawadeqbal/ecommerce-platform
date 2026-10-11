@@ -2,6 +2,7 @@ import type { OrderStatus, PaymentMethod, PaymentStatus } from '../enums';
 import type { CartItemDto } from '../cart/cart';
 import type { ShippingAddress } from '../users/address';
 import type { PaymentAttemptDto, PaymentOptionDto, PaymentSessionDto } from '../payments/payment';
+import type { ShippingOptionDto } from '../shipping/shipping';
 
 export type BadgeTone = 'gray' | 'green' | 'yellow' | 'red' | 'blue';
 
@@ -90,6 +91,14 @@ export interface CheckoutGroup {
   items: CartItemDto[];
   subtotal: number;
   shipping: number;
+  /** Delivery choices for this seller's parcel (cheapest first). */
+  shippingOptions: ShippingOptionDto[];
+  /** The option the totals use. */
+  shippingRateId: string | null;
+  shippingMethod: string;
+  estimatedDays: string | null;
+  /** Parcel weight used for weight-based rates (0 when products have no weight). */
+  weightGrams: number;
 }
 
 export interface CheckoutQuoteDto {
@@ -110,8 +119,10 @@ export interface CheckoutQuoteDto {
   selectedPaymentMethod: PaymentMethod | null;
   canPlace: boolean;
   problems: string[];
-  /** Spend this much more per vendor for free shipping (0 = disabled). */
+  /** Default flat-rate threshold; only meaningful when no shipping zone matched (`shippingZone` null). */
   freeShippingAbove: number;
+  /** Shipping zone that matched the destination; null = store default rate / no address yet. */
+  shippingZone: string | null;
 }
 
 export interface PlaceOrderInput {
@@ -123,6 +134,8 @@ export interface PlaceOrderInput {
   address?: ShippingAddress;
   saveAddress?: boolean;
   paymentMethod: PaymentMethod;
+  /** Chosen delivery option per seller: { vendorId: rateId }. Cheapest when omitted. */
+  shippingRateIds?: Record<string, string>;
   customerNote?: string | null;
   /** Random id per checkout attempt — a double click never creates two orders. */
   idempotencyKey: string;
@@ -149,6 +162,9 @@ export interface OrderItemDto {
 }
 
 export interface ShipmentDto {
+  courierName: string | null;
+  /** Courier tracking page, when the courier has a tracking link template. */
+  trackingUrl: string | null;
   trackingNumber: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
@@ -167,6 +183,7 @@ export interface VendorOrderDto {
   status: OrderStatus;
   subtotal: number;
   shippingTotal: number;
+  shippingMethod: string | null;
   items: OrderItemDto[];
   shipment: ShipmentDto | null;
 }
@@ -246,6 +263,9 @@ export interface VendorOrderDetailDto {
   shippingTotal: number;
   commissionAmount: number;
   netAmount: number;
+  /** Delivery option the customer chose, and its default courier. */
+  shippingMethod: string | null;
+  suggestedCourierId: string | null;
   customer: { name: string; email: string; phone: string };
   shippingAddress: ShippingAddress;
   paymentMethod: PaymentMethod;
@@ -268,6 +288,8 @@ export interface VendorOrderStatusInput {
   status: OrderStatus;
   /** Required when marking SHIPPED. */
   trackingNumber?: string;
+  /** Courier carrying the parcel (SHIPPED). */
+  courierId?: string;
   /** Required when cancelling. */
   note?: string;
 }

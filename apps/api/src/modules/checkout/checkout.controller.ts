@@ -21,7 +21,7 @@ export class CheckoutController {
   @Post('quote')
   @HttpCode(HttpStatus.OK)
   quote(@Req() req: CheckoutRequest, @Body() dto: QuoteRequestDto): Promise<CheckoutQuoteDto> {
-    return this.checkout.quote(this.context(req), dto.paymentMethod);
+    return this.checkout.quote(this.context(req), dto);
   }
 
   @Post('place')

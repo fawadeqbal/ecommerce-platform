@@ -1,15 +1,18 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ShippingService } from './shipping.service';
+import { Role, type CourierDto } from '@ecommerce/types';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CouriersService } from './couriers.service';
 
-@ApiTags('Shipping')
+@ApiTags('Seller · Shipping')
 @ApiBearerAuth()
-@Controller('shipping')
+@Roles(Role.VENDOR, Role.ADMIN)
+@Controller('vendor/shipping')
 export class ShippingController {
-  constructor(private readonly shippingService: ShippingService) {}
+  constructor(private readonly couriers: CouriersService) {}
 
-  @Get('status')
-  status() {
-    return this.shippingService.status();
+  @Get('couriers')
+  couriersList(): Promise<CourierDto[]> {
+    return this.couriers.list(true);
   }
 }

@@ -15,33 +15,33 @@ pnpm dev        # web, admin, vendor, api, worker
 
 ## Applications
 
-| App | URL | Login |
-|---|---|---|
-| Storefront (customers) | http://localhost:3000 | Create an account at http://localhost:3000/register, or check out as a guest |
-| Admin panel | http://localhost:3001/login | `admin@example.com` / `Admin@12345` |
-| Seller center (vendors) | http://localhost:3002/login | `vendor@example.com` / `Vendor@12345` (approved store) |
-| Seller registration | http://localhost:3002/register | New application → shows up in Admin → Vendors |
-| API base URL | http://localhost:4000/api/v1 | JWT (cookie or `Authorization: Bearer <token>`) |
-| API docs (Swagger) | http://localhost:4000/api/docs | Use `POST /auth/login`, then **Authorize** with the `accessToken` |
-| API health check | http://localhost:4000/health | none |
+| App                     | URL                            | Login                                                                        |
+| ----------------------- | ------------------------------ | ---------------------------------------------------------------------------- |
+| Storefront (customers)  | http://localhost:3000          | Create an account at http://localhost:3000/register, or check out as a guest |
+| Admin panel             | http://localhost:3001/login    | `admin@example.com` / `Admin@12345`                                          |
+| Seller center (vendors) | http://localhost:3002/login    | `vendor@example.com` / `Vendor@12345` (approved store)                       |
+| Seller registration     | http://localhost:3002/register | New application → shows up in Admin → Vendors                                |
+| API base URL            | http://localhost:4000/api/v1   | JWT (cookie or `Authorization: Bearer <token>`)                              |
+| API docs (Swagger)      | http://localhost:4000/api/docs | Use `POST /auth/login`, then **Authorize** with the `accessToken`            |
+| API health check        | http://localhost:4000/health   | none                                                                         |
 
 ### Seeded accounts
 
-| Role | Email | Password | Where to change |
-|---|---|---|---|
-| Super Admin | `admin@example.com` | `Admin@12345` | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in `.env`, then `pnpm db:seed` |
-| Vendor (approved): Demo Electronics | `vendor@example.com` | `Vendor@12345` | `seedVendors()` in `seed.ts` |
-| Vendor (pending review): Pending Fashion | `pending@example.com` | `Vendor@12345` | same |
-| Customer | none seeded | — | Register at http://localhost:3000/register (e.g. `customer@example.com` / `Customer@123`) |
+| Role                                     | Email                 | Password       | Where to change                                                                           |
+| ---------------------------------------- | --------------------- | -------------- | ----------------------------------------------------------------------------------------- |
+| Super Admin                              | `admin@example.com`   | `Admin@12345`  | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in `.env`, then `pnpm db:seed`                 |
+| Vendor (approved): Demo Electronics      | `vendor@example.com`  | `Vendor@12345` | `seedVendors()` in `seed.ts`                                                              |
+| Vendor (pending review): Pending Fashion | `pending@example.com` | `Vendor@12345` | same                                                                                      |
+| Customer                                 | none seeded           | —              | Register at http://localhost:3000/register (e.g. `customer@example.com` / `Customer@123`) |
 
 ### Seeded demo catalog (vendor: Demo Electronics)
 
-| Product | SKU | Status | Stock (warehouse `DEMO-ELECTRONICS-MAIN`) |
-|---|---|---|---|
-| Galaxy S24 Ultra 256GB (Samsung) | `SAM-S24U-256` | Published | 25 |
-| iPhone 15 128GB (Apple) | `APL-IP15-128` | Published | 3 (shows as low stock) |
-| Dell XPS 13 (Intel Core Ultra 7, 16GB) | `DEL-XPS13-U7-16` | Pending review (approve it in Admin → Products) | 12 |
-| Sony WH-1000XM5 Wireless Headphones | `SNY-WH1000XM5` | Draft | 0 |
+| Product                                | SKU               | Status                                          | Stock (warehouse `DEMO-ELECTRONICS-MAIN`) |
+| -------------------------------------- | ----------------- | ----------------------------------------------- | ----------------------------------------- |
+| Galaxy S24 Ultra 256GB (Samsung)       | `SAM-S24U-256`    | Published                                       | 25                                        |
+| iPhone 15 128GB (Apple)                | `APL-IP15-128`    | Published                                       | 3 (shows as low stock)                    |
+| Dell XPS 13 (Intel Core Ultra 7, 16GB) | `DEL-XPS13-U7-16` | Pending review (approve it in Admin → Products) | 12                                        |
+| Sony WH-1000XM5 Wireless Headphones    | `SNY-WH1000XM5`   | Draft                                           | 0                                         |
 
 Plus categories, brands, attributes, currencies (USD default, PKR) and the settings below.
 
@@ -49,38 +49,66 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 
 `pnpm db:seed` only creates missing keys; it never overwrites a value you changed.
 
-| Key | Default | Effect |
-|---|---|---|
-| `checkout.guestCheckout` | `true` | Allow checkout without an account |
-| `checkout.codFee` | `0` | Cash-on-delivery fee added to the total |
-| `checkout.codMaxOrderTotal` | `5000` | COD hidden above this order total |
-| `shipping.flatRatePerVendor` | `5` | Shipping charged per seller in the order |
-| `shipping.freeShippingAbove` | `50` | Seller subtotal at which that seller's shipping is free |
-| `marketplace.productApprovalRequired` | `true` | New products go to admin review before publishing |
-| `marketplace.defaultCommissionRate` | `10` | % commission when a vendor has no own rate |
+| Key                                   | Default       | Effect                                                                |
+| ------------------------------------- | ------------- | --------------------------------------------------------------------- |
+| `checkout.guestCheckout`              | `true`        | Allow checkout without an account                                     |
+| `checkout.codFee`                     | `0`           | Cash-on-delivery fee added to the total                               |
+| `checkout.codMaxOrderTotal`           | `5000`        | COD hidden above this order total                                     |
+| `checkout.reservationMinutes`         | `15`          | Time to pay an online order before it is cancelled and stock released |
+| `payments.onlineMethods`              | `CARD,WALLET` | Online methods offered (add `BANK_TRANSFER`; empty = COD only)        |
+| `shipping.flatRatePerVendor`          | `5`           | Default shipping per seller when no shipping zone matches the address |
+| `shipping.freeShippingAbove`          | `50`          | Seller subtotal at which that seller's shipping is free               |
+| `marketplace.productApprovalRequired` | `true`        | New products go to admin review before publishing                     |
+| `marketplace.defaultCommissionRate`   | `10`          | % commission when a vendor has no own rate                            |
 
 ---
 
 ## Try it: end-to-end walkthroughs
 
 **Buy as a guest (COD)**
+
 1. http://localhost:3000 → open the Galaxy S24 → Add to cart → Cart → Proceed to checkout.
 2. Enter an email and address → Place order → success page with the order number.
 3. Mailpit (http://localhost:8025): customer confirmation + "new order" email to the vendor.
 4. http://localhost:3000/track-order with the order number + email.
 
+**Pay online (mock gateway, no real money)**
+
+1. Add a product to the cart → Checkout → choose **Card** or **Wallet** → Continue to payment.
+2. The test gateway page opens (`/pay/mock/…`): **Pay** → back on the store, "Payment received". Mailpit gets the
+   confirmation and the seller's "new order" email; the order shows **Paid** and appears in the seller center.
+3. Try **Simulate failure**: "Payment failed" page with **Try again**, plus a "payment failed" email.
+   The order waits as "Awaiting payment" (with **Pay now** on the order page) and is cancelled automatically
+   after `checkout.reservationMinutes` (15) — stock comes back.
+4. Cancel a paid order (customer or admin): a refund is recorded and the "refund processed" email arrives.
+   Admin → order detail shows every payment attempt.
+
+**Shipping zones and couriers**
+Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
+Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.
+
+1. Checkout with a Karachi address: "Same-city delivery" or "Store pickup" per seller. Change the city to Lahore:
+   Standard / Express appear. Pick Express: cash on delivery becomes unavailable.
+2. Country outside PK: the default flat rate applies (no zone).
+3. Seller center → order → Mark as shipped: courier pre-selected from the customer's choice. The customer's order
+   page and "shipped" email link to the courier's tracking page.
+4. Admin → Settings → Shipping: edit zones, delivery options and couriers.
+
 **Fulfil as the seller**
+
 1. http://localhost:3002/login as `vendor@example.com` → Orders → open the order.
 2. Accept → Mark as packed → Mark as shipped (enter a tracking number) → Mark as delivered.
 3. Inventory shows stock reduced on shipping; the customer gets an email at each step.
 
 **Moderate as admin**
+
 - Vendors: approve / reject `pending@example.com`'s store.
 - Products: approve the Dell XPS 13 (In review tab) → it appears on the storefront.
 - Orders: see every order, cancel one that has not shipped (stock is released).
 - Inventory: low-stock report (iPhone 15).
 
 **Customer account**
+
 - Register, add to cart, check out with a new address (saved to the account), then
   http://localhost:3000/account/orders and /account/addresses. Cancel an order before it ships.
 
@@ -90,16 +118,17 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 
 ### PostgreSQL
 
-| Field | Value |
-|---|---|
-| Host | `localhost` |
-| Port | `5432` |
-| Database | `ecommerce` |
-| Username | `ecommerce` |
-| Password | `ecommerce` |
+| Field             | Value                                                                     |
+| ----------------- | ------------------------------------------------------------------------- |
+| Host              | `localhost`                                                               |
+| Port              | `5432`                                                                    |
+| Database          | `ecommerce`                                                               |
+| Username          | `ecommerce`                                                               |
+| Password          | `ecommerce`                                                               |
 | Connection string | `postgresql://ecommerce:ecommerce@localhost:5432/ecommerce?schema=public` |
 
 Use with DBeaver, pgAdmin, TablePlus, or:
+
 ```bash
 docker exec -it ecommerce-postgres psql -U ecommerce -d ecommerce
 ```
@@ -108,20 +137,20 @@ Reset everything (deletes all data): `docker compose down -v && pnpm infra:up &&
 
 ### Prisma Studio (database browser)
 
-| Field | Value |
-|---|---|
-| URL | http://localhost:5555 |
-| Start | `pnpm db:studio` |
-| Login | none |
+| Field | Value                 |
+| ----- | --------------------- |
+| URL   | http://localhost:5555 |
+| Start | `pnpm db:studio`      |
+| Login | none                  |
 
 ### Redis (cache + job queues)
 
-| Field | Value |
-|---|---|
-| Host | `localhost` |
-| Port | `6379` |
-| Password | none |
-| URL | `redis://localhost:6379` |
+| Field    | Value                    |
+| -------- | ------------------------ |
+| Host     | `localhost`              |
+| Port     | `6379`                   |
+| Password | none                     |
+| URL      | `redis://localhost:6379` |
 
 ```bash
 docker exec -it ecommerce-redis redis-cli
@@ -132,57 +161,57 @@ docker exec -it ecommerce-redis redis-cli
 Every email the platform sends (welcome, vendor decisions, product moderation, low stock, order confirmation,
 shipped, delivered, cancelled…) lands here; nothing reaches real inboxes.
 
-| Field | Value |
-|---|---|
-| Inbox (web UI) | http://localhost:8025 |
-| SMTP host | `localhost` |
-| SMTP port | `1025` |
-| SMTP username / password | none |
+| Field                    | Value                 |
+| ------------------------ | --------------------- |
+| Inbox (web UI)           | http://localhost:8025 |
+| SMTP host                | `localhost`           |
+| SMTP port                | `1025`                |
+| SMTP username / password | none                  |
 
 Emails are sent by the worker; if nothing arrives, check that the `worker` app is running in `pnpm dev`.
 
 ### MinIO (S3-compatible file storage)
 
-| Field | Value |
-|---|---|
-| Console (web UI) | http://localhost:9001 |
-| S3 API endpoint | http://localhost:9000 |
-| Username (access key) | `minioadmin` |
-| Password (secret key) | `minioadmin` |
-| Bucket | `ecommerce-media` (created automatically with a public-read policy when the API starts) |
+| Field                 | Value                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| Console (web UI)      | http://localhost:9001                                                                   |
+| S3 API endpoint       | http://localhost:9000                                                                   |
+| Username (access key) | `minioadmin`                                                                            |
+| Password (secret key) | `minioadmin`                                                                            |
+| Bucket                | `ecommerce-media` (created automatically with a public-read policy when the API starts) |
 
 ### Email template preview
 
-| Field | Value |
-|---|---|
-| URL | http://localhost:3003 |
-| Start | `pnpm email:preview` |
+| Field | Value                 |
+| ----- | --------------------- |
+| URL   | http://localhost:3003 |
+| Start | `pnpm email:preview`  |
 
 ---
 
 ## Secrets in `.env`
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `JWT_ACCESS_SECRET` | `change-me-access-secret-min-32-characters` | Signs login tokens (min 32 chars) |
-| `JWT_ACCESS_TTL_SECONDS` | `900` | Access token lifetime (15 min) |
-| `JWT_REFRESH_TTL_DAYS` | `30` | Refresh token lifetime |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | empty | Google sign-in (not wired yet) |
-| `PAYMENT_*` | empty | Payment gateway (roadmap step 10) |
+| Variable                                    | Default                                     | Purpose                           |
+| ------------------------------------------- | ------------------------------------------- | --------------------------------- |
+| `JWT_ACCESS_SECRET`                         | `change-me-access-secret-min-32-characters` | Signs login tokens (min 32 chars) |
+| `JWT_ACCESS_TTL_SECONDS`                    | `900`                                       | Access token lifetime (15 min)    |
+| `JWT_REFRESH_TTL_DAYS`                      | `30`                                        | Refresh token lifetime            |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | empty                                       | Google sign-in (not wired yet)    |
+| `PAYMENT_*`                                 | empty                                       | Payment gateway (roadmap step 10) |
 
 ---
 
 ## Ports at a glance
 
-| Port | Service |
-|---|---|
-| 3000 | Storefront |
-| 3001 | Admin |
-| 3002 | Seller center |
-| 3003 | Email preview |
-| 4000 | API |
-| 5432 | PostgreSQL |
-| 5555 | Prisma Studio |
-| 6379 | Redis |
+| Port        | Service              |
+| ----------- | -------------------- |
+| 3000        | Storefront           |
+| 3001        | Admin                |
+| 3002        | Seller center        |
+| 3003        | Email preview        |
+| 4000        | API                  |
+| 5432        | PostgreSQL           |
+| 5555        | Prisma Studio        |
+| 6379        | Redis                |
 | 1025 / 8025 | Mailpit SMTP / inbox |
-| 9000 / 9001 | MinIO S3 / console |
+| 9000 / 9001 | MinIO S3 / console   |

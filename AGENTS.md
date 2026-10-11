@@ -54,7 +54,7 @@ apps/api/src/
   common/guards/        JwtAuthGuard (@Public routes still get the user if a valid token is sent), RolesGuard
   common/utils/         unique-slug.ts, stock-availability.ts (availableByVariant), settings.ts (readSetting), money.ts (toCents/fromCents)
   modules/<domain>/     one Nest module per domain; implemented: auth, users, vendors, catalog/*, media,
-                        inventory, cart, checkout, orders, payments, notifications, audit
+                        inventory, cart, checkout, orders, payments, shipping, notifications, audit
 apps/admin/src/  apps/vendor/src/
   app/(dashboard)/…     thin pages          features/<entity>/…   list / detail / form components
   config/navigation.ts  sidebar             components/sidebar-shell.tsx  auth gate
@@ -185,6 +185,7 @@ For entity **X** (e.g. `Brand`), module **M** (e.g. `catalog`):
 | Public SEO page + client island                                                     | **Product page** — `web/app/products/[slug]/page.tsx` + `components/catalog/product-purchase.tsx`                                          |
 | Auth / cookies                                                                      | `modules/auth/*`, `apps/admin/src/app/login/*`, `web/components/auth/*`                                                                    |
 | External gateway adapter, signed idempotent webhooks, timed expiry                  | **Payments** — `modules/payments/*` (`providers/`, `payments.service.ts`)                                                                  |
+| Pure calculator + settings fallback, nested child rows                              | **Shipping** — `modules/shipping/*` (`shipping-rules.ts`, `shipping-zones.service.ts`), `admin/features/shipping/*`                        |
 | Sending email                                                                       | `NotificationsService.sendEmail({ template: EmailTemplateKey.X, to, data })` — never send directly                                         |
 
 ---

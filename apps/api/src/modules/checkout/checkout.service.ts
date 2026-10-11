@@ -9,6 +9,8 @@ import {
   toCents,
   type CheckoutGroup,
   type CheckoutQuoteDto,
+  type CheckoutQuoteInput,
+  type ShippingDestination,
   type PaymentMethod,
   type PaymentOptionDto,
   type PaymentSessionDto,
@@ -23,9 +25,11 @@ import { CartService, type CartContext } from '../cart/cart.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { sendOrderPlacedEmails } from '../orders/order-emails';
 import { orderInclude, toOrderDto, type OrderFull } from '../orders/order.mapper';
-import { commissionFor, generateOrderNumber, shippingFor } from '../orders/order-rules';
+import { commissionFor, generateOrderNumber } from '../orders/order-rules';
 import { reserveStock } from '../orders/order-stock';
 import { PaymentsService } from '../payments/payments.service';
+import { shippingMethodLabel } from '../shipping/shipping-rules';
+import { ShippingService } from '../shipping/shipping.service';
 import type { PlaceOrderDto } from './dto/checkout.dto';
 
 /**
@@ -46,29 +50,54 @@ export class CheckoutService {
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
     private readonly payments: PaymentsService,
+    private readonly shipping: ShippingService,
   ) {}
 
-  async quote(ctx: CartContext, requested?: PaymentMethod): Promise<CheckoutQuoteDto> {
+  async quote(ctx: CartContext, input: CheckoutQuoteInput = {}): Promise<CheckoutQuoteDto> {
+    const requested = input.paymentMethod;
     const cart = await this.cart.getCart(ctx);
-    const [flatRate, freeAbove, codFeeSetting, codMax, online] = await Promise.all([
-      readSetting(this.prisma, 'shipping.flatRatePerVendor', 5),
-      readSetting(this.prisma, 'shipping.freeShippingAbove', 50),
+    const [codFeeSetting, codMax, online] = await Promise.all([
       readSetting(this.prisma, 'checkout.codFee', 0),
       readSetting(this.prisma, 'checkout.codMaxOrderTotal', 5000),
       this.payments.onlineMethods(),
     ]);
 
-    const groups: CheckoutGroup[] = cart.groups.map((g) => ({
-      vendor: g.vendor,
-      items: g.items,
-      subtotal: g.subtotal,
-      shipping: shippingFor(g.subtotal, flatRate, freeAbove),
-    }));
+    // Shipping: one parcel per seller, priced by the zone of the destination.
+    const destination = await this.destinationFor(ctx, input);
+    const weights = await this.parcelWeights(cart.groups.flatMap((g) => g.items));
+    const shipping = await this.shipping.quote(
+      destination,
+      cart.groups.map((g) => ({
+        vendorId: g.vendor.id,
+        subtotal: g.subtotal,
+        weightGrams: g.items.reduce((n, i) => n + (weights.get(i.variantId) ?? 0) * i.quantity, 0),
+      })),
+      input.shippingRateIds ?? {},
+    );
+    const undeliverable: string[] = [];
+    const groups: CheckoutGroup[] = cart.groups.map((g) => {
+      const parcel = shipping.parcels.get(g.vendor.id)!;
+      const pick = parcel.selected;
+      if (!pick) undeliverable.push(g.vendor.name);
+      return {
+        vendor: g.vendor,
+        items: g.items,
+        subtotal: g.subtotal,
+        shipping: pick?.price ?? 0,
+        shippingOptions: parcel.options,
+        shippingRateId: pick?.rateId ?? null,
+        shippingMethod: pick ? shippingMethodLabel(pick) : 'Not available',
+        estimatedDays: pick?.estimatedDays ?? null,
+        weightGrams: g.items.reduce((n, i) => n + (weights.get(i.variantId) ?? 0) * i.quantity, 0),
+      };
+    });
     const subtotal = cart.subtotal;
     const shippingTotal = fromCents(groups.reduce((sum, g) => sum + toCents(g.shipping), 0));
     const beforeFees = fromCents(toCents(subtotal) + toCents(shippingTotal));
-    const codTotal = fromCents(toCents(beforeFees) + toCents(codFeeSetting));
-    const codAllowed = codMax <= 0 || codTotal <= codMax;
+    // COD fee = store fee + the selected delivery options' COD fees.
+    const codFeeTotal = fromCents(toCents(codFeeSetting) + shipping.codFeeCents);
+    const codTotal = fromCents(toCents(beforeFees) + toCents(codFeeTotal));
+    const codWithinLimit = codMax <= 0 || codTotal <= codMax;
 
     const option = (
       method: PaymentMethod,
@@ -86,23 +115,31 @@ export class CheckoutService {
       ...online.map((m) => option(m, 0, null)),
       option(
         'COD',
-        codFeeSetting,
-        codAllowed ? null : `Available for orders up to ${formatMoney(codMax, cart.currency)}`,
+        codFeeTotal,
+        !shipping.codAvailable
+          ? 'Not available with the chosen delivery option'
+          : codWithinLimit
+            ? null
+            : `Available for orders up to ${formatMoney(codMax, cart.currency)}`,
       ),
     ];
     const paymentMethods = paymentOptions.filter((o) => o.available).map((o) => o.method);
     const selected =
       requested && paymentMethods.includes(requested) ? requested : (paymentMethods[0] ?? null);
-    const codFee = selected === 'COD' ? codFeeSetting : 0;
+    const codFee = selected === 'COD' ? codFeeTotal : 0;
     const grandTotal = fromCents(toCents(beforeFees) + toCents(codFee));
 
     const problems: string[] = [];
     if (cart.itemCount === 0) problems.push('Your cart is empty');
     if (!cart.canCheckout && cart.itemCount > 0)
       problems.push('Some items are unavailable or low on stock. Update your cart.');
+    if (undeliverable.length > 0)
+      problems.push(
+        `We cannot deliver ${undeliverable.join(', ')}'s items to this address. Try another address or remove them.`,
+      );
     if (cart.itemCount > 0 && paymentMethods.length === 0)
       problems.push(
-        codAllowed
+        codWithinLimit
           ? 'No payment method is available right now'
           : `Cash on delivery is available for orders up to ${formatMoney(codMax, cart.currency)}`,
       );
@@ -121,7 +158,8 @@ export class CheckoutService {
       selectedPaymentMethod: selected,
       canPlace: problems.length === 0,
       problems,
-      freeShippingAbove: freeAbove,
+      freeShippingAbove: shipping.freeShippingAbove,
+      shippingZone: shipping.zoneName,
     };
   }
 
@@ -153,7 +191,11 @@ export class CheckoutService {
     const email = user?.email ?? dto.email!;
     const address = await this.resolveAddress(user?.id, dto);
 
-    const quote = await this.quote(ctx, dto.paymentMethod);
+    const quote = await this.quote(ctx, {
+      paymentMethod: dto.paymentMethod,
+      destination: address,
+      shippingRateIds: dto.shippingRateIds,
+    });
     if (!quote.canPlace) throw new BadRequestException(quote.problems.join(' '));
     if (!quote.paymentMethods.includes(dto.paymentMethod))
       throw new BadRequestException('This payment method is not available');
@@ -212,6 +254,31 @@ export class CheckoutService {
   }
 
   // ---------------------------------------------------------------- internals
+
+  /** Saved address (signed-in) wins over a typed destination; none = default rate estimate. */
+  private async destinationFor(
+    ctx: CartContext,
+    input: CheckoutQuoteInput,
+  ): Promise<ShippingDestination | null> {
+    if (input.addressId && ctx.userId) {
+      const saved = await this.prisma.address.findFirst({
+        where: { id: input.addressId, userId: ctx.userId },
+        select: { countryCode: true, state: true, city: true },
+      });
+      if (saved) return saved;
+    }
+    return input.destination?.countryCode ? input.destination : null;
+  }
+
+  /** Grams per variant (variant weight, else product weight, else 0). */
+  private async parcelWeights(items: { variantId: string }[]): Promise<Map<string, number>> {
+    if (items.length === 0) return new Map();
+    const rows = await this.prisma.productVariant.findMany({
+      where: { id: { in: items.map((i) => i.variantId) } },
+      select: { id: true, weightGrams: true, product: { select: { weightGrams: true } } },
+    });
+    return new Map(rows.map((r) => [r.id, r.weightGrams ?? r.product.weightGrams ?? 0]));
+  }
 
   private async resolveAddress(
     userId: string | undefined,
@@ -308,6 +375,8 @@ export class CheckoutService {
                   orderId: order.id,
                   vendorId: group.vendor.id,
                   status: initialStatus,
+                  shippingRateId: group.shippingRateId,
+                  shippingMethod: group.shippingMethod,
                   subtotal: group.subtotal,
                   shippingTotal: group.shipping,
                   commissionAmount: commission,

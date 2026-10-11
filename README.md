@@ -127,7 +127,7 @@ Status per entity: [`docs/roadmap.md`](docs/roadmap.md).
   admin approve / reject / feature (emails); suspended vendors' products are hidden.
 - Inventory: warehouses, stock adjustments with a movement log, low-stock and back-in-stock emails, admin low-stock report.
 
-**Phase 2: Buying flow (in progress)**
+**Phase 2: Buying flow (done)**
 
 - Storefront: home, product listing with filters, category pages, product page with variant picker, sign in / register.
 - Cart: guest cart (cookie) merged into the account at sign-in, stock & price checks, save for later.
@@ -136,7 +136,10 @@ Status per entity: [`docs/roadmap.md`](docs/roadmap.md).
   seller order screens with status actions (shipping deducts stock, tracking number); admin order list / detail / cancel.
 - Online payments (card / wallet / bank) through a pluggable gateway; a mock gateway is used until a real one
   (Safepay, PayFast, …) is plugged in. Unpaid orders expire, cancellations of paid orders are refunded.
-- **Next:** shipping. See the roadmap.
+- Shipping zones (country / province / city) with flat, weight and order-value rates, delivery choice per seller,
+  couriers with tracking links.
+
+**Phase 3: After-sale & growth (next: returns).** See the roadmap.
 
 **Not built yet:** every module that has not reached its roadmap step still exposes `GET /<module>/status`, and
 every screen not yet built shows a scaffold card listing the features it needs.
@@ -151,7 +154,7 @@ One NestJS module per domain under `apps/api/src/modules/`:
 `settings` · `audit` · `jobs`
 
 Implemented: `auth`, `users` (profile, addresses), `vendors`, `catalog` (categories, brands, attributes, products,
-storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `notifications`, `audit`.
+storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `notifications`, `audit`.
 
 ## Deployment
 

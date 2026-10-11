@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   checkoutFormSchema,
@@ -94,11 +94,23 @@ export function CheckoutView() {
 
   const addressId = watch('addressId');
   const paymentMethod = watch('paymentMethod');
+  // Delivery choice per seller ({ vendorId: rateId }); the API falls back to the cheapest option.
+  const [shippingRateIds, setShippingRateIds] = useState<Record<string, string>>({});
+  // Where the parcel goes decides the shipping zone: saved address, or the typed one (debounced).
+  const [countryCode, state, city] = watch(['countryCode', 'state', 'city']);
+  const typedDestination = useDeferredValue(
+    countryCode.trim().length === 2 ? { countryCode: countryCode.trim(), state, city } : undefined,
+  );
+  const shippingInput = addressId
+    ? { addressId, shippingRateIds }
+    : { destination: typedDestination, shippingRateIds };
 
   // Totals depend on the payment method (COD adds its fee), so the method is part of the quote.
   const quote = useQuery({
-    queryKey: queryKeys.checkoutQuote(`${signature}#${paymentMethod}`),
-    queryFn: () => checkoutApi.quote({ paymentMethod }),
+    queryKey: queryKeys.checkoutQuote(
+      `${signature}#${paymentMethod}#${JSON.stringify(shippingInput)}`,
+    ),
+    queryFn: () => checkoutApi.quote({ paymentMethod, ...shippingInput }),
     enabled: Boolean(cart && cart.itemCount > 0) && !placed,
     placeholderData: keepPreviousData,
   });
@@ -112,7 +124,7 @@ export function CheckoutView() {
 
   const place = useMutation({
     mutationFn: (values: CheckoutFormValues) =>
-      checkoutApi.place(checkoutFormToInput(values, idempotencyKey)),
+      checkoutApi.place({ ...checkoutFormToInput(values, idempotencyKey), shippingRateIds }),
     onSuccess: async ({ order, payment }) => {
       setPlaced(true);
       await queryClient.invalidateQueries({ queryKey: queryKeys.orders.all, refetchType: 'none' });
@@ -346,12 +358,50 @@ export function CheckoutView() {
                           </span>
                         </div>
                       ))}
-                      <div className="flex justify-between text-xs text-gray-600">
-                        <span>Shipping from this seller</span>
-                        <span>
-                          {g.shipping === 0 ? 'Free' : formatMoney(g.shipping, q.currency)}
-                        </span>
-                      </div>
+                      {g.shippingOptions.length > 1 ? (
+                        <fieldset className="space-y-1 pt-1">
+                          <legend className="text-xs font-medium text-gray-700">Delivery</legend>
+                          {g.shippingOptions.map((opt) => (
+                            <label
+                              key={opt.rateId ?? 'default'}
+                              className="flex cursor-pointer items-center justify-between gap-2 text-xs text-gray-700"
+                            >
+                              <span className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`ship-${g.vendor.id}`}
+                                  checked={opt.rateId === g.shippingRateId}
+                                  onChange={() =>
+                                    opt.rateId &&
+                                    setShippingRateIds((s) => ({
+                                      ...s,
+                                      [g.vendor.id]: opt.rateId!,
+                                    }))
+                                  }
+                                />
+                                {opt.name}
+                                {opt.estimatedDays ? (
+                                  <span className="text-gray-400">{opt.estimatedDays}</span>
+                                ) : null}
+                              </span>
+                              <span>
+                                {opt.price === 0 ? 'Free' : formatMoney(opt.price, q.currency)}
+                              </span>
+                            </label>
+                          ))}
+                        </fieldset>
+                      ) : (
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>
+                            {g.shippingOptions.length === 0
+                              ? 'No delivery to this address'
+                              : g.shippingMethod}
+                          </span>
+                          <span>
+                            {g.shipping === 0 ? 'Free' : formatMoney(g.shipping, q.currency)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -379,7 +429,7 @@ export function CheckoutView() {
                   </div>
                 </dl>
 
-                {q.freeShippingAbove > 0 ? (
+                {q.shippingZone === null && q.freeShippingAbove > 0 ? (
                   <p className="text-xs text-gray-500">
                     Free shipping on orders over {formatMoney(q.freeShippingAbove, q.currency)} per
                     seller.

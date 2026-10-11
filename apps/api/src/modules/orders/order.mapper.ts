@@ -15,6 +15,7 @@ import {
   type VendorOrderDetailDto,
   type VendorOrderListItem,
   isOnlinePayment,
+  trackingUrlFor,
 } from '@ecommerce/types';
 import { paymentInclude, sessionMeta, toPaymentAttemptDto } from '../payments/payment.mapper';
 
@@ -37,7 +38,7 @@ export const orderInclude = {
     include: {
       vendor: { select: { id: true, name: true, slug: true } },
       items: { include: itemInclude },
-      shipments: { orderBy: { createdAt: 'desc' }, take: 1 },
+      shipments: { orderBy: { createdAt: 'desc' }, take: 1, include: { courier: true } },
     },
   },
   statusHistory: {
@@ -55,7 +56,7 @@ export const orderSummaryInclude = {
 export const vendorOrderInclude = {
   order: true,
   items: { include: itemInclude },
-  shipments: { orderBy: { createdAt: 'desc' }, take: 1 },
+  shipments: { orderBy: { createdAt: 'desc' }, take: 1, include: { courier: true } },
   statusHistory: { orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.VendorOrderInclude;
 
@@ -84,6 +85,8 @@ function toItemDto(i: ItemRow): OrderItemDto {
 function toShipmentDto(s: ShipmentRow | undefined): ShipmentDto | null {
   if (!s) return null;
   return {
+    courierName: s.courier?.name ?? null,
+    trackingUrl: trackingUrlFor(s.courier?.trackingUrlTemplate, s.trackingNumber),
     trackingNumber: s.trackingNumber,
     shippedAt: s.shippedAt?.toISOString() ?? null,
     deliveredAt: s.deliveredAt?.toISOString() ?? null,
@@ -131,6 +134,7 @@ export function toOrderDto(o: OrderFull): OrderDto {
       status: v.status as OrderStatus,
       subtotal: n(v.subtotal),
       shippingTotal: n(v.shippingTotal),
+      shippingMethod: v.shippingMethod,
       items: v.items.map(toItemDto),
       shipment: toShipmentDto(v.shipments[0]),
     })),
@@ -203,6 +207,8 @@ export function toVendorDetail(v: VendorOrderFull): VendorOrderDetailDto {
     shippingTotal: n(v.shippingTotal),
     commissionAmount: n(v.commissionAmount),
     netAmount: n(v.netAmount),
+    shippingMethod: v.shippingMethod,
+    suggestedCourierId: null,
     customer: { name: address.fullName, email: v.order.email, phone: address.phone },
     shippingAddress: address,
     paymentMethod: v.order.paymentMethod as PaymentMethod,

@@ -797,6 +797,9 @@ model VendorOrder {
   taxTotal         Decimal     @default(0) @db.Decimal(12, 2)
   commissionAmount Decimal     @default(0) @db.Decimal(12, 2)
   netAmount        Decimal     @default(0) @db.Decimal(12, 2)
+  /// Snapshot of the delivery option chosen at checkout (rates can change or be deleted later).
+  shippingRateId   String?
+  shippingMethod   String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 

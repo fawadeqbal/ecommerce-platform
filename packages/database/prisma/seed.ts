@@ -175,6 +175,94 @@ async function seedSettings() {
   console.log('  ✓ settings, loyalty tiers, menus');
 }
 
+/** Couriers + Pakistan zones. Idempotent: skipped when the zone / courier already exists. */
+async function seedShipping() {
+  const demo = await prisma.courier.upsert({
+    where: { code: 'demo-courier' },
+    update: {},
+    create: {
+      name: 'Demo Courier',
+      code: 'demo-courier',
+      trackingUrlTemplate: 'https://track.example.com/{tracking}',
+    },
+  });
+  await prisma.courier.upsert({
+    where: { code: 'own-delivery' },
+    update: {},
+    create: { name: 'Own delivery (seller)', code: 'own-delivery' },
+  });
+
+  const zones: {
+    name: string;
+    countries: string[];
+    regions: string[];
+    rates: Prisma.ShippingRateCreateWithoutZoneInput[];
+  }[] = [
+    {
+      name: 'Karachi',
+      countries: ['PK'],
+      regions: ['Karachi'],
+      rates: [
+        {
+          name: 'Same-city delivery',
+          type: 'FLAT',
+          price: 3,
+          freeAbove: 40,
+          estimatedDays: '1-2 days',
+          courier: { connect: { id: demo.id } },
+        },
+        { name: 'Store pickup', type: 'PICKUP', price: 0, estimatedDays: 'Ready next day' },
+      ],
+    },
+    {
+      name: 'Pakistan',
+      countries: ['PK'],
+      regions: [],
+      rates: [
+        {
+          name: 'Standard',
+          type: 'FLAT',
+          price: 5,
+          freeAbove: 50,
+          maxWeightGrams: 5000,
+          estimatedDays: '3-5 days',
+          courier: { connect: { id: demo.id } },
+        },
+        {
+          name: 'Express',
+          type: 'FLAT',
+          price: 12,
+          maxWeightGrams: 5000,
+          codAvailable: false,
+          estimatedDays: '1-2 days',
+          courier: { connect: { id: demo.id } },
+        },
+        {
+          name: 'Heavy parcel',
+          type: 'WEIGHT_BASED',
+          price: 15,
+          minWeightGrams: 5001,
+          maxWeightGrams: 30000,
+          estimatedDays: '4-6 days',
+          courier: { connect: { id: demo.id } },
+        },
+      ],
+    },
+  ];
+  for (const z of zones) {
+    if (await prisma.shippingZone.findFirst({ where: { name: z.name } })) continue;
+    await prisma.shippingZone.create({
+      data: {
+        name: z.name,
+        countries: z.countries,
+        regions: z.regions,
+        rates: { create: z.rates },
+      },
+    });
+  }
+  console.log('  ✓ shipping zones + couriers');
+}
+
 async function seedCategories() {
   const tree: Record<string, string[]> = {
     Electronics: ['Smartphones', 'Laptops', 'Headphones', 'Smart Watches'],
@@ -508,6 +596,7 @@ async function main() {
   await seedVendors();
   await seedProducts();
   await seedInventory();
+  await seedShipping();
   console.log('Done.');
 }
 
