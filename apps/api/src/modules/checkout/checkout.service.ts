@@ -25,7 +25,8 @@ import { CartService, type CartContext } from '../cart/cart.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { sendOrderPlacedEmails } from '../orders/order-emails';
 import { orderInclude, toOrderDto, type OrderFull } from '../orders/order.mapper';
-import { commissionFor, generateOrderNumber } from '../orders/order-rules';
+import { commissionForLines, generateOrderNumber } from '../orders/order-rules';
+import { loadCommissionResolver, type CommissionResolver } from '../vendors/commission-resolver';
 import { reserveStock } from '../orders/order-stock';
 import { PaymentsService } from '../payments/payments.service';
 import { PromotionsService } from '../promotions/promotions.service';
@@ -301,6 +302,7 @@ export class CheckoutService {
     if (!cartRow || cartRow.items.length === 0) throw new BadRequestException('Your cart is empty');
 
     const defaultRate = await readSetting(this.prisma, 'marketplace.defaultCommissionRate', 10);
+    const commissionRate = await loadCommissionResolver(this.prisma, defaultRate);
     const online = isOnlinePayment(dto.paymentMethod);
     const order = await this.createOrder({
       online,
@@ -311,7 +313,7 @@ export class CheckoutService {
       email,
       userId: user?.id ?? null,
       address,
-      defaultRate,
+      commissionRate,
     });
 
     await this.audit.log({
@@ -424,9 +426,10 @@ export class CheckoutService {
     email: string;
     userId: string | null;
     address: ShippingAddress;
-    defaultRate: number;
+    commissionRate: CommissionResolver;
   }): Promise<OrderFull> {
-    const { cartRow, quote, dto, email, userId, address, defaultRate, online, holdMinutes } = args;
+    const { cartRow, quote, dto, email, userId, address, commissionRate, online, holdMinutes } =
+      args;
     const prepaid = dto.paymentMethod === 'GIFT_CARD'; // fully covered by gift card / points
     const initialStatus = online
       ? ('PENDING_PAYMENT' as const)
@@ -474,12 +477,23 @@ export class CheckoutService {
             );
 
             for (const group of quote.groups) {
-              const vendor = cartRow.items.find(
-                (i) => i.variant.product.vendorId === group.vendor.id,
-              )!.variant.product.vendor;
-              const rate =
-                vendor.commissionRate === null ? defaultRate : Number(vendor.commissionRate);
-              const commission = commissionFor(group.subtotal, rate);
+              // Each item gets the most specific rule (seller+category → seller → category → global).
+              const commission = commissionForLines(
+                cartRow.items
+                  .filter((i) => i.variant.product.vendorId === group.vendor.id)
+                  .map((i) => {
+                    const vendor = i.variant.product.vendor;
+                    return {
+                      amount: fromCents(toCents(Number(i.variant.price)) * i.quantity),
+                      rate: commissionRate({
+                        vendorId: vendor.id,
+                        categoryId: i.variant.product.categoryId,
+                        vendorRate:
+                          vendor.commissionRate === null ? null : Number(vendor.commissionRate),
+                      }).rate,
+                    };
+                  }),
+              );
               const vendorOrder = await tx.vendorOrder.create({
                 data: {
                   orderId: order.id,

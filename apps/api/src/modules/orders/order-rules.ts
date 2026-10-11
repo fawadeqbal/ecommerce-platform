@@ -12,6 +12,12 @@ export function commissionFor(subtotal: number, ratePercent: number): number {
   return fromCents(Math.round((toCents(subtotal) * ratePercent) / 100));
 }
 
+/** Sum of per-line commissions, each rounded to the cent (lines can carry different rates). */
+export function commissionForLines(lines: { amount: number; rate: number }[]): number {
+  const cents = lines.reduce((sum, l) => sum + Math.round((toCents(l.amount) * l.rate) / 100), 0);
+  return fromCents(cents);
+}
+
 export interface WarehouseStock {
   stockLevelId: string;
   warehouseId: string;

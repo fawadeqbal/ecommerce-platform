@@ -131,6 +131,11 @@ export const queryKeys = {
     access: ['vendor-staff', 'me'] as const,
     list: ['vendor-staff', 'list'] as const,
   },
+  commissions: {
+    all: ['commissions'] as const,
+    list: ['commissions', 'list'] as const,
+    preview: (q: object) => ['commissions', 'preview', q] as const,
+  },
   customers: {
     all: ['customers'] as const,
     list: (q: object) => ['customers', 'list', q] as const,

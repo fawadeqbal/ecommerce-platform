@@ -10,6 +10,7 @@ export * from './catalog/attribute';
 export * from './catalog/product';
 export * from './media';
 export * from './vendors/vendor';
+export * from './vendors/commission';
 export * from './inventory/inventory';
 export * from './storefront/storefront';
 export * from './cart/cart';

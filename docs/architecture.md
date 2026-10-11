@@ -273,8 +273,11 @@ Computed by the API only (`POST /checkout/quote`); the UI never calculates total
   free when that seller's subtotal ≥ `shipping.freeShippingAbove`.
 - Cash on delivery: allowed while the total ≤ `checkout.codMaxOrderTotal`; fee `checkout.codFee` (only when COD is chosen).
 - Online methods: the gateway's methods ∩ setting `payments.onlineMethods` (`CARD,WALLET`; empty = COD only).
-- Guest checkout: `checkout.guestCheckout`. Commission per seller: the vendor's rate, else
-  `marketplace.defaultCommissionRate`.
+- Guest checkout: `checkout.guestCheckout`. Commission is worked out per item (Step 25,
+  `resolveCommissionRate` in `@ecommerce/types`): seller+category rule (nearest category) → seller
+  rule → `Vendor.commissionRate` → category rule (inherited from parents) → GLOBAL rule →
+  `marketplace.defaultCommissionRate`. Rules are managed at admin Sellers → Commissions
+  (`/admin/vendors/commissions`); placed orders keep the commission they were charged.
 - Settings are rows in the `Setting` table, read with `readSetting(prisma, key, fallback)`.
 
 ## Conventions
