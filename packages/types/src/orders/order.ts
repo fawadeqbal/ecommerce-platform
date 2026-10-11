@@ -159,6 +159,8 @@ export interface OrderItemDto {
   quantity: number;
   unitPrice: number;
   total: number;
+  /** Units the customer can still return (delivered, within the window, not already in a return). */
+  returnableQuantity: number;
 }
 
 export interface ShipmentDto {
@@ -186,6 +188,8 @@ export interface VendorOrderDto {
   shippingMethod: string | null;
   items: OrderItemDto[];
   shipment: ShipmentDto | null;
+  /** Last day a return can be requested (delivered sub-orders only). */
+  returnableUntil: string | null;
 }
 
 /** Full order (customer, guest tracking, admin). */

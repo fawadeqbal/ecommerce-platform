@@ -8,6 +8,7 @@ import { useMe } from '@/hooks/use-cart';
 
 const NAV = [
   { href: '/account/orders', label: 'Orders' },
+  { href: '/account/returns', label: 'Returns' },
   { href: '/account/addresses', label: 'Addresses' },
 ];
 

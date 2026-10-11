@@ -401,32 +401,59 @@ export class PaymentsService {
     if (payment) await this.refundPayment(payment.id, amount, reason, actorId);
   }
 
+  /**
+   * Refund for a return: through the gateway for online payments; COD money goes back by hand
+   * (bank transfer / cash), so it is only recorded, with the given reference.
+   */
+  async refundForReturn(
+    orderId: string,
+    amount: number,
+    reason: string,
+    returnRequestId: string,
+    actorId?: string,
+    reference?: string,
+  ): Promise<boolean> {
+    const payment = await this.prisma.payment.findFirst({
+      where: { orderId, status: { in: ['PAID', 'PARTIALLY_REFUNDED'] } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!payment) throw new BadRequestException('This order has no captured payment to refund');
+    return this.refundPayment(payment.id, amount, reason, actorId, {
+      returnRequestId,
+      manualReference: reference,
+    });
+  }
+
   private async refundPayment(
     paymentId: string,
     amount: number,
     reason: string,
     actorId?: string,
-  ): Promise<void> {
+    opts: { returnRequestId?: string; manualReference?: string } = {},
+  ): Promise<boolean> {
     const payment = await this.prisma.payment.findUniqueOrThrow({
       where: { id: paymentId },
       include: { ...paymentInclude, order: true },
     });
     const already = refundedTotal(payment);
     const value = Math.min(amount, refundableAmount(Number(payment.amount), already));
-    if (value <= 0) return;
+    if (value <= 0) return false;
 
     let result: RefundResult;
-    try {
-      result = await this.provider.refund({
-        providerRef: payment.providerRef ?? '',
-        amount: value,
-        currency: payment.currency,
-        reason,
-      });
-    } catch (error) {
-      this.logger.error(`Refund of ${value} on payment ${paymentId} failed: ${String(error)}`);
-      result = { providerRef: '', succeeded: false };
-    }
+    if (payment.method === 'COD') {
+      result = { providerRef: opts.manualReference || 'manual', succeeded: true };
+    } else
+      try {
+        result = await this.provider.refund({
+          providerRef: payment.providerRef ?? '',
+          amount: value,
+          currency: payment.currency,
+          reason,
+        });
+      } catch (error) {
+        this.logger.error(`Refund of ${value} on payment ${paymentId} failed: ${String(error)}`);
+        result = { providerRef: '', succeeded: false };
+      }
     const refundStatus = result.succeeded ? 'PAID' : 'FAILED';
     const nextStatus = refundStatusFor(
       Number(payment.amount),
@@ -436,6 +463,7 @@ export class PaymentsService {
       await tx.refund.create({
         data: {
           paymentId,
+          returnRequestId: opts.returnRequestId ?? null,
           amount: value,
           reason,
           status: refundStatus,
@@ -474,6 +502,7 @@ export class PaymentsService {
         `We have refunded ${formatMoney(value, payment.currency)} for order ${payment.order.orderNumber} to your original payment method. Reason: ${reason}`,
       );
     }
+    return result.succeeded;
   }
 
   // ================================================================ expiry

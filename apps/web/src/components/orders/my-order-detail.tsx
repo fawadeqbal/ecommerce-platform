@@ -6,11 +6,13 @@ import { useState } from 'react';
 import { ORDER_REASON_MIN } from '@ecommerce/types';
 import { Alert, Button, ReasonDialog, Spinner } from '@ecommerce/ui';
 import { ordersApi, queryKeys } from '@/lib/api-client';
+import { ReturnDialog } from '@/components/returns/return-dialog';
 import { OrderDetails } from './order-details';
 
 export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
   const queryClient = useQueryClient();
   const [cancelling, setCancelling] = useState(false);
+  const [returning, setReturning] = useState<string | null>(null);
   const { data: order, error } = useQuery({
     queryKey: queryKeys.orders.detail(orderNumber),
     queryFn: () => ordersApi.get(orderNumber),
@@ -33,6 +35,10 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
     );
   }
   if (!order) return <Spinner />;
+  const returnable = order.vendorOrders.filter((v) =>
+    v.items.some((i) => i.returnableQuantity > 0),
+  );
+  const returningFrom = order.vendorOrders.find((v) => v.id === returning);
 
   return (
     <div className="space-y-4">
@@ -56,6 +62,27 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
           ) : null
         }
       />
+      {returnable.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm">
+          <span className="text-gray-700">Something wrong with your items?</span>
+          {returnable.map((v) => (
+            <Button key={v.id} size="sm" variant="outline" onClick={() => setReturning(v.id)}>
+              Return items{order.vendorOrders.length > 1 ? ` from ${v.vendor.name}` : ''}
+            </Button>
+          ))}
+          <Link href="/account/returns" className="text-brand-700 hover:underline">
+            My returns
+          </Link>
+        </div>
+      ) : null}
+      {returningFrom ? (
+        <ReturnDialog
+          orderNumber={order.orderNumber}
+          currency={order.currency}
+          vendorOrder={returningFrom}
+          onClose={() => setReturning(null)}
+        />
+      ) : null}
       <ReasonDialog
         open={cancelling}
         title="Cancel this order?"

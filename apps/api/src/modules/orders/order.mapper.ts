@@ -18,6 +18,7 @@ import {
   trackingUrlFor,
 } from '@ecommerce/types';
 import { paymentInclude, sessionMeta, toPaymentAttemptDto } from '../payments/payment.mapper';
+import { OPEN_RETURN_STATUSES, returnDeadline, returnableQuantity } from '../returns/return-rules';
 
 const itemInclude = {
   variant: {
@@ -29,6 +30,10 @@ const itemInclude = {
         },
       },
     },
+  },
+  returnItems: {
+    where: { returnRequest: { status: { in: OPEN_RETURN_STATUSES } } },
+    select: { quantity: true },
   },
 } satisfies Prisma.OrderItemInclude;
 
@@ -68,8 +73,14 @@ type ShipmentRow = OrderFull['vendorOrders'][number]['shipments'][number];
 
 const n = (v: Prisma.Decimal | number) => Number(v);
 
-function toItemDto(i: ItemRow): OrderItemDto {
+function toItemDto(i: ItemRow, returnsOpen = false): OrderItemDto {
   return {
+    returnableQuantity: returnsOpen
+      ? returnableQuantity(
+          i.quantity,
+          i.returnItems.reduce((n, r) => n + r.quantity, 0),
+        )
+      : 0,
     id: i.id,
     productName: i.productName,
     productSlug: i.variant.product.slug,
@@ -99,7 +110,8 @@ function paymentExpiresAt(o: OrderFull): string | null {
   return o.payments.map(sessionMeta).find((m) => m.expiresAt)?.expiresAt ?? null;
 }
 
-export function toOrderDto(o: OrderFull): OrderDto {
+/** `returnWindowDays` > 0 only for the customer's own order view (enables returns). */
+export function toOrderDto(o: OrderFull, returnWindowDays = 0): OrderDto {
   const expiresAt = paymentExpiresAt(o);
   return {
     id: o.id,
@@ -128,16 +140,24 @@ export function toOrderDto(o: OrderFull): OrderDto {
       (!expiresAt || new Date(expiresAt) > new Date()),
     paymentExpiresAt: expiresAt,
     payments: o.payments.map(toPaymentAttemptDto),
-    vendorOrders: o.vendorOrders.map((v) => ({
-      id: v.id,
-      vendor: v.vendor,
-      status: v.status as OrderStatus,
-      subtotal: n(v.subtotal),
-      shippingTotal: n(v.shippingTotal),
-      shippingMethod: v.shippingMethod,
-      items: v.items.map(toItemDto),
-      shipment: toShipmentDto(v.shipments[0]),
-    })),
+    vendorOrders: o.vendorOrders.map((v) => {
+      const deadline =
+        v.status === 'DELIVERED'
+          ? returnDeadline(v.shipments[0]?.deliveredAt ?? v.updatedAt, returnWindowDays)
+          : null;
+      const open = deadline !== null && deadline > new Date();
+      return {
+        id: v.id,
+        vendor: v.vendor,
+        status: v.status as OrderStatus,
+        subtotal: n(v.subtotal),
+        shippingTotal: n(v.shippingTotal),
+        shippingMethod: v.shippingMethod,
+        items: v.items.map((i) => toItemDto(i, open)),
+        shipment: toShipmentDto(v.shipments[0]),
+        returnableUntil: deadline?.toISOString() ?? null,
+      };
+    }),
     history: o.statusHistory.map((h): OrderHistoryEntry => ({
       status: h.toStatus as OrderStatus,
       note: h.note,
@@ -202,7 +222,7 @@ export function toVendorDetail(v: VendorOrderFull): VendorOrderDetailDto {
     orderNumber: v.order.orderNumber,
     status,
     currency: v.order.currency,
-    items: v.items.map(toItemDto),
+    items: v.items.map((i) => toItemDto(i)),
     subtotal: n(v.subtotal),
     shippingTotal: n(v.shippingTotal),
     commissionAmount: n(v.commissionAmount),

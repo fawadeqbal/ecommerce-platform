@@ -15,3 +15,4 @@ export { cartApi } from './endpoints/cart';
 export { addressesApi, checkoutApi, ordersApi } from './endpoints/orders';
 export { paymentsApi } from './endpoints/payments';
 export { shippingApi } from './endpoints/shipping';
+export { returnsApi } from './endpoints/returns';

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { MyReturns } from '@/components/returns/my-returns';
 
 export const metadata: Metadata = { title: 'Returns' };
 
 export default function Page() {
-  return <PagePlaceholder title="Returns" features={['Return requests and refund status']} />;
+  return <MyReturns />;
 }

@@ -10,11 +10,11 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-**Next: Phase 3, step 12 — Returns.**
+Phase 3: step 12 done. **Next: step 13 — Reviews & Q&A.**
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
-shippingMethod snapshot).
+shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.vendorOrderId / decisionNote / refundedAt).
 
 ## Phase 1: Catalog foundation
 
@@ -41,6 +41,9 @@ shippingMethod snapshot).
 
 ## Phase 3: After-sale & growth
 
-Step 12 Returns is **Next**.
+| #   | Entity            | API                                                                                                                              | Admin                      | Vendor                  | Storefront                                           | Status   |
+| --- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ----------------------- | ---------------------------------------------------- | -------- |
+| 12  | **Returns (RMA)** | ✅ request within `returns.windowDays`, approve / reject, receive + restock, refund (gateway or recorded manual for COD), emails | ✅ all returns, any action | ✅ own returns, actions | ✅ return items from the order, my returns, withdraw | **Done** |
+| 13  | Reviews & Q&A     |                                                                                                                                  |                            |                         |                                                      | Next     |
 
-Returns → Reviews & Q&A → Wishlist → Coupons/Promotions → Loyalty → Payouts → CMS → Reports
+Then: Wishlist → Coupons/Promotions → Loyalty → Payouts → CMS → Reports

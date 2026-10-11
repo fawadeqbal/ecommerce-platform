@@ -163,6 +163,24 @@ no zone matches → store default "Standard delivery" (settings flat rate / free
   `{tracking}` becomes the customer's tracking link (order page + "shipped" email).
 - Courier APIs (rates / booking / labels) can be added later behind the courier record; today couriers are manual.
 
+### Returns (RMA)
+
+```
+customer (signed in), delivered sub-order, within returns.windowDays of delivery
+  REQUESTED ─approve─► APPROVED ─receive─► ITEMS_RECEIVED ─refund─► REFUNDED
+      ├─reject (reason)─► REJECTED
+      └─customer withdraws─► CLOSED
+```
+
+- One request = items of **one** seller's sub-order (`ReturnRequest.vendorOrderId`); that seller (or admin / support)
+  handles it. Units already in an open return cannot be returned twice (`returnableQuantity` on the order item).
+- **Receive**: condition per item; restocked items go back (`StockMovement` RETURN) to the warehouse the SALE came from.
+- **Refund**: up to items + that sub-order's shipping. Online payments → `PaymentsService.refundForReturn()` through the
+  gateway; COD → recorded as a manual refund with the transfer reference. `Refund.returnRequestId` links them.
+- Status changes use a conditional update (`updateMany where status = from`), so a double click cannot apply twice.
+- Emails: customer RETURN_RECEIVED / APPROVED / REJECTED / REFUND_PROCESSED, seller VENDOR_RETURN_REQUEST.
+- Order status is not changed by returns; payouts (later) must subtract refunds.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

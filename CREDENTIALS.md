@@ -56,6 +56,7 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 | `checkout.codMaxOrderTotal`           | `5000`        | COD hidden above this order total                                     |
 | `checkout.reservationMinutes`         | `15`          | Time to pay an online order before it is cancelled and stock released |
 | `payments.onlineMethods`              | `CARD,WALLET` | Online methods offered (add `BANK_TRANSFER`; empty = COD only)        |
+| `returns.windowDays`                  | `7`           | Days after delivery a customer can request a return                   |
 | `shipping.flatRatePerVendor`          | `5`           | Default shipping per seller when no shipping zone matches the address |
 | `shipping.freeShippingAbove`          | `50`          | Seller subtotal at which that seller's shipping is free               |
 | `marketplace.productApprovalRequired` | `true`        | New products go to admin review before publishing                     |
@@ -82,6 +83,15 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
    after `checkout.reservationMinutes` (15) — stock comes back.
 4. Cancel a paid order (customer or admin): a refund is recorded and the "refund processed" email arrives.
    Admin → order detail shows every payment attempt.
+
+**Returns**
+
+1. As a signed-in customer, place an order; in the seller center move it to **Delivered**.
+2. My orders → the order → **Return items**: pick quantities + reason → the return page (`RMA-…`). Mailpit: customer
+   "return received" + seller "return request".
+3. Seller center → Returns → **Approve** → **Mark items received** (condition, restock) → **Refund**. For a COD order
+   enter the transfer reference; for a card / wallet order the refund goes through the (mock) gateway.
+4. Inventory shows a RETURN movement; the customer sees "Refunded". Admin → Returns sees every return.
 
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;

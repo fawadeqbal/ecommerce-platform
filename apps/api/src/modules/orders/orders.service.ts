@@ -27,6 +27,7 @@ import {
   trackingUrlFor,
 } from '@ecommerce/types';
 import { paginate } from '../../common/dto/pagination.dto';
+import { readSetting } from '../../common/utils/settings';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -106,7 +107,7 @@ export class OrdersService {
       include: orderInclude,
     });
     if (!order) throw new NotFoundException('Order not found');
-    return toOrderDto(order);
+    return toOrderDto(order, await readSetting(this.prisma, 'returns.windowDays', 7));
   }
 
   /** Guest tracking: order number + the email used at checkout. */

@@ -54,7 +54,7 @@ apps/api/src/
   common/guards/        JwtAuthGuard (@Public routes still get the user if a valid token is sent), RolesGuard
   common/utils/         unique-slug.ts, stock-availability.ts (availableByVariant), settings.ts (readSetting), money.ts (toCents/fromCents)
   modules/<domain>/     one Nest module per domain; implemented: auth, users, vendors, catalog/*, media,
-                        inventory, cart, checkout, orders, payments, shipping, notifications, audit
+                        inventory, cart, checkout, orders, payments, shipping, returns, notifications, audit
 apps/admin/src/  apps/vendor/src/
   app/(dashboard)/…     thin pages          features/<entity>/…   list / detail / form components
   config/navigation.ts  sidebar             components/sidebar-shell.tsx  auth gate
@@ -169,24 +169,25 @@ For entity **X** (e.g. `Brand`), module **M** (e.g. `catalog`):
 
 ## 4. Reference implementations (copy the closest one)
 
-| Pattern                                                                             | Copy from                                                                                                                                  |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Simple CRUD (name, slug, image, active)                                             | **Brand** — `modules/catalog/brands/*`, `admin/features/brands/*`                                                                          |
-| Tree / parent-child, cycle prevention                                               | **Category** — `modules/catalog/categories/*`                                                                                              |
-| Parent with editable child list (nested array, `useFieldArray`, transactional sync) | **Attribute** — `modules/catalog/attributes/*`, `features/attributes/attribute-form.tsx`                                                   |
-| File upload                                                                         | **Media** — `modules/media/*`, `ImageUploadField`                                                                                          |
-| Application → admin approval with reasons + emails                                  | **Vendor** — `modules/vendors/*`, `admin/features/vendors/*`, `vendor/app/register`, `vendor/app/onboarding`                               |
-| Seller-owned entity + moderation workflow, variant builder                          | **Product** — `modules/catalog/products/*` (vendor + admin controllers, mapper), `vendor/features/products/*`, `admin/features/products/*` |
-| Quantities with a movement log                                                      | **Inventory** — `modules/inventory/*` (`applyChange`), `vendor/features/inventory/*`                                                       |
-| Guest + signed-in state via cookie, merge at sign-in                                | **Cart** — `modules/cart/*` (`CART_COOKIE`), `web/hooks/use-cart.ts`, `web/components/cart/cart-view.tsx`                                  |
-| Big transactional write, idempotency key, settings-driven totals                    | **Checkout** — `modules/checkout/checkout.service.ts`                                                                                      |
-| State machine with per-role actions, history, emails, stock side effects            | **Orders** — `modules/orders/*` (`order-rules.ts`, `order-stock.ts`, three controllers), `vendor/features/orders/order-detail.tsx`         |
-| Customer self-service CRUD in a modal                                               | **Addresses** — `users.service.ts` (address methods), `web/components/account/addresses-view.tsx`                                          |
-| Public SEO page + client island                                                     | **Product page** — `web/app/products/[slug]/page.tsx` + `components/catalog/product-purchase.tsx`                                          |
-| Auth / cookies                                                                      | `modules/auth/*`, `apps/admin/src/app/login/*`, `web/components/auth/*`                                                                    |
-| External gateway adapter, signed idempotent webhooks, timed expiry                  | **Payments** — `modules/payments/*` (`providers/`, `payments.service.ts`)                                                                  |
-| Pure calculator + settings fallback, nested child rows                              | **Shipping** — `modules/shipping/*` (`shipping-rules.ts`, `shipping-zones.service.ts`), `admin/features/shipping/*`                        |
-| Sending email                                                                       | `NotificationsService.sendEmail({ template: EmailTemplateKey.X, to, data })` — never send directly                                         |
+| Pattern                                                                                           | Copy from                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Simple CRUD (name, slug, image, active)                                                           | **Brand** — `modules/catalog/brands/*`, `admin/features/brands/*`                                                                          |
+| Tree / parent-child, cycle prevention                                                             | **Category** — `modules/catalog/categories/*`                                                                                              |
+| Parent with editable child list (nested array, `useFieldArray`, transactional sync)               | **Attribute** — `modules/catalog/attributes/*`, `features/attributes/attribute-form.tsx`                                                   |
+| File upload                                                                                       | **Media** — `modules/media/*`, `ImageUploadField`                                                                                          |
+| Application → admin approval with reasons + emails                                                | **Vendor** — `modules/vendors/*`, `admin/features/vendors/*`, `vendor/app/register`, `vendor/app/onboarding`                               |
+| Seller-owned entity + moderation workflow, variant builder                                        | **Product** — `modules/catalog/products/*` (vendor + admin controllers, mapper), `vendor/features/products/*`, `admin/features/products/*` |
+| Quantities with a movement log                                                                    | **Inventory** — `modules/inventory/*` (`applyChange`), `vendor/features/inventory/*`                                                       |
+| Guest + signed-in state via cookie, merge at sign-in                                              | **Cart** — `modules/cart/*` (`CART_COOKIE`), `web/hooks/use-cart.ts`, `web/components/cart/cart-view.tsx`                                  |
+| Big transactional write, idempotency key, settings-driven totals                                  | **Checkout** — `modules/checkout/checkout.service.ts`                                                                                      |
+| State machine with per-role actions, history, emails, stock side effects                          | **Orders** — `modules/orders/*` (`order-rules.ts`, `order-stock.ts`, three controllers), `vendor/features/orders/order-detail.tsx`         |
+| Customer self-service CRUD in a modal                                                             | **Addresses** — `users.service.ts` (address methods), `web/components/account/addresses-view.tsx`                                          |
+| Public SEO page + client island                                                                   | **Product page** — `web/app/products/[slug]/page.tsx` + `components/catalog/product-purchase.tsx`                                          |
+| Auth / cookies                                                                                    | `modules/auth/*`, `apps/admin/src/app/login/*`, `web/components/auth/*`                                                                    |
+| External gateway adapter, signed idempotent webhooks, timed expiry                                | **Payments** — `modules/payments/*` (`providers/`, `payments.service.ts`)                                                                  |
+| Pure calculator + settings fallback, nested child rows                                            | **Shipping** — `modules/shipping/*` (`shipping-rules.ts`, `shipping-zones.service.ts`), `admin/features/shipping/*`                        |
+| One service, customer + seller + admin controllers with a scope; staff screens shared by two apps | **Returns** — `modules/returns/*` (`return-rules.ts`, `vendor-` / `admin-returns.controller.ts`), `vendor                                  | admin/features/returns/*` |
+| Sending email                                                                                     | `NotificationsService.sendEmail({ template: EmailTemplateKey.X, to, data })` — never send directly                                         |
 
 ---
 

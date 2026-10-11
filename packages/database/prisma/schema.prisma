@@ -236,34 +236,34 @@ model User {
   updatedAt       DateTime   @updatedAt
   deletedAt       DateTime?
 
-  roles            UserRole[]
-  sessions         Session[]
-  refreshTokens    RefreshToken[]
-  otpCodes         OtpCode[]
-  addresses        Address[]
-  ownedVendors     Vendor[]        @relation("VendorOwner")
-  vendorStaff      VendorStaff[]
-  cart             Cart?
-  savedItems       SavedItem[]
-  orders           Order[]
-  reviews          Review[]
-  questions        Question[]
-  answers          Answer[]
-  wishlists        Wishlist[]
-  stockAlerts      StockAlert[]
-  productViews     ProductView[]
-  loyaltyAccount   LoyaltyAccount?
-  referralsMade    Referral[]      @relation("Referrer")
-  referredBy       Referral?       @relation("Referee")
-  emailPreference  EmailPreference?
-  tickets          Ticket[]        @relation("TicketCustomer")
-  assignedTickets  Ticket[]        @relation("TicketAssignee")
-  ticketMessages   TicketMessage[]
-  disputes         Dispute[]
-  returnRequests   ReturnRequest[]
-  couponUsages     CouponUsage[]
-  blogPosts        BlogPost[]
-  auditLogs        AuditLog[]
+  roles           UserRole[]
+  sessions        Session[]
+  refreshTokens   RefreshToken[]
+  otpCodes        OtpCode[]
+  addresses       Address[]
+  ownedVendors    Vendor[]         @relation("VendorOwner")
+  vendorStaff     VendorStaff[]
+  cart            Cart?
+  savedItems      SavedItem[]
+  orders          Order[]
+  reviews         Review[]
+  questions       Question[]
+  answers         Answer[]
+  wishlists       Wishlist[]
+  stockAlerts     StockAlert[]
+  productViews    ProductView[]
+  loyaltyAccount  LoyaltyAccount?
+  referralsMade   Referral[]       @relation("Referrer")
+  referredBy      Referral?        @relation("Referee")
+  emailPreference EmailPreference?
+  tickets         Ticket[]         @relation("TicketCustomer")
+  assignedTickets Ticket[]         @relation("TicketAssignee")
+  ticketMessages  TicketMessage[]
+  disputes        Dispute[]
+  returnRequests  ReturnRequest[]
+  couponUsages    CouponUsage[]
+  blogPosts       BlogPost[]
+  auditLogs       AuditLog[]
 
   @@index([status])
 }
@@ -297,8 +297,8 @@ model RolePermission {
 model UserRole {
   userId String
   roleId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
 }
@@ -472,18 +472,18 @@ model PayoutItem {
 // ============================== CATALOG ==============================
 
 model Category {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   parentId       String?
   name           String
-  slug           String    @unique
+  slug           String   @unique
   description    String?
   imageUrl       String?
-  position       Int       @default(0)
-  isActive       Boolean   @default(true)
+  position       Int      @default(0)
+  isActive       Boolean  @default(true)
   seoTitle       String?
   seoDescription String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   parent          Category?        @relation("CategoryTree", fields: [parentId], references: [id])
   children        Category[]       @relation("CategoryTree")
@@ -989,24 +989,30 @@ model Shipment {
 // ============================== RETURNS ==============================
 
 model ReturnRequest {
-  id           String           @id @default(cuid())
-  rmaNumber    String           @unique
-  orderId      String
-  userId       String?
-  status       ReturnStatus     @default(REQUESTED)
-  resolution   ReturnResolution @default(REFUND)
-  reason       String
-  comments     String?
-  images       String[]
-  refundAmount Decimal?         @db.Decimal(12, 2)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  order        Order            @relation(fields: [orderId], references: [id])
-  user         User?            @relation(fields: [userId], references: [id])
-  items        ReturnItem[]
-  refunds      Refund[]
+  id            String           @id @default(cuid())
+  rmaNumber     String           @unique
+  orderId       String
+  userId        String?
+  status        ReturnStatus     @default(REQUESTED)
+  resolution    ReturnResolution @default(REFUND)
+  reason        String
+  comments      String?
+  images        String[]
+  refundAmount  Decimal?         @db.Decimal(12, 2)
+  /// One return = items of one seller's sub-order (that seller handles it).
+  vendorOrderId String?
+  /// Why it was approved / rejected (shown to the customer).
+  decisionNote  String?
+  refundedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  order         Order            @relation(fields: [orderId], references: [id])
+  user          User?            @relation(fields: [userId], references: [id])
+  items         ReturnItem[]
+  refunds       Refund[]
 
   @@index([status])
+  @@index([vendorOrderId])
 }
 
 model ReturnItem {
