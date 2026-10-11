@@ -90,8 +90,8 @@ warehouses (`availableByVariant()` in `apps/api/src/common/utils/stock-availabil
 | Sub-order shipped           | −n       | −n       | `StockMovement` type `SALE`, reservation committed          |
 | Sub-order / order cancelled | –        | −n       | reservation released                                        |
 
-Low-stock and back-in-stock emails fire from stock changes. Reservation expiry (for unpaid online payments)
-arrives with the payments step.
+Low-stock and back-in-stock emails fire from stock changes. Unpaid online orders hold their stock for
+`checkout.reservationMinutes`; after that the order is cancelled and the reservation released (see Payments).
 
 ### Order (multi-vendor)
 
@@ -101,7 +101,7 @@ One `Order` → one `VendorOrder` per seller → `OrderItem`s. Each vendor order
 
 ```
 place (COD) ──► COD_CONFIRMED ──► PROCESSING ──► PACKED ──► SHIPPED ──► OUT_FOR_DELIVERY ──► DELIVERED
- (online, next step: PENDING_PAYMENT ──► PAID ──► PROCESSING …)
+ (online: PENDING_PAYMENT ──webhook──► PAID ──► PROCESSING …; not paid in time ──► CANCELLED)
                    └──────────── CANCELLED (customer, seller or admin, only before shipping) ─────┘
 ```
 
@@ -113,12 +113,43 @@ place (COD) ──► COD_CONFIRMED ──► PROCESSING ──► PACKED ──
 - Placing an order emails the customer (`ORDER_CONFIRMATION`) and each seller (`VENDOR_NEW_ORDER`).
 - Order numbers: `ORD-YYMMDD-XXXXX` (retry on collision).
 
+### Payments
+
+Gateway-agnostic. A gateway is one class implementing `PaymentProvider`
+(`apps/api/src/modules/payments/providers/payment-provider.ts`): `createSession`, `parseWebhook` (verify signature),
+`refund`. `PAYMENT_PROVIDER` in `.env` picks it (`createPaymentProvider()`); today only `mock` exists.
+
+```
+checkout (CARD / WALLET / BANK_TRANSFER)
+  ├─ Order + sub-orders PENDING_PAYMENT, stock reserved for checkout.reservationMinutes, Payment attempt PENDING
+  ├─ provider.createSession() → customer redirected to the gateway page
+  └─ gateway → POST /payments/webhooks/<provider>  (signature checked, WebhookEvent makes it run once)
+        PAID      → Payment PAID, order + sub-orders PAID, stock held until shipping, confirmation + seller emails
+        FAILED    → attempt FAILED + "payment failed" email; customer retries (new attempt) until the deadline
+        CANCELLED → attempt CANCELLED; customer can retry
+deadline passes unpaid → PaymentExpiryService (every minute) cancels the order and releases stock (email)
+paid after the order was closed → automatic full refund
+cancel a paid order (customer / admin) or sub-order (seller) → refund of the cancelled part (Refund + Transaction rows)
+```
+
+- The customer returns to `/checkout/payment-return?payment=<id>`, which only **reads** the status (polls while
+  pending). The webhook is the source of truth, never the redirect.
+- Sellers only see COD orders and online orders that were paid (`VISIBLE_TO_VENDOR` in `orders.service.ts`).
+- Gateway amount ≠ attempt amount → not confirmed (logged).
+- Mock gateway: `/pay/mock/<paymentId>` on the storefront; its buttons call `POST /payments/mock/:id/complete`, which
+  signs a webhook and runs it through the same `handleWebhook()`. Disabled when `NODE_ENV=production` unless
+  `PAYMENT_ALLOW_MOCK_IN_PRODUCTION=true`.
+- **Adding a real gateway:** `providers/<name>.provider.ts` implementing `PaymentProvider`, a `case` in
+  `createPaymentProvider()`, set `PAYMENT_PROVIDER`, `PAYMENT_API_KEY`, `PAYMENT_WEBHOOK_SECRET`, and register
+  `https://api.<domain>/api/v1/payments/webhooks/<name>` in the gateway dashboard. Nothing else changes.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.
 
 - Shipping: `shipping.flatRatePerVendor` per seller, free when that seller's subtotal ≥ `shipping.freeShippingAbove`.
-- Cash on delivery: allowed while the total ≤ `checkout.codMaxOrderTotal`; fee `checkout.codFee`.
+- Cash on delivery: allowed while the total ≤ `checkout.codMaxOrderTotal`; fee `checkout.codFee` (only when COD is chosen).
+- Online methods: the gateway's methods ∩ setting `payments.onlineMethods` (`CARD,WALLET`; empty = COD only).
 - Guest checkout: `checkout.guestCheckout`. Commission per seller: the vendor's rate, else
   `marketplace.defaultCommissionRate`.
 - Settings are rows in the `Setting` table, read with `readSetting(prisma, key, fallback)`.

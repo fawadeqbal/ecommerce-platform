@@ -2,14 +2,17 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { ConfigService } from '@nestjs/config';
 import type { Prisma } from '@ecommerce/database';
 import {
-  EmailTemplateKey,
+  PAYMENT_METHOD_DESCRIPTIONS,
   PAYMENT_METHOD_LABELS,
   fromCents,
+  isOnlinePayment,
   toCents,
   type CheckoutGroup,
   type CheckoutQuoteDto,
-  type OrderDto,
   type PaymentMethod,
+  type PaymentOptionDto,
+  type PaymentSessionDto,
+  type PlaceOrderResultDto,
   type ShippingAddress,
 } from '@ecommerce/types';
 import { formatMoney } from '../../common/utils/money';
@@ -18,16 +21,19 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CartService, type CartContext } from '../cart/cart.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { sendOrderPlacedEmails } from '../orders/order-emails';
 import { orderInclude, toOrderDto, type OrderFull } from '../orders/order.mapper';
 import { commissionFor, generateOrderNumber, shippingFor } from '../orders/order-rules';
 import { reserveStock } from '../orders/order-stock';
+import { PaymentsService } from '../payments/payments.service';
 import type { PlaceOrderDto } from './dto/checkout.dto';
 
 /**
  * Checkout: quote (totals) and place order.
  * One Order → one VendorOrder per vendor → OrderItems (price snapshots). Stock is reserved in the same
  * transaction; the cart is emptied; confirmation emails go to the customer and each vendor.
- * TODO: coupons/gift cards/loyalty (Promotions step), tax rates (Settings), online payments (Payments step).
+ * Online methods start as PENDING_PAYMENT with a short stock hold; PaymentsService confirms them via the gateway webhook.
+ * TODO: coupons/gift cards/loyalty (Promotions step), tax rates (Settings).
  */
 @Injectable()
 export class CheckoutService {
@@ -39,15 +45,17 @@ export class CheckoutService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
+    private readonly payments: PaymentsService,
   ) {}
 
-  async quote(ctx: CartContext): Promise<CheckoutQuoteDto> {
+  async quote(ctx: CartContext, requested?: PaymentMethod): Promise<CheckoutQuoteDto> {
     const cart = await this.cart.getCart(ctx);
-    const [flatRate, freeAbove, codFee, codMax] = await Promise.all([
+    const [flatRate, freeAbove, codFeeSetting, codMax, online] = await Promise.all([
       readSetting(this.prisma, 'shipping.flatRatePerVendor', 5),
       readSetting(this.prisma, 'shipping.freeShippingAbove', 50),
       readSetting(this.prisma, 'checkout.codFee', 0),
       readSetting(this.prisma, 'checkout.codMaxOrderTotal', 5000),
+      this.payments.onlineMethods(),
     ]);
 
     const groups: CheckoutGroup[] = cart.groups.map((g) => ({
@@ -59,18 +67,45 @@ export class CheckoutService {
     const subtotal = cart.subtotal;
     const shippingTotal = fromCents(groups.reduce((sum, g) => sum + toCents(g.shipping), 0));
     const beforeFees = fromCents(toCents(subtotal) + toCents(shippingTotal));
+    const codTotal = fromCents(toCents(beforeFees) + toCents(codFeeSetting));
+    const codAllowed = codMax <= 0 || codTotal <= codMax;
+
+    const option = (
+      method: PaymentMethod,
+      fee: number,
+      reason: string | null,
+    ): PaymentOptionDto => ({
+      method,
+      label: PAYMENT_METHOD_LABELS[method],
+      description: PAYMENT_METHOD_DESCRIPTIONS[method] ?? '',
+      fee,
+      available: reason === null,
+      reason,
+    });
+    const paymentOptions: PaymentOptionDto[] = [
+      ...online.map((m) => option(m, 0, null)),
+      option(
+        'COD',
+        codFeeSetting,
+        codAllowed ? null : `Available for orders up to ${formatMoney(codMax, cart.currency)}`,
+      ),
+    ];
+    const paymentMethods = paymentOptions.filter((o) => o.available).map((o) => o.method);
+    const selected =
+      requested && paymentMethods.includes(requested) ? requested : (paymentMethods[0] ?? null);
+    const codFee = selected === 'COD' ? codFeeSetting : 0;
     const grandTotal = fromCents(toCents(beforeFees) + toCents(codFee));
 
     const problems: string[] = [];
     if (cart.itemCount === 0) problems.push('Your cart is empty');
     if (!cart.canCheckout && cart.itemCount > 0)
       problems.push('Some items are unavailable or low on stock. Update your cart.');
-    const codAllowed = codMax <= 0 || grandTotal <= codMax;
-    if (!codAllowed)
+    if (cart.itemCount > 0 && paymentMethods.length === 0)
       problems.push(
-        `Cash on delivery is available for orders up to ${formatMoney(codMax, cart.currency)}`,
+        codAllowed
+          ? 'No payment method is available right now'
+          : `Cash on delivery is available for orders up to ${formatMoney(codMax, cart.currency)}`,
       );
-    const paymentMethods: PaymentMethod[] = codAllowed ? ['COD'] : [];
 
     return {
       currency: cart.currency,
@@ -82,20 +117,27 @@ export class CheckoutService {
       codFee,
       grandTotal,
       paymentMethods,
+      paymentOptions,
+      selectedPaymentMethod: selected,
       canPlace: problems.length === 0,
       problems,
       freeShippingAbove: freeAbove,
     };
   }
 
-  async place(ctx: CartContext, dto: PlaceOrderDto): Promise<OrderDto> {
+  async place(ctx: CartContext, dto: PlaceOrderDto): Promise<PlaceOrderResultDto> {
     // Same idempotency key = same order (double click / retry after a network error).
     const existing = await this.prisma.order.findUnique({
       where: { idempotencyKey: dto.idempotencyKey },
       include: orderInclude,
     });
-    if (existing && (existing.userId === (ctx.userId ?? null) || existing.email === dto.email))
-      return toOrderDto(existing);
+    if (existing && (existing.userId === (ctx.userId ?? null) || existing.email === dto.email)) {
+      const payment =
+        existing.status === 'PENDING_PAYMENT'
+          ? await this.payments.sessionForOrder(existing.id)
+          : null;
+      return { order: toOrderDto(existing), payment };
+    }
 
     const user = ctx.userId
       ? await this.prisma.user.findUnique({
@@ -111,7 +153,7 @@ export class CheckoutService {
     const email = user?.email ?? dto.email!;
     const address = await this.resolveAddress(user?.id, dto);
 
-    const quote = await this.quote(ctx);
+    const quote = await this.quote(ctx, dto.paymentMethod);
     if (!quote.canPlace) throw new BadRequestException(quote.problems.join(' '));
     if (!quote.paymentMethods.includes(dto.paymentMethod))
       throw new BadRequestException('This payment method is not available');
@@ -125,7 +167,10 @@ export class CheckoutService {
     if (!cartRow || cartRow.items.length === 0) throw new BadRequestException('Your cart is empty');
 
     const defaultRate = await readSetting(this.prisma, 'marketplace.defaultCommissionRate', 10);
+    const online = isOnlinePayment(dto.paymentMethod);
     const order = await this.createOrder({
+      online,
+      holdMinutes: online ? await this.payments.holdMinutes() : undefined,
       cartRow,
       quote,
       dto,
@@ -142,8 +187,28 @@ export class CheckoutService {
       entityId: order.id,
       after: { orderNumber: order.orderNumber, grandTotal: quote.grandTotal },
     });
-    await this.sendEmails(order, user?.firstName ?? address.fullName.split(' ')[0]);
-    return toOrderDto(order);
+
+    // COD is confirmed now; online orders are confirmed (and emailed) when the gateway reports payment.
+    let payment: PaymentSessionDto | null = null;
+    if (online) {
+      try {
+        payment = await this.payments.sessionForOrder(order.id);
+      } catch (error) {
+        // The order exists and holds stock: the customer can retry from the order page.
+        this.logger.error(`Could not open payment for ${order.orderNumber}: ${String(error)}`);
+      }
+    } else {
+      await sendOrderPlacedEmails(
+        {
+          prisma: this.prisma,
+          notifications: this.notifications,
+          config: this.config,
+          logger: this.logger,
+        },
+        order.id,
+      );
+    }
+    return { order: toOrderDto(order), payment };
   }
 
   // ---------------------------------------------------------------- internals
@@ -178,6 +243,8 @@ export class CheckoutService {
   }
 
   private async createOrder(args: {
+    online: boolean;
+    holdMinutes: number | undefined;
     cartRow: Prisma.CartGetPayload<{
       include: {
         items: { include: { variant: { include: { product: { include: { vendor: true } } } } } };
@@ -190,8 +257,8 @@ export class CheckoutService {
     address: ShippingAddress;
     defaultRate: number;
   }): Promise<OrderFull> {
-    const { cartRow, quote, dto, email, userId, address, defaultRate } = args;
-    const initialStatus = 'COD_CONFIRMED' as const;
+    const { cartRow, quote, dto, email, userId, address, defaultRate, online, holdMinutes } = args;
+    const initialStatus = online ? ('PENDING_PAYMENT' as const) : ('COD_CONFIRMED' as const);
 
     for (let attempt = 0; attempt < 3; attempt++) {
       const orderNumber = generateOrderNumber();
@@ -226,6 +293,7 @@ export class CheckoutService {
                 quantity: i.quantity,
                 label: `${i.variant.product.name}${i.variant.name ? ` (${i.variant.name})` : ''}`,
               })),
+              holdMinutes,
             );
 
             for (const group of quote.groups) {
@@ -274,13 +342,17 @@ export class CheckoutService {
             }
 
             await tx.orderStatusHistory.create({
-              data: { orderId: order.id, toStatus: initialStatus, note: 'Order placed' },
+              data: {
+                orderId: order.id,
+                toStatus: initialStatus,
+                note: online ? 'Order placed, waiting for payment' : 'Order placed',
+              },
             });
             await tx.payment.create({
               data: {
                 orderId: order.id,
                 method: dto.paymentMethod,
-                provider: 'cod',
+                provider: online ? this.payments.providerName : 'cod',
                 status: 'PENDING',
                 amount: quote.grandTotal,
                 currency: quote.currency,
@@ -303,58 +375,5 @@ export class CheckoutService {
       }
     }
     throw new BadRequestException('Could not create the order, please try again');
-  }
-
-  private async sendEmails(order: OrderFull, firstName: string) {
-    const site = this.config.get<string>('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000');
-    const vendorApp = this.config.get<string>('NEXT_PUBLIC_VENDOR_URL', 'http://localhost:3002');
-    const money = (v: Prisma.Decimal | number) => formatMoney(Number(v), order.currency);
-    try {
-      await this.notifications.sendEmail({
-        template: EmailTemplateKey.ORDER_CONFIRMATION,
-        to: order.email,
-        userId: order.userId ?? undefined,
-        data: {
-          firstName,
-          orderNumber: order.orderNumber,
-          items: order.vendorOrders.flatMap((v) =>
-            v.items.map((i) => ({
-              name: `${i.productName}${i.variantName ? ` (${i.variantName})` : ''}`,
-              quantity: i.quantity,
-              total: money(i.total),
-            })),
-          ),
-          subtotal: money(order.subtotal),
-          shipping: money(order.shippingTotal),
-          tax: money(order.taxTotal),
-          grandTotal: money(order.grandTotal),
-          paymentMethod: PAYMENT_METHOD_LABELS[order.paymentMethod as PaymentMethod],
-          orderUrl: order.userId
-            ? `${site}/account/orders/${order.orderNumber}`
-            : `${site}/track-order`,
-        },
-      });
-      for (const vo of order.vendorOrders) {
-        const vendor = await this.prisma.vendor.findUnique({
-          where: { id: vo.vendor.id },
-          select: { email: true, ownerId: true },
-        });
-        if (!vendor) continue;
-        await this.notifications.sendEmail({
-          template: EmailTemplateKey.VENDOR_NEW_ORDER,
-          to: vendor.email,
-          userId: vendor.ownerId,
-          data: {
-            orderNumber: order.orderNumber,
-            heading: `New order ${order.orderNumber}`,
-            body: `${vo.items.reduce((n, i) => n + i.quantity, 0)} item(s) worth ${money(vo.subtotal)} to prepare. Payment: ${PAYMENT_METHOD_LABELS[order.paymentMethod as PaymentMethod]}.`,
-            ctaLabel: 'Open order',
-            ctaUrl: `${vendorApp}/orders/${vo.id}`,
-          },
-        });
-      }
-    } catch (error) {
-      this.logger.error(`Order emails failed for ${order.orderNumber}: ${String(error)}`);
-    }
   }
 }

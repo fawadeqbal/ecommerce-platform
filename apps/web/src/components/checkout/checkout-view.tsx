@@ -2,14 +2,14 @@
 
 /* eslint-disable @next/next/no-img-element -- images are served from object storage */
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  PAYMENT_METHOD_LABELS,
   checkoutFormSchema,
+  isOnlinePayment,
   checkoutFormToInput,
   emptyCheckoutForm,
   formatAddress,
@@ -64,12 +64,6 @@ export function CheckoutView() {
         .flatMap((g) => g.items.map((i) => `${i.id}:${i.quantity}:${i.unitPrice}`))
         .join('|')
     : '';
-  const quote = useQuery({
-    queryKey: queryKeys.checkoutQuote(signature),
-    queryFn: checkoutApi.quote,
-    enabled: Boolean(cart && cart.itemCount > 0) && !placed,
-  });
-
   const {
     register,
     handleSubmit,
@@ -99,16 +93,45 @@ export function CheckoutView() {
   }, [me.isPending, signedIn, addresses.isPending, addresses.data, setValue]);
 
   const addressId = watch('addressId');
+  const paymentMethod = watch('paymentMethod');
+
+  // Totals depend on the payment method (COD adds its fee), so the method is part of the quote.
+  const quote = useQuery({
+    queryKey: queryKeys.checkoutQuote(`${signature}#${paymentMethod}`),
+    queryFn: () => checkoutApi.quote({ paymentMethod }),
+    enabled: Boolean(cart && cart.itemCount > 0) && !placed,
+    placeholderData: keepPreviousData,
+  });
+
+  // The API picks a method when the chosen one is unavailable (e.g. COD above its limit).
+  const selected = quote.data?.selectedPaymentMethod;
+  useEffect(() => {
+    if (selected && selected !== paymentMethod)
+      setValue('paymentMethod', selected as CheckoutFormValues['paymentMethod']);
+  }, [selected, paymentMethod, setValue]);
 
   const place = useMutation({
     mutationFn: (values: CheckoutFormValues) =>
       checkoutApi.place(checkoutFormToInput(values, idempotencyKey)),
-    onSuccess: async (order) => {
+    onSuccess: async ({ order, payment }) => {
       setPlaced(true);
       await queryClient.invalidateQueries({ queryKey: queryKeys.orders.all, refetchType: 'none' });
       queryClient.setQueryData(queryKeys.orders.detail(order.orderNumber), order);
       await queryClient.invalidateQueries({ queryKey: queryKeys.cart });
       if (signedIn) await queryClient.invalidateQueries({ queryKey: queryKeys.addresses });
+      // Online: off to the gateway's page. If it could not be opened, the order page offers "Pay now".
+      if (payment) {
+        window.location.assign(payment.redirectUrl);
+        return;
+      }
+      if (isOnlinePayment(order.paymentMethod)) {
+        router.replace(
+          signedIn
+            ? `/account/orders/${encodeURIComponent(order.orderNumber)}`
+            : `/track-order?order=${encodeURIComponent(order.orderNumber)}`,
+        );
+        return;
+      }
       router.replace(`/checkout/success?order=${encodeURIComponent(order.orderNumber)}`);
     },
     onError: async () => {
@@ -237,17 +260,43 @@ export function CheckoutView() {
 
           <Card className="space-y-4">
             <CardTitle>Payment</CardTitle>
-            <label className={radioCard}>
-              <input type="radio" value="COD" className="mt-1" {...register('paymentMethod')} />
-              <span>
-                <span className="font-medium text-gray-900">{PAYMENT_METHOD_LABELS.COD}</span>
-                <span className="block text-gray-600">
-                  Pay in cash when your order arrives.
-                  {q && q.codFee > 0 ? ` A ${formatMoney(q.codFee, q.currency)} fee applies.` : ''}
-                </span>
-              </span>
-            </label>
-            <p className="text-xs text-gray-500">Online card payments are coming soon.</p>
+            {q ? (
+              <div className="space-y-2">
+                {q.paymentOptions.map((option) => (
+                  <label
+                    key={option.method}
+                    className={cn(radioCard, !option.available && 'cursor-not-allowed opacity-60')}
+                  >
+                    <input
+                      type="radio"
+                      value={option.method}
+                      className="mt-1"
+                      disabled={!option.available}
+                      {...register('paymentMethod')}
+                    />
+                    <span>
+                      <span className="font-medium text-gray-900">{option.label}</span>
+                      <span className="block text-gray-600">
+                        {option.description}
+                        {option.fee > 0
+                          ? ` A ${formatMoney(option.fee, q.currency)} fee applies.`
+                          : ''}
+                      </span>
+                      {option.reason ? (
+                        <span className="block text-xs text-amber-700">{option.reason}</span>
+                      ) : null}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <Spinner />
+            )}
+            {isOnlinePayment(paymentMethod) ? (
+              <p className="text-xs text-gray-500">
+                You will be taken to a secure payment page. Items are held for you while you pay.
+              </p>
+            ) : null}
           </Card>
 
           <Card className="space-y-2">
@@ -362,7 +411,7 @@ export function CheckoutView() {
               loading={place.isPending}
               disabled={!q?.canPlace}
             >
-              Place order
+              {isOnlinePayment(paymentMethod) ? 'Continue to payment' : 'Place order'}
             </Button>
             <p className="text-center text-xs text-gray-500">
               By placing your order you agree to our terms and returns policy.

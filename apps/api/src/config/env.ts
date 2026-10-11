@@ -12,6 +12,12 @@ const envSchema = z.object({
   JWT_REFRESH_TTL_DAYS: z.coerce.number().default(30),
   NEXT_PUBLIC_SITE_URL: z.string().default('http://localhost:3000'),
 
+  // Payments: "mock" until a real gateway adapter is added (see modules/payments/providers)
+  PAYMENT_PROVIDER: z.string().default('mock'),
+  PAYMENT_API_KEY: z.string().optional(),
+  PAYMENT_WEBHOOK_SECRET: z.string().optional(),
+  PAYMENT_ALLOW_MOCK_IN_PRODUCTION: z.enum(['true', 'false']).default('false'),
+
   // Object storage (MinIO locally, any S3-compatible service in production)
   S3_ENDPOINT: z.string().default('http://localhost:9000'),
   S3_REGION: z.string().default('us-east-1'),

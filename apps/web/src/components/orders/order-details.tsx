@@ -19,6 +19,7 @@ import {
 } from '@ecommerce/ui';
 import { OrderProgress } from './order-progress';
 import { OrderStatusBadge } from './order-status-badge';
+import { PayNow } from './pay-now';
 
 /** Read-only order view shared by "My orders" and guest tracking. */
 export function OrderDetails({ order, actions }: { order: OrderDto; actions?: ReactNode }) {
@@ -35,6 +36,8 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
           {actions}
         </div>
       </div>
+
+      {order.canPay ? <PayNow order={order} /> : null}
 
       {order.status === 'CANCELLED' ? (
         <Alert tone="warning" title="This order was cancelled">

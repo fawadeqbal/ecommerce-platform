@@ -21,7 +21,7 @@ export const checkoutFormSchema = z
     countryCode: z.string().trim(),
     saveAddress: z.boolean(),
     customerNote: z.string().trim().max(500, 'At most 500 characters'),
-    paymentMethod: z.literal('COD'),
+    paymentMethod: z.enum(['COD', 'CARD', 'WALLET', 'BANK_TRANSFER']),
   })
   .superRefine((v, ctx) => {
     if (v.isGuest && !z.string().email().safeParse(v.email).success) {

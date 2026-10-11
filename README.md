@@ -134,7 +134,9 @@ Status per entity: [`docs/roadmap.md`](docs/roadmap.md).
 - Checkout & orders (cash on delivery): quote with per-seller shipping, idempotent order placement, stock reservation,
   one sub-order per seller, confirmation emails; customer order history, detail, cancel, guest order tracking, address book;
   seller order screens with status actions (shipping deducts stock, tracking number); admin order list / detail / cancel.
-- **Next:** online payment gateway, then shipping. See the roadmap.
+- Online payments (card / wallet / bank) through a pluggable gateway; a mock gateway is used until a real one
+  (Safepay, PayFast, …) is plugged in. Unpaid orders expire, cancellations of paid orders are refunded.
+- **Next:** shipping. See the roadmap.
 
 **Not built yet:** every module that has not reached its roadmap step still exposes `GET /<module>/status`, and
 every screen not yet built shows a scaffold card listing the features it needs.
@@ -149,7 +151,7 @@ One NestJS module per domain under `apps/api/src/modules/`:
 `settings` · `audit` · `jobs`
 
 Implemented: `auth`, `users` (profile, addresses), `vendors`, `catalog` (categories, brands, attributes, products,
-storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `notifications`, `audit`.
+storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `notifications`, `audit`.
 
 ## Deployment
 

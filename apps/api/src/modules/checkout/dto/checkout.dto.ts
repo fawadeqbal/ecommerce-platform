@@ -10,7 +10,17 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import type { PaymentMethod, PlaceOrderInput } from '@ecommerce/types';
+import type { CheckoutQuoteInput, PaymentMethod, PlaceOrderInput } from '@ecommerce/types';
+
+/** Methods the storefront can request; availability is decided by CheckoutService.quote(). */
+const CHECKOUT_METHODS: PaymentMethod[] = ['COD', 'CARD', 'WALLET', 'BANK_TRANSFER'];
+
+export class QuoteRequestDto implements CheckoutQuoteInput {
+  @ApiPropertyOptional({ enum: CHECKOUT_METHODS })
+  @IsOptional()
+  @IsIn(CHECKOUT_METHODS)
+  paymentMethod?: PaymentMethod;
+}
 import { ShippingAddressDto } from '../../users/dto/address.dto';
 
 export class PlaceOrderDto implements PlaceOrderInput {
@@ -33,13 +43,15 @@ export class PlaceOrderDto implements PlaceOrderInput {
 
   @ApiPropertyOptional() @IsOptional() @IsBoolean() saveAddress?: boolean;
 
-  @ApiProperty({ enum: ['COD'], description: 'Online payments arrive with the Payments step' })
-  @IsIn(['COD'])
+  @ApiProperty({
+    enum: CHECKOUT_METHODS,
+    description: 'Online methods return a gateway page to pay on',
+  })
+  @IsIn(CHECKOUT_METHODS)
   paymentMethod: PaymentMethod;
 
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() @MaxLength(500) customerNote?:
-    | string
-    | null;
+    string | null;
 
   @ApiProperty({ description: 'Random id per checkout attempt' })
   @IsString()

@@ -15,6 +15,7 @@ export * from './storefront/storefront';
 export * from './cart/cart';
 export * from './users/address';
 export * from './orders/order';
+export * from './payments/payment';
 export * from './schemas/common';
 export * from './schemas/auth.schema';
 export * from './schemas/category.schema';

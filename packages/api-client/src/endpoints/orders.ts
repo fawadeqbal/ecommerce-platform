@@ -4,11 +4,13 @@ import type {
   AdminOrderListItem,
   CancelOrderInput,
   CheckoutQuoteDto,
+  CheckoutQuoteInput,
   OrderDto,
   OrderListQuery,
   OrderSummaryDto,
   Paginated,
   PlaceOrderInput,
+  PlaceOrderResultDto,
   TrackOrderInput,
   VendorOrderDetailDto,
   VendorOrderListItem,
@@ -34,9 +36,12 @@ export const addressesApi = {
 };
 
 export const checkoutApi = {
-  /** Totals for the current cart (shipping per vendor, COD availability). */
-  quote: () => api<CheckoutQuoteDto>('/checkout/quote', { method: 'POST', body: {} }),
-  place: (body: PlaceOrderInput) => api<OrderDto>('/checkout/place', { method: 'POST', body }),
+  /** Totals for the current cart and the chosen payment method (COD adds its fee). */
+  quote: (body: CheckoutQuoteInput = {}) =>
+    api<CheckoutQuoteDto>('/checkout/quote', { method: 'POST', body }),
+  /** Online methods return `payment.redirectUrl`: send the customer there to pay. */
+  place: (body: PlaceOrderInput) =>
+    api<PlaceOrderResultDto>('/checkout/place', { method: 'POST', body }),
 };
 
 export const ordersApi = {

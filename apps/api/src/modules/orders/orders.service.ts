@@ -22,11 +22,14 @@ import {
   type ShippingAddress,
   type VendorOrderDetailDto,
   type VendorOrderListItem,
+  fromCents,
+  toCents,
 } from '@ecommerce/types';
 import { paginate } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PaymentsService } from '../payments/payments.service';
 import type { OrderQueryDto, VendorOrderStatusDto } from './dto/order.dto';
 import {
   orderInclude,
@@ -45,6 +48,18 @@ import { commitStock, releaseStock } from './order-stock';
 type Tx = Prisma.TransactionClient;
 type ListParams = Pick<OrderQueryDto, 'page' | 'limit' | 'status' | 'search'>;
 
+/** Sellers only see COD orders and online orders that were actually paid. */
+const VISIBLE_TO_VENDOR: Prisma.OrderWhereInput = {
+  OR: [
+    { paymentMethod: 'COD' },
+    { paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } },
+  ],
+};
+
+/** What the customer paid for a sub-order (refunded when it is cancelled). */
+const subOrderTotal = (v: { subtotal: Prisma.Decimal; shippingTotal: Prisma.Decimal }) =>
+  fromCents(toCents(Number(v.subtotal)) + toCents(Number(v.shippingTotal)));
+
 /**
  * Orders after checkout.
  * Vendors move their sub-order: (COD_CONFIRMED|PAID) → PROCESSING → PACKED → SHIPPED → (OUT_FOR_DELIVERY) → DELIVERED.
@@ -60,6 +75,7 @@ export class OrdersService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
+    private readonly payments: PaymentsService,
   ) {}
 
   // ================================================================ customer
@@ -117,13 +133,12 @@ export class OrdersService {
     const where: Prisma.VendorOrderWhereInput = {
       vendorId: vendor.id,
       ...(query.status ? { status: query.status } : {}),
-      ...(query.search
-        ? {
-            order: {
-              orderNumber: { contains: query.search.toUpperCase(), mode: 'insensitive' as const },
-            },
-          }
-        : {}),
+      order: {
+        ...VISIBLE_TO_VENDOR,
+        ...(query.search
+          ? { orderNumber: { contains: query.search.toUpperCase(), mode: 'insensitive' as const } }
+          : {}),
+      },
     };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.vendorOrder.findMany({
@@ -225,6 +240,14 @@ export class OrdersService {
       before: { status: from },
       after: { status: dto.status },
     });
+    if (dto.status === 'CANCELLED') {
+      await this.payments.refundOrder(
+        vo.orderId,
+        subOrderTotal(vo),
+        `Cancelled by ${vendor.name}: ${dto.note}`,
+        userId,
+      );
+    }
     await this.emailStatusChange(vo.orderId, dto.status, {
       trackingNumber: dto.trackingNumber,
       reason: dto.note,
@@ -311,7 +334,11 @@ export class OrdersService {
       );
       await tx.order.update({
         where: { id: order.id },
-        data: { cancelledAt: new Date(), cancelReason: reason },
+        data: {
+          cancelledAt: new Date(),
+          cancelReason: reason,
+          ...(order.paymentStatus === 'PENDING' ? { paymentStatus: 'CANCELLED' as const } : {}),
+        },
       });
       await this.syncParent(tx, order.id, actorId);
       await tx.payment.updateMany({
@@ -326,6 +353,8 @@ export class OrdersService {
       entityId: order.id,
       after: { reason },
     });
+    const paidPart = open.reduce((sum, v) => sum + toCents(subOrderTotal(v)), 0);
+    await this.payments.refundOrder(order.id, fromCents(paidPart), note, actorId);
     await this.emailStatusChange(order.id, 'CANCELLED', { reason });
     return toOrderDto(
       await this.prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: orderInclude }),
@@ -417,7 +446,7 @@ export class OrdersService {
 
   private async ownVendorOrder(vendorId: string, id: string) {
     const vo = await this.prisma.vendorOrder.findFirst({
-      where: { id, vendorId },
+      where: { id, vendorId, order: VISIBLE_TO_VENDOR },
       include: vendorOrderInclude,
     });
     if (!vo) throw new NotFoundException('Order not found');

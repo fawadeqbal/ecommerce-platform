@@ -10,14 +10,23 @@ export interface LineToReserve {
   label: string;
 }
 
-const HOLD_DAYS = 30;
+/** COD / paid orders hold stock until shipped. */
+export const HOLD_DAYS = 30;
 
 /**
  * Reserves stock for every line inside the checkout transaction.
  * The reserved counter is incremented atomically and re-checked, so two checkouts can never oversell.
  */
-export async function reserveStock(tx: Tx, orderId: string, lines: LineToReserve[]): Promise<void> {
-  const expiresAt = new Date(Date.now() + HOLD_DAYS * 24 * 60 * 60 * 1000);
+export async function reserveStock(
+  tx: Tx,
+  orderId: string,
+  lines: LineToReserve[],
+  /** Unpaid online orders: minutes until the payment deadline. */
+  holdMinutes?: number,
+): Promise<void> {
+  const expiresAt = new Date(
+    Date.now() + (holdMinutes ? holdMinutes * 60 * 1000 : HOLD_DAYS * 24 * 60 * 60 * 1000),
+  );
   for (const line of lines) {
     const levels = await tx.stockLevel.findMany({
       where: { variantId: line.variantId, warehouse: { isActive: true } },

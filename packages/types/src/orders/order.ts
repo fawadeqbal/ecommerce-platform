@@ -1,6 +1,7 @@
 import type { OrderStatus, PaymentMethod, PaymentStatus } from '../enums';
 import type { CartItemDto } from '../cart/cart';
 import type { ShippingAddress } from '../users/address';
+import type { PaymentAttemptDto, PaymentOptionDto, PaymentSessionDto } from '../payments/payment';
 
 export type BadgeTone = 'gray' | 'green' | 'yellow' | 'red' | 'blue';
 
@@ -98,9 +99,15 @@ export interface CheckoutQuoteDto {
   shippingTotal: number;
   discountTotal: number;
   taxTotal: number;
+  /** COD fee applied to this quote (0 unless the selected method is COD). */
   codFee: number;
   grandTotal: number;
+  /** Methods the customer can choose right now. */
   paymentMethods: PaymentMethod[];
+  /** Every method with availability + reason, for the payment picker. */
+  paymentOptions: PaymentOptionDto[];
+  /** The method these totals were calculated for. */
+  selectedPaymentMethod: PaymentMethod | null;
   canPlace: boolean;
   problems: string[];
   /** Spend this much more per vendor for free shipping (0 = disabled). */
@@ -119,6 +126,12 @@ export interface PlaceOrderInput {
   customerNote?: string | null;
   /** Random id per checkout attempt — a double click never creates two orders. */
   idempotencyKey: string;
+}
+
+/** Result of placing an order. Online methods also return the gateway page to send the customer to. */
+export interface PlaceOrderResultDto {
+  order: OrderDto;
+  payment: PaymentSessionDto | null;
 }
 
 // ---------------------------------------------------------------- orders
@@ -178,6 +191,11 @@ export interface OrderDto {
   cancelledAt: string | null;
   cancelReason: string | null;
   canCancel: boolean;
+  /** Online order still waiting for payment (and not expired): show "Pay now". */
+  canPay: boolean;
+  /** Unpaid online orders are cancelled after this moment. */
+  paymentExpiresAt: string | null;
+  payments: PaymentAttemptDto[];
   vendorOrders: VendorOrderDto[];
   history: OrderHistoryEntry[];
 }

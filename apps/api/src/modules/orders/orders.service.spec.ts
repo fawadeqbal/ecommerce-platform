@@ -3,6 +3,7 @@ import type { ConfigService } from '@nestjs/config';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { AuditService } from '../audit/audit.service';
 import type { NotificationsService } from '../notifications/notifications.service';
+import type { PaymentsService } from '../payments/payments.service';
 import { OrdersService } from './orders.service';
 
 const vendorOrder = (status: string) => ({
@@ -62,15 +63,13 @@ function setup(status: string) {
     stockLevel: { update: jest.fn() },
     stockMovement: { create: jest.fn() },
     order: {
-      findUniqueOrThrow: jest
-        .fn()
-        .mockResolvedValue({
-          id: 'o1',
-          status: 'COD_CONFIRMED',
-          paymentMethod: 'COD',
-          paymentStatus: 'PENDING',
-          vendorOrders: [{ status: 'SHIPPED' }],
-        }),
+      findUniqueOrThrow: jest.fn().mockResolvedValue({
+        id: 'o1',
+        status: 'COD_CONFIRMED',
+        paymentMethod: 'COD',
+        paymentStatus: 'PENDING',
+        vendorOrders: [{ status: 'SHIPPED' }],
+      }),
       update: jest.fn(),
     },
     payment: { updateMany: jest.fn() },
@@ -84,14 +83,12 @@ function setup(status: string) {
     },
     vendorOrder: { findFirst: jest.fn().mockResolvedValue(vendorOrder(status)) },
     order: {
-      findUniqueOrThrow: jest
-        .fn()
-        .mockResolvedValue({
-          orderNumber: 'ORD-1',
-          email: 'b@x.com',
-          userId: null,
-          shippingAddress: { fullName: 'Ali Khan' },
-        }),
+      findUniqueOrThrow: jest.fn().mockResolvedValue({
+        orderNumber: 'ORD-1',
+        email: 'b@x.com',
+        userId: null,
+        shippingAddress: { fullName: 'Ali Khan' },
+      }),
     },
     $transaction: jest.fn((fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
   };
@@ -100,6 +97,7 @@ function setup(status: string) {
     { log: jest.fn() } as unknown as AuditService,
     { sendEmail: jest.fn() } as unknown as NotificationsService,
     { get: jest.fn((_k: string, f?: unknown) => f) } as unknown as ConfigService,
+    { refundOrder: jest.fn() } as unknown as PaymentsService,
   );
   return { tx, service };
 }

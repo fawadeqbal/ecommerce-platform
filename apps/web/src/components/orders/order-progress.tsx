@@ -3,9 +3,9 @@ import { cn } from '@ecommerce/ui';
 
 /** Where in ORDER_PROGRESS a status sits (paid counts as confirmed, out-for-delivery as shipped). */
 function stepIndex(status: OrderStatus): number {
+  if (status === 'PENDING_PAYMENT') return -1; // nothing confirmed until it is paid
   const alias: Partial<Record<OrderStatus, OrderStatus>> = {
     PAID: 'COD_CONFIRMED',
-    PENDING_PAYMENT: 'COD_CONFIRMED',
     OUT_FOR_DELIVERY: 'SHIPPED',
   };
   const index = ORDER_PROGRESS.indexOf(alias[status] ?? status);

@@ -2,12 +2,12 @@ import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import type { CheckoutQuoteDto, JwtPayload, OrderDto } from '@ecommerce/types';
+import type { CheckoutQuoteDto, JwtPayload, PlaceOrderResultDto } from '@ecommerce/types';
 import { Public } from '../../common/decorators/public.decorator';
 import { CART_COOKIE } from '../cart/cart.controller';
 import type { CartContext } from '../cart/cart.service';
 import { CheckoutService } from './checkout.service';
-import { PlaceOrderDto } from './dto/checkout.dto';
+import { PlaceOrderDto, QuoteRequestDto } from './dto/checkout.dto';
 
 type CheckoutRequest = Request & { user?: JwtPayload };
 
@@ -20,8 +20,8 @@ export class CheckoutController {
 
   @Post('quote')
   @HttpCode(HttpStatus.OK)
-  quote(@Req() req: CheckoutRequest): Promise<CheckoutQuoteDto> {
-    return this.checkout.quote(this.context(req));
+  quote(@Req() req: CheckoutRequest, @Body() dto: QuoteRequestDto): Promise<CheckoutQuoteDto> {
+    return this.checkout.quote(this.context(req), dto.paymentMethod);
   }
 
   @Post('place')
@@ -31,11 +31,11 @@ export class CheckoutController {
     @Req() req: CheckoutRequest,
     @Res({ passthrough: true }) res: Response,
     @Body() dto: PlaceOrderDto,
-  ): Promise<OrderDto> {
+  ): Promise<PlaceOrderResultDto> {
     const ctx = this.context(req);
-    const order = await this.checkout.place(ctx, dto);
+    const result = await this.checkout.place(ctx, dto);
     if (ctx.userId && ctx.sessionId) res.clearCookie(CART_COOKIE, { path: '/' });
-    return order;
+    return result;
   }
 
   private context(req: CheckoutRequest): CartContext {

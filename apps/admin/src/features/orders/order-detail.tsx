@@ -192,6 +192,29 @@ export function AdminOrderDetail({ id }: { id: string }) {
               ]}
             />
           </Card>
+
+          {o.payments.length > 0 && o.paymentMethod !== 'COD' ? (
+            <Card>
+              <CardTitle className="mb-2">Payment attempts</CardTitle>
+              <ul className="divide-y divide-gray-100 text-sm">
+                {o.payments.map((p) => (
+                  <li key={p.id} className="space-y-0.5 py-2">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{PAYMENT_STATUS_LABELS[p.status]}</span>
+                      <span>{money(p.amount)}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {p.provider} · {p.providerRef ?? 'no reference'} ·{' '}
+                      {formatDateTime(p.createdAt)}
+                    </p>
+                    {p.refundedAmount > 0 ? (
+                      <p className="text-xs text-gray-700">Refunded {money(p.refundedAmount)}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
         </div>
       </div>
 

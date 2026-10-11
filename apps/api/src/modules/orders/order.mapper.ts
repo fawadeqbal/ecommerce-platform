@@ -14,7 +14,9 @@ import {
   type ShippingAddress,
   type VendorOrderDetailDto,
   type VendorOrderListItem,
+  isOnlinePayment,
 } from '@ecommerce/types';
+import { paymentInclude, sessionMeta, toPaymentAttemptDto } from '../payments/payment.mapper';
 
 const itemInclude = {
   variant: {
@@ -42,6 +44,7 @@ export const orderInclude = {
     orderBy: { createdAt: 'asc' },
     include: { vendorOrder: { select: { vendor: { select: { name: true } } } } },
   },
+  payments: { orderBy: { createdAt: 'desc' }, include: paymentInclude },
 } satisfies Prisma.OrderInclude;
 
 export const orderSummaryInclude = {
@@ -87,7 +90,14 @@ function toShipmentDto(s: ShipmentRow | undefined): ShipmentDto | null {
   };
 }
 
+/** Deadline of an unpaid online order (stored on its latest gateway session). */
+function paymentExpiresAt(o: OrderFull): string | null {
+  if (o.status !== 'PENDING_PAYMENT') return null;
+  return o.payments.map(sessionMeta).find((m) => m.expiresAt)?.expiresAt ?? null;
+}
+
 export function toOrderDto(o: OrderFull): OrderDto {
+  const expiresAt = paymentExpiresAt(o);
   return {
     id: o.id,
     orderNumber: o.orderNumber,
@@ -109,6 +119,12 @@ export function toOrderDto(o: OrderFull): OrderDto {
     canCancel:
       o.vendorOrders.length > 0 &&
       o.vendorOrders.every((v) => CANCELLABLE_STATUSES.includes(v.status as OrderStatus)),
+    canPay:
+      o.status === 'PENDING_PAYMENT' &&
+      isOnlinePayment(o.paymentMethod as PaymentMethod) &&
+      (!expiresAt || new Date(expiresAt) > new Date()),
+    paymentExpiresAt: expiresAt,
+    payments: o.payments.map(toPaymentAttemptDto),
     vendorOrders: o.vendorOrders.map((v) => ({
       id: v.id,
       vendor: v.vendor,
@@ -118,14 +134,12 @@ export function toOrderDto(o: OrderFull): OrderDto {
       items: v.items.map(toItemDto),
       shipment: toShipmentDto(v.shipments[0]),
     })),
-    history: o.statusHistory.map(
-      (h): OrderHistoryEntry => ({
-        status: h.toStatus as OrderStatus,
-        note: h.note,
-        vendorName: h.vendorOrder?.vendor.name ?? null,
-        createdAt: h.createdAt.toISOString(),
-      }),
-    ),
+    history: o.statusHistory.map((h): OrderHistoryEntry => ({
+      status: h.toStatus as OrderStatus,
+      note: h.note,
+      vendorName: h.vendorOrder?.vendor.name ?? null,
+      createdAt: h.createdAt.toISOString(),
+    })),
   };
 }
 

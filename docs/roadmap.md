@@ -9,10 +9,11 @@ We build one entity at a time through every layer:
 5. App screens (admin / vendor / web)
 6. Seed data so the screen has something to show
 
-**Where we are:** Phase 1 done, Phase 2 steps 8–9 done. **Next: step 10, Payments (online gateway).**
+**Where we are:** Phase 1 done, Phase 2 steps 8–10 done (payments run on the mock gateway until a real one is
+plugged in). **Next: step 11, Shipping.**
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
-product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–9 needed no migration.
+product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration.
 
 ## Phase 1: Catalog foundation
 
@@ -30,12 +31,12 @@ product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, St
 
 ## Phase 2: Buying flow
 
-| #   | Entity                                         | API                                                                                                                                     | Admin                   | Vendor                                     | Storefront                                                                        | Status   |
-| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------ | --------------------------------------------------------------------------------- | -------- |
-| 8   | **Cart** (+ first storefront pages)            | ✅ guest/user cart, merge at sign-in, stock & price checks, save for later                                                              | –                       | –                                          | ✅ listing, category, product + variant picker, cart, sign-in/up                  | **Done** |
-| 9   | **Checkout + Orders** (vendor sub-orders, COD) | ✅ quote, idempotent place order, stock reservation, vendor status flow (ship commits stock), cancel, guest tracking, addresses, emails | ✅ list, detail, cancel | ✅ list, detail, status actions + tracking | ✅ checkout, success, my orders, order detail + cancel, track order, address book | **Done** |
-| 10  | Payments (gateway)                             |                                                                                                                                         |                         |                                            |                                                                                   | Next     |
-| 11  | Shipping                                       |                                                                                                                                         |                         |                                            |                                                                                   |          |
+| #   | Entity                                           | API                                                                                                                                       | Admin                               | Vendor                                     | Storefront                                                                                | Status   |
+| --- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- | -------- |
+| 8   | **Cart** (+ first storefront pages)              | ✅ guest/user cart, merge at sign-in, stock & price checks, save for later                                                                | –                                   | –                                          | ✅ listing, category, product + variant picker, cart, sign-in/up                          | **Done** |
+| 9   | **Checkout + Orders** (vendor sub-orders, COD)   | ✅ quote, idempotent place order, stock reservation, vendor status flow (ship commits stock), cancel, guest tracking, addresses, emails   | ✅ list, detail, cancel             | ✅ list, detail, status actions + tracking | ✅ checkout, success, my orders, order detail + cancel, track order, address book         | **Done** |
+| 10  | **Payments** (gateway abstraction, mock gateway) | ✅ PaymentProvider interface + mock adapter, signed idempotent webhooks, unpaid-order expiry, retry, auto-refund on cancel / late payment | ✅ payment attempts on order detail | ✅ only paid online orders are visible     | ✅ card / wallet / bank choice, mock gateway page, payment return, pay now on order pages | **Done** |
+| 11  | Shipping                                         |                                                                                                                                           |                                     |                                            |                                                                                           | Next     |
 
 ## Phase 3: After-sale & growth
 
