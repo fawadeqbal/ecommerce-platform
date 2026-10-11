@@ -21,6 +21,12 @@ export class RegisterDto {
   @IsString()
   @MaxLength(80)
   lastName: string;
+
+  @ApiPropertyOptional({ description: "Friend's referral code" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  referralCode?: string;
 }
 
 export class LoginDto {

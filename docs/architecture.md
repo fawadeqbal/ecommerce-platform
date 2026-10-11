@@ -222,6 +222,22 @@ lines (seller, product, category, price × qty)
 - Refunds use what was paid: cancellations refund subtotal + shipping − discount; returns refund the items' share
   after the sub-order discount (+ shipping).
 
+### Loyalty & gift cards
+
+- **Points ledger** (`PointsTransaction`) + `LoyaltyAccount.points`. EARN on a fully DELIVERED order:
+  money paid (sub-order subtotal − discounts − points / gift card share) × `loyalty.pointsPerCurrencyUnit` × tier
+  multiplier; welcome bonus at registration, points for each new review, referral reward for both sides when the
+  referred customer's first order is delivered (`/register?ref=CODE`). Tiers by lifetime points.
+- **Expiry**: EARN rows get `expiresAt` (`loyalty.expiryDays`); `LoyaltySweepService` expires unspent old points
+  FIFO (earned-and-expired − already consumed).
+- **At checkout** (after discounts): points first (≤ `loyalty.maxRedeemPercent` % of the order, value
+  `loyalty.pointValue`), then the gift card. Both are store-funded and split across sellers into
+  `VendorOrder.discountTotal`, so refunds never exceed the money paid. Order: `loyaltyDiscount`, `giftCardTotal`.
+  Nothing left to pay → payment method GIFT_CARD, order PAID immediately.
+- Points and gift card balance are debited atomically in the order transaction and **given back proportionally**
+  when sub-orders are cancelled (customer / seller / admin / unpaid expiry).
+- Gift cards: admin issues (code `GC-XXXX-XXXX`, emailed), ledger `GiftCardTransaction` ISSUE / REDEEM / REFUND / ADJUST.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

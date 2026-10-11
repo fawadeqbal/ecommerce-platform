@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { LoyaltyAdmin } from '@/features/loyalty/loyalty-admin';
 
-export const metadata: Metadata = { title: 'Loyalty & referrals' };
+export const metadata: Metadata = { title: 'Loyalty' };
 
 export default function Page() {
-  return (
-    <PagePlaceholder
-      title="Loyalty & referrals"
-      features={['Earning and redemption rules', 'Tiers and benefits', 'Referral rewards']}
-    />
-  );
+  return <LoyaltyAdmin />;
 }

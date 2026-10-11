@@ -54,6 +54,7 @@ function setup(orderStatus = 'PENDING_PAYMENT') {
     { sendEmail: jest.fn() } as unknown as NotificationsService,
     { get: jest.fn((_k: string, f?: unknown) => f) } as unknown as ConfigService,
     provider,
+    { restoreForCancellation: jest.fn() } as never,
   );
   return { prisma, tx, service };
 }

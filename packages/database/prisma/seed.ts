@@ -154,6 +154,11 @@ async function seedSettings() {
     { key: 'shipping.freeShippingAbove', group: 'shipping', value: 50 },
     { key: 'loyalty.pointsPerCurrencyUnit', group: 'loyalty', value: 1 },
     { key: 'loyalty.pointValue', group: 'loyalty', value: 0.01 },
+    { key: 'loyalty.maxRedeemPercent', group: 'loyalty', value: 50 },
+    { key: 'loyalty.signupBonus', group: 'loyalty', value: 100 },
+    { key: 'loyalty.reviewPoints', group: 'loyalty', value: 20 },
+    { key: 'loyalty.referralPoints', group: 'loyalty', value: 200 },
+    { key: 'loyalty.expiryDays', group: 'loyalty', value: 365 },
     { key: 'marketing.abandonedCartDelaysHours', group: 'marketing', value: [1, 24, 72] },
   ];
   for (const s of settings) {

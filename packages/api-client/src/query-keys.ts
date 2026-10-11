@@ -6,6 +6,14 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
   wishlist: ['wishlist'] as const,
+  loyalty: {
+    all: ['loyalty'] as const,
+    summary: ['loyalty', 'summary'] as const,
+    tiers: ['loyalty', 'tiers'] as const,
+    member: (email: string) => ['loyalty', 'member', email] as const,
+    giftCards: ['loyalty', 'gift-cards'] as const,
+    giftCard: (id: string) => ['loyalty', 'gift-card', id] as const,
+  },
   promotions: {
     all: ['promotions'] as const,
     coupons: (scope: 'admin' | 'vendor') => ['promotions', 'coupons', scope] as const,

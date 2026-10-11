@@ -25,7 +25,13 @@ export function RegisterForm() {
   const onSubmit = handleSubmit(async (values) => {
     setError(null);
     try {
-      await authApi.register({ ...values, email: values.email.trim().toLowerCase() });
+      // A friend's link (/register?ref=CODE) gives both of you points after your first order.
+      const ref = new URLSearchParams(window.location.search).get('ref') ?? undefined;
+      await authApi.register({
+        ...values,
+        email: values.email.trim().toLowerCase(),
+        referralCode: ref,
+      });
       await queryClient.invalidateQueries({ queryKey: queryKeys.me });
       await queryClient.invalidateQueries({ queryKey: queryKeys.cart });
       router.replace('/');

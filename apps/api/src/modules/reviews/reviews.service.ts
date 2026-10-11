@@ -16,6 +16,7 @@ import { paginate } from '../../common/dto/pagination.dto';
 import { readSetting } from '../../common/utils/settings';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import type { ModerateDto, ReviewDtoIn, ReviewQueryDto } from './dto/review.dto';
 import { reviewInclude, toReviewDto } from './review.mapper';
 import { summarize } from './review-rules';
@@ -44,6 +45,7 @@ export class ReviewsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly loyalty: LoyaltyService,
   ) {}
 
   // ================================================================ public
@@ -115,6 +117,7 @@ export class ReviewsService {
           include: reviewInclude,
         });
     await this.recalculate(dto.productId);
+    if (!existing) await this.loyalty.awardReview(userId, review.id);
     await this.audit.log({
       actorId: userId,
       action: existing ? 'review.update' : 'review.create',

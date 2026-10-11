@@ -99,6 +99,9 @@ export function CheckoutView() {
   // Coupon: what the customer typed vs the code sent to the API.
   const [couponInput, setCouponInput] = useState('');
   const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [redeemPoints, setRedeemPoints] = useState(false);
+  const [giftInput, setGiftInput] = useState('');
+  const [giftCardCode, setGiftCardCode] = useState<string | null>(null);
   const guestEmail = useDeferredValue(watch('email'));
   // Where the parcel goes decides the shipping zone: saved address, or the typed one (debounced).
   const [countryCode, state, city] = watch(['countryCode', 'state', 'city']);
@@ -109,6 +112,8 @@ export function CheckoutView() {
     ...(addressId ? { addressId } : { destination: typedDestination }),
     shippingRateIds,
     couponCode,
+    redeemPoints,
+    giftCardCode,
     email: guestEmail.includes('@') ? guestEmail.trim() : undefined,
   };
 
@@ -135,6 +140,8 @@ export function CheckoutView() {
         ...checkoutFormToInput(values, idempotencyKey),
         shippingRateIds,
         couponCode: q?.coupon?.applied ? couponCode : null,
+        redeemPoints,
+        giftCardCode: q?.giftCard?.applied ? giftCardCode : null,
       }),
     onSuccess: async ({ order, payment }) => {
       setPlaced(true);
@@ -432,6 +439,18 @@ export function CheckoutView() {
                       value={`−${formatMoney(d.amount, q.currency)}`}
                     />
                   ))}
+                  {q.loyalty && q.loyalty.pointsUsed > 0 ? (
+                    <Row
+                      label={`Points (${q.loyalty.pointsUsed})`}
+                      value={`−${formatMoney(q.loyalty.amount, q.currency)}`}
+                    />
+                  ) : null}
+                  {q.giftCard?.applied ? (
+                    <Row
+                      label={`Gift card ${q.giftCard.code}`}
+                      value={`−${formatMoney(q.giftCard.amount, q.currency)}`}
+                    />
+                  ) : null}
                   {q.taxTotal > 0 ? (
                     <Row label="Tax" value={formatMoney(q.taxTotal, q.currency)} />
                   ) : null}
@@ -497,6 +516,58 @@ export function CheckoutView() {
                       {q.coupon.applied
                         ? `${q.coupon.code} applied${q.coupon.message ? ` — ${q.coupon.message}` : ''}`
                         : q.coupon.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                {q.loyalty && q.loyalty.balance > 0 ? (
+                  <Checkbox
+                    label={`Use my points (${q.loyalty.balance} available, up to ${Math.min(q.loyalty.balance, q.loyalty.maxPoints)} on this order)`}
+                    checked={redeemPoints}
+                    onChange={(e) => setRedeemPoints(e.target.checked)}
+                  />
+                ) : null}
+
+                <div className="space-y-1">
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="Gift card code"
+                      placeholder="Gift card code"
+                      value={giftInput}
+                      onChange={(e) => setGiftInput(e.target.value)}
+                    />
+                    {giftCardCode ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setGiftCardCode(null);
+                          setGiftInput('');
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={!giftInput.trim()}
+                        onClick={() => setGiftCardCode(giftInput.trim())}
+                      >
+                        Apply
+                      </Button>
+                    )}
+                  </div>
+                  {q.giftCard ? (
+                    <p
+                      className={cn(
+                        'text-xs',
+                        q.giftCard.applied ? 'text-green-700' : 'text-red-600',
+                      )}
+                    >
+                      {q.giftCard.applied
+                        ? `${formatMoney(q.giftCard.amount, q.currency)} from ${q.giftCard.code} · ${formatMoney(q.giftCard.remainingBalance, q.currency)} left on the card`
+                        : q.giftCard.message}
                     </p>
                   ) : null}
                 </div>

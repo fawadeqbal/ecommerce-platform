@@ -4,6 +4,7 @@ import type { ShippingAddress } from '../users/address';
 import type { PaymentAttemptDto, PaymentOptionDto, PaymentSessionDto } from '../payments/payment';
 import type { ShippingOptionDto } from '../shipping/shipping';
 import type { CouponResultDto, DiscountLineDto } from '../promotions/promotion';
+import type { CheckoutGiftCardDto, CheckoutLoyaltyDto } from '../loyalty/loyalty';
 
 export type BadgeTone = 'gray' | 'green' | 'yellow' | 'red' | 'blue';
 
@@ -104,6 +105,8 @@ export interface CheckoutGroup {
   discount: number;
   /** Part of `discount` paid by the seller (seller coupons). */
   sellerFundedDiscount: number;
+  /** Share of points + gift card used for this seller's items (store-funded). */
+  tenders: number;
 }
 
 export interface CheckoutQuoteDto {
@@ -131,6 +134,9 @@ export interface CheckoutQuoteDto {
   /** Automatic promotions and the coupon, as applied. */
   discounts: DiscountLineDto[];
   coupon: CouponResultDto | null;
+  /** Signed-in customers: points balance and what this order uses (null for guests). */
+  loyalty: CheckoutLoyaltyDto | null;
+  giftCard: CheckoutGiftCardDto | null;
 }
 
 export interface PlaceOrderInput {
@@ -145,6 +151,8 @@ export interface PlaceOrderInput {
   /** Chosen delivery option per seller: { vendorId: rateId }. Cheapest when omitted. */
   shippingRateIds?: Record<string, string>;
   couponCode?: string | null;
+  redeemPoints?: boolean;
+  giftCardCode?: string | null;
   customerNote?: string | null;
   /** Random id per checkout attempt — a double click never creates two orders. */
   idempotencyKey: string;
@@ -216,6 +224,8 @@ export interface OrderDto {
   taxTotal: number;
   grandTotal: number;
   couponCode: string | null;
+  loyaltyDiscount: number;
+  giftCardTotal: number;
   shippingAddress: ShippingAddress;
   customerNote: string | null;
   placedAt: string;

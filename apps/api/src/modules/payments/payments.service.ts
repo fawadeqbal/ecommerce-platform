@@ -20,6 +20,7 @@ import { readSetting } from '../../common/utils/settings';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import {
   sendOrderNotice,
   sendOrderPlacedEmails,
@@ -63,6 +64,7 @@ export class PaymentsService {
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    private readonly loyalty: LoyaltyService,
   ) {}
 
   get providerName(): string {
@@ -569,6 +571,14 @@ export class PaymentsService {
       return true;
     });
     if (cancelled) {
+      const vos = await this.prisma.vendorOrder.findMany({
+        where: { orderId },
+        select: { id: true },
+      });
+      await this.loyalty.restoreForCancellation(
+        orderId,
+        vos.map((v) => v.id),
+      );
       await this.audit.log({
         action: 'order.payment_expired',
         entityType: 'Order',

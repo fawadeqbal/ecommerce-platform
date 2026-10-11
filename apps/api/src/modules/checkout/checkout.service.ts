@@ -29,6 +29,9 @@ import { commissionFor, generateOrderNumber } from '../orders/order-rules';
 import { reserveStock } from '../orders/order-stock';
 import { PaymentsService } from '../payments/payments.service';
 import { PromotionsService } from '../promotions/promotions.service';
+import { allocate } from '../promotions/discount-engine';
+import { GiftCardsService } from '../loyalty/gift-cards.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { shippingMethodLabel } from '../shipping/shipping-rules';
 import { ShippingService } from '../shipping/shipping.service';
 import type { PlaceOrderDto } from './dto/checkout.dto';
@@ -53,6 +56,8 @@ export class CheckoutService {
     private readonly payments: PaymentsService,
     private readonly shipping: ShippingService,
     private readonly promotions: PromotionsService,
+    private readonly loyalty: LoyaltyService,
+    private readonly giftCards: GiftCardsService,
   ) {}
 
   async quote(ctx: CartContext, input: CheckoutQuoteInput = {}): Promise<CheckoutQuoteDto> {
@@ -93,6 +98,7 @@ export class CheckoutService {
         weightGrams: g.items.reduce((n, i) => n + (weights.get(i.variantId) ?? 0) * i.quantity, 0),
         discount: 0,
         sellerFundedDiscount: 0,
+        tenders: 0,
       };
     });
     const subtotal = cart.subtotal;
@@ -123,7 +129,36 @@ export class CheckoutService {
       g.sellerFundedDiscount = d ? fromCents(d.vendorFundedCents) : 0;
     }
     const discountTotal = fromCents(deals.totalCents);
-    const beforeFees = fromCents(toCents(subtotal) + toCents(shippingTotal) - deals.totalCents);
+    const afterDiscountCents = toCents(subtotal) + toCents(shippingTotal) - deals.totalCents;
+    // Points, then the gift card, pay part (or all) of what is left. Store-funded; split across sellers so
+    // refunds on cancellation / returns never exceed the money actually paid.
+    const loyalty = ctx.userId
+      ? await this.loyalty.checkoutPoints(
+          ctx.userId,
+          afterDiscountCents,
+          Boolean(input.redeemPoints),
+        )
+      : null;
+    const pointsCents = loyalty ? toCents(loyalty.amount) : 0;
+    const giftCard = input.giftCardCode
+      ? await this.giftCards.checkoutCard(
+          input.giftCardCode,
+          cart.currency,
+          afterDiscountCents - pointsCents,
+        )
+      : null;
+    const tenderCents = pointsCents + (giftCard?.applied ? toCents(giftCard.amount) : 0);
+    const shares = allocate(
+      tenderCents,
+      new Map(
+        groups.map((g) => [
+          g.vendor.id,
+          toCents(g.subtotal) + toCents(g.shipping) - toCents(g.discount),
+        ]),
+      ),
+    );
+    for (const g of groups) g.tenders = fromCents(shares.get(g.vendor.id) ?? 0);
+    const beforeFees = fromCents(afterDiscountCents - tenderCents);
     // COD fee = store fee + the selected delivery options' COD fees.
     const codFeeTotal = fromCents(toCents(codFeeSetting) + shipping.codFeeCents);
     const codTotal = fromCents(toCents(beforeFees) + toCents(codFeeTotal));
@@ -141,7 +176,7 @@ export class CheckoutService {
       available: reason === null,
       reason,
     });
-    const paymentOptions: PaymentOptionDto[] = [
+    let paymentOptions: PaymentOptionDto[] = [
       ...online.map((m) => option(m, 0, null)),
       option(
         'COD',
@@ -153,6 +188,9 @@ export class CheckoutService {
             : `Available for orders up to ${formatMoney(codMax, cart.currency)}`,
       ),
     ];
+    // Nothing left to pay: no payment method needed.
+    if (cart.itemCount > 0 && toCents(beforeFees) === 0)
+      paymentOptions = [option('GIFT_CARD', 0, null)];
     const paymentMethods = paymentOptions.filter((o) => o.available).map((o) => o.method);
     const selected =
       requested && paymentMethods.includes(requested) ? requested : (paymentMethods[0] ?? null);
@@ -199,6 +237,8 @@ export class CheckoutService {
         deals.couponCode && deals.coupon
           ? { code: deals.couponCode, applied: deals.coupon.applied, message: deals.coupon.message }
           : null,
+      loyalty,
+      giftCard,
     };
   }
 
@@ -235,8 +275,12 @@ export class CheckoutService {
       destination: address,
       shippingRateIds: dto.shippingRateIds,
       couponCode: dto.couponCode,
+      redeemPoints: dto.redeemPoints,
+      giftCardCode: dto.giftCardCode,
       email,
     });
+    if (dto.giftCardCode && !quote.giftCard?.applied)
+      throw new BadRequestException(quote.giftCard?.message ?? 'This gift card cannot be used');
     if (dto.couponCode && !quote.coupon?.applied)
       throw new BadRequestException(quote.coupon?.message ?? 'This coupon cannot be used');
     if (!quote.canPlace) throw new BadRequestException(quote.problems.join(' '));
@@ -378,7 +422,12 @@ export class CheckoutService {
     defaultRate: number;
   }): Promise<OrderFull> {
     const { cartRow, quote, dto, email, userId, address, defaultRate, online, holdMinutes } = args;
-    const initialStatus = online ? ('PENDING_PAYMENT' as const) : ('COD_CONFIRMED' as const);
+    const prepaid = dto.paymentMethod === 'GIFT_CARD'; // fully covered by gift card / points
+    const initialStatus = online
+      ? ('PENDING_PAYMENT' as const)
+      : prepaid
+        ? ('PAID' as const)
+        : ('COD_CONFIRMED' as const);
 
     for (let attempt = 0; attempt < 3; attempt++) {
       const orderNumber = generateOrderNumber();
@@ -396,11 +445,13 @@ export class CheckoutService {
                 shippingTotal: quote.shippingTotal,
                 discountTotal: quote.discountTotal,
                 couponCode: quote.coupon?.applied ? quote.coupon.code : null,
+                loyaltyDiscount: quote.loyalty?.amount ?? 0,
+                giftCardTotal: quote.giftCard?.applied ? quote.giftCard.amount : 0,
                 taxTotal: 0,
                 grandTotal: quote.grandTotal,
                 shippingAddress: address as unknown as Prisma.InputJsonValue,
                 paymentMethod: dto.paymentMethod,
-                paymentStatus: 'PENDING',
+                paymentStatus: prepaid ? 'PAID' : 'PENDING',
                 customerNote: dto.customerNote ?? null,
                 idempotencyKey: dto.idempotencyKey,
               },
@@ -431,7 +482,7 @@ export class CheckoutService {
                   status: initialStatus,
                   shippingRateId: group.shippingRateId,
                   shippingMethod: group.shippingMethod,
-                  discountTotal: group.discount,
+                  discountTotal: fromCents(toCents(group.discount) + toCents(group.tenders)),
                   subtotal: group.subtotal,
                   shippingTotal: group.shipping,
                   commissionAmount: commission,
@@ -479,8 +530,8 @@ export class CheckoutService {
               data: {
                 orderId: order.id,
                 method: dto.paymentMethod,
-                provider: online ? this.payments.providerName : 'cod',
-                status: 'PENDING',
+                provider: online ? this.payments.providerName : prepaid ? 'internal' : 'cod',
+                status: prepaid ? 'PAID' : 'PENDING',
                 amount: quote.grandTotal,
                 currency: quote.currency,
               },
@@ -493,6 +544,23 @@ export class CheckoutService {
                 order.id,
                 userId,
                 couponLine?.amount ?? 0,
+              );
+            }
+            if (quote.loyalty && quote.loyalty.pointsUsed > 0 && userId) {
+              await this.loyalty.redeemInTx(
+                tx,
+                userId,
+                quote.loyalty.pointsUsed,
+                order.id,
+                orderNumber,
+              );
+            }
+            if (quote.giftCard?.applied) {
+              await this.giftCards.redeemInTx(
+                tx,
+                quote.giftCard.code,
+                quote.giftCard.amount,
+                order.id,
               );
             }
             await tx.cartItem.deleteMany({ where: { cartId: cartRow.id } });

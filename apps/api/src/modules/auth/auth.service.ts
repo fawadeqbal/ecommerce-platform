@@ -6,6 +6,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { EmailTemplateKey, Role, type AuthTokens, type JwtPayload } from '@ecommerce/types';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import type { LoginDto, RegisterDto } from './dto/auth.dto';
 
 /**
@@ -19,6 +20,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly notifications: NotificationsService,
+    private readonly loyalty: LoyaltyService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokens> {
@@ -43,6 +45,7 @@ export class AuthService {
       userId: user.id,
       data: { firstName: user.firstName },
     });
+    await this.loyalty.onRegister(user.id, dto.referralCode);
 
     return this.issueTokens(user.id);
   }

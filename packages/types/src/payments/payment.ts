@@ -19,6 +19,7 @@ export const PAYMENT_METHOD_DESCRIPTIONS: Partial<Record<PaymentMethod, string>>
   CARD: 'Visa, Mastercard or UnionPay debit / credit card.',
   WALLET: 'Mobile wallet such as JazzCash or Easypaisa.',
   BANK_TRANSFER: 'Pay directly from your bank account.',
+  GIFT_CARD: 'Fully covered by your gift card / points — nothing else to pay.',
 };
 
 /** One row of the payment picker at checkout. */
@@ -42,6 +43,9 @@ export interface CheckoutQuoteInput {
   /** Chosen delivery option per seller: { vendorId: rateId }. */
   shippingRateIds?: Record<string, string>;
   couponCode?: string | null;
+  /** Use loyalty points (signed-in). */
+  redeemPoints?: boolean;
+  giftCardCode?: string | null;
   /** Guest email, for per-customer coupon limits. */
   email?: string;
 }

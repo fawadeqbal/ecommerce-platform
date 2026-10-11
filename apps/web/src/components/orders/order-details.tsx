@@ -143,7 +143,16 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
               value={order.shippingTotal === 0 ? 'Free' : money(order.shippingTotal)}
             />
             {order.discountTotal > 0 ? (
-              <Line label="Discount" value={`−${money(order.discountTotal)}`} />
+              <Line
+                label={order.couponCode ? `Discount (${order.couponCode})` : 'Discount'}
+                value={`−${money(order.discountTotal)}`}
+              />
+            ) : null}
+            {order.loyaltyDiscount > 0 ? (
+              <Line label="Points" value={`−${money(order.loyaltyDiscount)}`} />
+            ) : null}
+            {order.giftCardTotal > 0 ? (
+              <Line label="Gift card" value={`−${money(order.giftCardTotal)}`} />
             ) : null}
             {order.taxTotal > 0 ? <Line label="Tax" value={money(order.taxTotal)} /> : null}
             <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-semibold">
