@@ -257,28 +257,119 @@ seller: `vendor@example.com` / `Vendor@12345`; customers register at http://loca
 
 ---
 
-## 8. How the previous agent worked (optional workflow)
+## 8. The generator-script workflow (how every step so far was written)
 
-The first agent could not run `pnpm` against this machine directly, so it worked like this — you may
-use the same discipline even when editing files directly:
+Every step in the roadmap was written by **Python generator scripts**, not by hand-editing files one at a time.
+A script writes new files in full and changes existing files by exact text replacement, failing loudly if the
+text isn't found. This keeps changes reproducible, reviewable and safe to re-check. Keep the scripts **outside**
+the repo (e.g. a `scratch/gen/` folder that is not committed). Use this workflow, or at least its discipline,
+for every new step.
 
-1. **Plan the entity** from `docs/roadmap.md` + `schema.prisma` (list exact fields, rules, endpoints).
-2. **Write all files for one step from a generator script** (a Python script that writes new files and
-   patches existing ones by *exact string replacement*, failing loudly if the target text is not found).
-   This makes edits reproducible and prevents silently editing the wrong place.
-   - Patch targets must match the **prettier-formatted** text (multi-line imports!), not how you imagine it.
-   - Patch scripts are not idempotent: if one fails halfway, check which patches already applied before re-running.
-3. **Format + syntax-check** every touched file (`prettier --write`, TypeScript syntactic diagnostics).
-4. **Deliver only the changed files**, then verify on the machine that earlier fixes were not overwritten.
-5. **User runs** `pnpm install` (if deps changed) → `pnpm db:migrate` (if schema changed) → `pnpm db:seed` → `pnpm dev`, and reports errors.
-6. Fix errors at the root cause (never by disabling type checks), then update `docs/roadmap.md`.
+### 8.1 One step = three scripts, run in this order
 
-If you can run commands yourself, replace steps 3–5 with: `pnpm typecheck`, `pnpm test`, open the screen.
+| Script | Writes | Typical content |
+|---|---|---|
+| `stepN_shared.py` | `packages/types`, `packages/api-client`, `packages/database/prisma/seed.ts` (+ `schema.prisma` if needed) | DTO interfaces, labels/tones/state tables, zod form schemas + `emptyXForm`/`xToForm`/`xFormToInput`, index exports, `xsApi` endpoints, `queryKeys.xs`, seed functions/settings |
+| `stepN_api.py` | `apps/api/src/...` | `common/utils/*` helpers, DTOs (class-validator mirroring zod), `x-rules.ts` (pure logic), `x.mapper.ts` (`include` + `toXDto`), service, admin/vendor/public controllers, module registration, `*.spec.ts` |
+| `stepN_ui.py` | `packages/ui`, `apps/web`, `apps/vendor`, `apps/admin`, `docs/roadmap.md` | new shared components + `index.ts` export, `features/<x>/*` (admin/vendor), `components/<domain>/*` (web), thin `page.tsx` files, nav/header/cart patches, roadmap row → Done and next row → Next |
+
+Shared runs first because API and UI import from it. Large steps can split further (`step6a_*`, `step6b_*`).
+
+### 8.2 Script skeleton
+
+```python
+"""Step N — <entity>: what this script writes."""
+import os
+
+ROOT = "/path/to/repo"          # repo root
+CHANGED = []                    # every touched path, for formatting + delivery
+
+def w(path, content):
+    """Write a whole file (new or fully replaced). Content is a triple-quoted string, LF line endings."""
+    full = os.path.join(ROOT, path)
+    os.makedirs(os.path.dirname(full), exist_ok=True)
+    text = content.lstrip("\n")
+    with open(full, "w", newline="\n") as f:
+        f.write(text if text.endswith("\n") else text + "\n")
+    CHANGED.append(path)
+
+def patch(path, old, new):
+    """Change part of an existing file. `old` must match EXACTLY once-or-first (prettier-formatted text)."""
+    full = os.path.join(ROOT, path)
+    src = open(full).read()
+    assert old in src, f"pattern not found in {path}: {old[:60]!r}"
+    open(full, "w", newline="\n").write(src.replace(old, new, 1))
+    CHANGED.append(path)
+
+# ---- new files: always write the COMPLETE file
+w("packages/types/src/orders/order.ts", """
+export interface OrderDto { ... }
+""")
+
+# ---- existing files: small, anchored patches
+patch("packages/types/src/index.ts",
+      "export * from './cart/cart';\n",
+      "export * from './cart/cart';\nexport * from './orders/order';\n")
+
+open("changedN_shared.txt", "w").write("\n".join(sorted(set(CHANGED))) + "\n")
+print(len(set(CHANGED)), "files")
+```
+
+Rules for writing the content:
+- **New file → `w()` with the whole file.** Never patch a file you are creating.
+- **Existing file → `patch()` with the smallest unique anchor** (an import line, a closing `];`, a table row).
+  Open the file first and copy the anchor **exactly as prettier formatted it** (multi-line imports, trailing commas).
+- Replacing a placeholder page (`PagePlaceholder` stub) → `w()` the whole page; delete stubs that no longer compile.
+- Inside Python triple-quoted strings, JS template literals (`${x}`) are fine; escape only `\` and `"""`.
+- Each script writes its own changed-list file (`changedN_shared.txt`, `changedN_api.txt`, `changedN_ui.txt`).
+
+### 8.3 Run, check, deliver
+
+```bash
+python3 stepN_shared.py && python3 stepN_api.py && python3 stepN_ui.py
+cat changedN_*.txt | sort -u > changedN.txt
+
+# format exactly the touched files
+grep -E '\.(ts|tsx|md|json|yml)$' changedN.txt | xargs npx prettier --write
+
+# syntax check (no node_modules needed) — syntax.js:
+#   const ts = require('typescript');
+#   const p = ts.createProgram(files, { noResolve: true, jsx: ts.JsxEmit.Preserve, experimentalDecorators: true });
+#   print p.getSyntacticDiagnostics(sf) for each file
+node syntax.js $(grep -E '\.tsx?$' changedN.txt)
+
+# full checks when dependencies are installed
+pnpm typecheck && pnpm test
+```
+
+Delivering to another machine: `tar -czf stepN.tgz -T changedN.txt`, copy, `tar -xzf stepN.tgz --overwrite` in the repo root.
+Only the changed files travel, so earlier fixes on that machine are never overwritten.
+
+### 8.4 If a script fails halfway
+
+`patch()` is **not idempotent**: patches before the failing one are already applied.
+1. Read the assertion message. It names the file and the anchor that didn't match.
+2. Open that file, copy the real (prettier-formatted) text, fix the anchor.
+3. Before re-running, check which earlier patches already landed (grep for the new text). Either revert them
+   or guard them (`if new not in src:`), then run again.
+
+### 8.5 Order of thinking for each step (before writing any script)
+
+1. Read the roadmap row and `schema.prisma` → list fields, statuses, rules, endpoints, screens, emails, settings.
+2. Decide the shared contract first (DTOs + labels + state tables) because API and all three apps use it.
+3. Write the API so every rule lives there (totals, stock, allowed transitions, ownership).
+4. Write the screens against the api-client only. Screens never compute business results.
+5. Seed data, roadmap update, then the user's run commands: `pnpm db:migrate` (only if the schema changed) →
+   `pnpm db:seed` → `pnpm dev`, plus a short click-through test.
+
+If you can run commands directly (dependencies installed), you may edit files directly instead of using scripts,
+but keep the same order (shared → API → UI), the same file locations, and run `pnpm typecheck && pnpm test` before
+saying a step is done.
 
 ---
 
 ## 9. Prompt template for the next agent
 
 > Read `AGENTS.md`, `docs/roadmap.md` and `docs/architecture.md`. Build the next entity marked **Next** following §3
-> exactly, copying the closest reference from §4. Do not modify unrelated files. When done, list the files you
+> exactly (written with the §8 shared → API → UI scripts), copying the closest reference from §4. Do not modify unrelated files. When done, list the files you
 > changed, the commands I must run, and update the roadmap (plus CREDENTIALS/architecture if affected).
