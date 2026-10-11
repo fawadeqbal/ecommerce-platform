@@ -51,6 +51,7 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 
 | Key                                          | Default                                                      | Effect                                                                                  |
 | -------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `store.timezone`                             | `Asia/Karachi`                                               | Time zone used to cut days in reports and dashboards                                    |
 | `checkout.guestCheckout`                     | `true`                                                       | Allow checkout without an account                                                       |
 | `checkout.codFee`                            | `0`                                                          | Cash-on-delivery fee added to the total                                                 |
 | `checkout.codMaxOrderTotal`                  | `5000`                                                       | COD hidden above this order total                                                       |

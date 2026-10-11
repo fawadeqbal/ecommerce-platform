@@ -115,6 +115,13 @@ export const queryKeys = {
     all: ['media'] as const,
     list: (folder?: string, page = 1) => ['media', 'list', folder ?? 'all', page] as const,
   },
+  reports: {
+    all: ['reports'] as const,
+    adminSales: (range: object) => ['reports', 'admin-sales', range] as const,
+    adminAttention: ['reports', 'admin-attention'] as const,
+    vendorSales: (range: object) => ['reports', 'vendor-sales', range] as const,
+    vendorAttention: ['reports', 'vendor-attention'] as const,
+  },
   cms: {
     all: ['cms'] as const,
     pages: ['cms', 'pages'] as const,

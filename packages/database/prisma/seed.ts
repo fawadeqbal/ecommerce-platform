@@ -139,6 +139,8 @@ async function seedSettings() {
     { key: 'store.name', group: 'general', value: 'Ecommerce' },
     { key: 'store.supportEmail', group: 'general', value: 'support@example.com' },
     { key: 'store.maintenanceMode', group: 'general', value: false },
+    // IANA zone used for report day boundaries (e.g. 'UTC', 'Asia/Karachi', 'Europe/London').
+    { key: 'store.timezone', group: 'general', value: 'Asia/Karachi' },
     { key: 'marketplace.productApprovalRequired', group: 'vendors', value: true },
     { key: 'marketplace.defaultCommissionRate', group: 'vendors', value: 10 },
     { key: 'marketplace.payoutCycle', group: 'vendors', value: 'MONTHLY' },

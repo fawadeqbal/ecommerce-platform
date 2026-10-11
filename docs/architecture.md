@@ -250,6 +250,21 @@ lines (seller, product, category, price × qty)
 - Status: PENDING → PROCESSING (transfer sent) → PAID (reference required, seller emailed); FAILED can be retried.
   Cancelling a PENDING / FAILED payout deletes it and frees its sub-orders for the next run. All audited.
 
+### CMS
+
+Pages are stored as typed blocks (heading, paragraph, image, button) validated by `pageContentSchema` on both the
+admin form and the API, so no raw HTML is ever rendered. Banners are live when active and inside
+`startsAt`/`endsAt`. The storefront reads pages, banners, menus and FAQs through public `/cms/*` endpoints cached
+for 60 s, and falls back to built-in links/hero when the CMS is empty or unreachable.
+
+### Reports
+
+- **Counted order** = not `CANCELLED` and not `PENDING_PAYMENT` (an unpaid online order). Gross sales = Σ order
+  grand total of counted orders; seller sales = Σ sub-order item subtotal; refunds are dated by the refund itself.
+- Days are cut in the `store.timezone` setting (timestamps are stored in UTC); unknown zones fall back to UTC.
+- Range up to 366 days, default last 30; buckets switch day → week (Mon) → month by length. Every KPI is compared
+  with the equally long period right before. Aggregation runs in Postgres (`reports.service.ts`).
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

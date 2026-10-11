@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { VendorDashboard } from '@/features/reports/vendor-dashboard';
 
-export const metadata: Metadata = { title: 'Vendor dashboard' };
+export const metadata: Metadata = { title: 'Dashboard' };
 
-export default function Page() {
-  return (
-    <PagePlaceholder
-      title="Vendor dashboard"
-      features={['Sales, orders, earnings at a glance', 'Low-stock alerts', 'Pending orders']}
-    />
-  );
+export default function DashboardPage() {
+  return <VendorDashboard />;
 }
