@@ -12,6 +12,8 @@ const NAV = [
   { href: '/account/wishlist', label: 'Wishlist' },
   { href: '/account/loyalty', label: 'Points' },
   { href: '/account/addresses', label: 'Addresses' },
+  { href: '/account/profile', label: 'Profile' },
+  { href: '/account/preferences', label: 'Preferences' },
 ];
 
 /** Account area: side navigation + sign-in gate. */
@@ -62,7 +64,17 @@ export function AccountShell({ children }: { children: ReactNode }) {
           </Link>
         ))}
       </nav>
-      <div className="min-w-0">{children}</div>
+      <div className="min-w-0 space-y-4">
+        {!me.emailVerifiedAt && !pathname.startsWith('/account/profile') ? (
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+            Please verify your email address.{' '}
+            <Link href="/account/profile" className="font-medium underline">
+              Send the link again
+            </Link>
+          </div>
+        ) : null}
+        {children}
+      </div>
     </div>
   );
 }

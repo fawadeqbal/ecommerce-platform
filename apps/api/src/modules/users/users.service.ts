@@ -25,11 +25,19 @@ export class UsersService {
         status: true,
         emailVerifiedAt: true,
         createdAt: true,
+        passwordHash: true,
+        googleId: true,
         roles: { select: { role: { select: { name: true } } } },
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    return { ...user, roles: user.roles.map((r) => r.role.name) };
+    const { passwordHash, googleId, ...rest } = user;
+    return {
+      ...rest,
+      roles: user.roles.map((r) => r.role.name),
+      hasPassword: passwordHash !== null,
+      googleLinked: googleId !== null,
+    };
   }
 
   // ---------------------------------------------------------------- addresses

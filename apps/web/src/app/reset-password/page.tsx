@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { Suspense } from 'react';
+import { AuthCard } from '@/components/auth/auth-card';
+import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 
-export const metadata: Metadata = { title: 'Reset password' };
+export const metadata: Metadata = { title: 'Choose a new password', robots: { index: false } };
 
-export default function Page() {
+export default function ResetPasswordPage() {
   return (
-    <PagePlaceholder title="Reset password" features={['Set new password from emailed token']} />
+    <AuthCard title="Choose a new password" subtitle="At least 8 characters.">
+      <Suspense>
+        <ResetPasswordForm />
+      </Suspense>
+    </AuthCard>
   );
 }

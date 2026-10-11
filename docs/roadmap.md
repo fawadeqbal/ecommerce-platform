@@ -10,7 +10,7 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-Phase 3: steps 12–19 and 18b done. **Next (optional): branches / multi-location.**
+Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 21.**
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
@@ -53,4 +53,22 @@ shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.
 | 19  | **Reports & dashboards**              | ✅ sales KPIs with previous-period comparison (gross sales, orders, AOV, items, commission, refunds, new customers, cancellation rate), day / week / month series in the store time zone (`store.timezone`), breakdowns by status & payment method, top products / sellers / categories, seller-scoped report, attention counters | ✅ Dashboard (to-dos + 30 days), Reports with date range + CSV export   | ✅ Dashboard (to-dos + 30 days), Analytics with date range + CSV export | –                                                                                                                            | **Done** |
 | 18b | **Blog**                              | ✅ posts (typed blocks like pages, tags, cover, SEO, author), scheduling via future publish date, categories (no delete while used), public list with category / tag filters and pagination, post with related posts, sitemap of pages + posts                                                                                    | ✅ Content → Blog: posts (status tabs, block editor) and categories     | –                                                                       | ✅ /blog with category chips, tags and paging, /blog/[slug] with JSON-LD and related posts, sitemap                          | **Done** |
 
-Then (optional): branches / multi-location (nearest-branch routing, branch staff, transfers, click & collect)
+## Phase 4: Scope completion (audit of docs/scope.md vs what is built)
+
+| #   | Entity                             | Covers (scope section)                                                                                                                                                        | Status   |
+| --- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 20  | **Account & auth completion**      | Email verification, forgot / reset password, email OTP login, Google OAuth, profile + change password, email preferences, account deletion request (3.4)                      | **Done** |
+| 21  | **Search & discovery**             | Search page with typo-tolerant search + suggestions, brand pages, seller store pages, recently viewed, related / frequently bought together, product view tracking (3.2, 3.3) | Next     |
+| 22  | **Support & disputes**             | Contact form → ticket, admin ticket inbox (assign, priority, email replies, internal notes), customer ↔ seller disputes (3.8, 5.15, 5.7)                                      |          |
+| 23  | **Customers admin**                | Customer list & profile (orders, addresses, points), segments (new, repeat, high-value, inactive), block / unblock (5.6)                                                      |          |
+| 24  | **Roles, staff & system settings** | Roles & granular permissions, admin users, audit log viewer, store settings & maintenance mode, seller staff accounts (5.18, 4.6)                                             |          |
+| 25  | **Commission rules**               | Global / per-category / per-seller commission applied at checkout (5.7)                                                                                                       |          |
+| 26  | **Taxes, currencies & languages**  | Tax classes & regional rates (inclusive / exclusive) at checkout, currency switcher with exchange rates, storefront languages (5.13)                                          |          |
+| 27  | **Payment settings & logs**        | Enable / disable gateways, credentials, COD by zone, transaction & webhook logs (5.12)                                                                                        |          |
+| 28  | **Email marketing**                | Newsletter subscribers, campaigns to segments with scheduling, abandoned-cart sequence, win-back (5.14)                                                                       |          |
+| 29  | **Email templates & logs**         | Template editor (subject / blocks overrides) and email log viewer (5.18, 6)                                                                                                   |          |
+| 30  | **SEO tools**                      | Redirect manager (301), canonical URLs, full sitemap (products, categories, brands, stores), Organization / Breadcrumb structured data (5.17)                                 |          |
+| 31  | **Documents & bulk tools**         | Invoice PDF, packing slips, order notes, manual orders, reorder / buy now, CSV product import / export (3.7, 4.2, 4.4, 5.2, 5.4)                                              |          |
+| 32  | **Reports extras**                 | Customer, coupon, tax, inventory & abandoned-cart reports, conversion rate, scheduled report emails (5.1, 5.16, 4.6)                                                          |          |
+
+Later (optional, not in scope doc): branches / multi-location.

@@ -115,6 +115,8 @@ export const queryKeys = {
     all: ['media'] as const,
     list: (folder?: string, page = 1) => ['media', 'list', folder ?? 'all', page] as const,
   },
+  emailPreferences: ['me', 'email-preferences'] as const,
+  authProviders: ['auth', 'providers'] as const,
   reports: {
     all: ['reports'] as const,
     adminSales: (range: object) => ['reports', 'admin-sales', range] as const,
