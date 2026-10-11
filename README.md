@@ -1,7 +1,15 @@
 # E-Commerce Platform (Monorepo)
 
 Multi-vendor e-commerce platform built with **Next.js**, **NestJS**, **PostgreSQL** and **Prisma**.
-Email is the only notification channel. Full scope: [`docs/scope.md`](docs/scope.md).
+Email is the only notification channel.
+
+| Doc                                            | What it is for                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------------- |
+| [`docs/roadmap.md`](docs/roadmap.md)           | What is built, what is next (progress table)                           |
+| [`AGENTS.md`](AGENTS.md)                       | How to write code here: recipe, conventions, gotchas (read first)      |
+| [`docs/architecture.md`](docs/architecture.md) | Request flow, packages, business flows (vendor, product, stock, order) |
+| [`CREDENTIALS.md`](CREDENTIALS.md)             | Local URLs, logins, seeded demo data, test walkthroughs                |
+| [`docs/scope.md`](docs/scope.md)               | Full product scope (all phases)                                        |
 
 ## Stack
 
@@ -9,12 +17,12 @@ Email is the only notification channel. Full scope: [`docs/scope.md`](docs/scope
 | -------------- | -------------------------------------------------------------------------------------- |
 | Monorepo       | Turborepo + pnpm workspaces                                                            |
 | Frontends      | Next.js 15 (App Router), React 19, Tailwind CSS, TanStack Query, React Hook Form + Zod |
-| API            | NestJS 11 (modular), REST + Swagger, class-validator, JWT                              |
+| API            | NestJS 11 (modular), REST + Swagger, class-validator, JWT in HttpOnly cookies          |
 | Database       | PostgreSQL 16 + Prisma 6 (`pg_trgm` for fuzzy search)                                  |
 | Queues / cache | Redis + BullMQ (separate worker process)                                               |
 | Email          | React Email templates, provider-agnostic sender (SMTP → Mailpit locally)               |
 | Storage        | S3-compatible (MinIO locally)                                                          |
-| Testing        | Jest, Supertest, Playwright                                                            |
+| Testing        | Jest (API unit tests), Playwright (planned)                                            |
 | DevOps         | Docker, GitHub Actions                                                                 |
 
 ## Structure
@@ -28,12 +36,13 @@ apps/
   worker/           NestJS BullMQ worker (emails, cron jobs)
 packages/
   config/           shared tsconfig, ESLint, Tailwind preset
-  types/            shared enums, email keys, queue names, API contracts
-  ui/               shared React components (Button, Card, AppShell, …)
+  types/            shared DTO interfaces, enums, zod form schemas, helpers (compiled, CJS)
+  api-client/       typed fetch functions + TanStack Query keys used by all three Next apps
+  ui/               shared React components (DataTable, Modal, Tabs, Timeline, AppShell, …)
   database/         Prisma schema, migrations, seed, Prisma client
   email-templates/  React Email templates + renderEmail()             → preview http://localhost:3003
 docker/             Dockerfiles + Postgres init
-docs/               scope document, architecture notes
+docs/               scope, roadmap, architecture
 ```
 
 ## Prerequisites
@@ -42,7 +51,7 @@ docs/               scope document, architecture notes
 - pnpm 9+ (`corepack enable` then `corepack prepare pnpm@9.15.4 --activate`)
 - Docker Desktop (for Postgres, Redis, Mailpit, MinIO)
 
-## Getting started
+## Getting started (fresh machine)
 
 ```bash
 # 1. Install dependencies
@@ -55,18 +64,29 @@ cp .env.example .env          # Git Bash / macOS / Linux
 # 3. Start infrastructure (Postgres, Redis, Mailpit, MinIO)
 pnpm infra:up
 
-# 4. Database: create the first migration, then seed roles/admin/settings
-pnpm db:migrate --name init
+# 4. Database: apply all migrations, then seed demo data
+pnpm db:migrate
 pnpm db:seed
 
 # 5. Run everything (web, admin, vendor, api, worker)
 pnpm dev
 ```
 
-Commit the generated `pnpm-lock.yaml` and `packages/database/prisma/migrations/` after step 4. CI and Docker builds
-use `--frozen-lockfile`.
+### Updating an existing checkout
 
-Seeded super admin: `admin@example.com` / `Admin@12345` (change via `SEED_ADMIN_*` in `.env`).
+After pulling new steps:
+
+```bash
+pnpm install          # only if a package.json changed
+pnpm db:migrate       # applies new migrations (the step notes say when one is needed)
+pnpm db:seed          # idempotent: adds new demo data and new settings, never overwrites existing rows
+pnpm dev
+```
+
+If you changed `schema.prisma` yourself: `pnpm db:migrate --name <what_changed>` and commit the new folder in
+`packages/database/prisma/migrations/`.
+
+Logins and demo data: see [`CREDENTIALS.md`](CREDENTIALS.md). Super admin: `admin@example.com` / `Admin@12345`.
 
 | Service               | URL                                          |
 | --------------------- | -------------------------------------------- |
@@ -76,40 +96,60 @@ Seeded super admin: `admin@example.com` / `Admin@12345` (change via `SEED_ADMIN_
 | API + Swagger         | http://localhost:4000/api/docs               |
 | Mailpit (email inbox) | http://localhost:8025                        |
 | MinIO console         | http://localhost:9001                        |
-| Prisma Studio         | `pnpm db:studio`                             |
+| Prisma Studio         | `pnpm db:studio` → http://localhost:5555     |
 | Email preview         | `pnpm email:preview` → http://localhost:3003 |
 
 ## Scripts
 
-| Command                                                 | What it does                                               |
-| ------------------------------------------------------- | ---------------------------------------------------------- |
-| `pnpm dev`                                              | Run every app in watch mode                                |
-| `pnpm dev:web` / `dev:admin` / `dev:vendor` / `dev:api` | Run one app (plus its dependencies)                        |
-| `pnpm build`                                            | Build everything                                           |
-| `pnpm lint` / `pnpm typecheck` / `pnpm test`            | Quality checks                                             |
-| `pnpm db:migrate`                                       | Create & apply a migration from `schema.prisma`            |
-| `pnpm db:seed`                                          | Seed roles, permissions, super admin, currencies, settings |
-| `pnpm db:studio`                                        | Open Prisma Studio                                         |
-| `pnpm infra:up` / `infra:down`                          | Start / stop local Docker services                         |
-| `pnpm format`                                           | Prettier across the repo                                   |
+| Command                                                 | What it does                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------------- |
+| `pnpm dev`                                              | Run every app in watch mode                                    |
+| `pnpm dev:web` / `dev:admin` / `dev:vendor` / `dev:api` | Run one app (plus its dependencies)                            |
+| `pnpm build`                                            | Build everything                                               |
+| `pnpm lint` / `pnpm typecheck` / `pnpm test`            | Quality checks                                                 |
+| `pnpm --filter @ecommerce/api test`                     | API unit tests only                                            |
+| `pnpm db:migrate`                                       | Apply migrations / create one from `schema.prisma` changes     |
+| `pnpm db:seed`                                          | Seed roles, admin, settings, catalog, vendors, products, stock |
+| `pnpm db:studio`                                        | Open Prisma Studio                                             |
+| `pnpm infra:up` / `infra:down`                          | Start / stop local Docker services                             |
+| `pnpm format`                                           | Prettier across the repo                                       |
+
+## What works today
+
+Built entity by entity through every layer (types → API → api-client → ui → screens → seed).
+Status per entity: [`docs/roadmap.md`](docs/roadmap.md).
+
+**Phase 1: Catalog foundation (done)**
+
+- Admin sign-in (HttpOnly cookies), categories (tree), brands, attributes & values, media upload to MinIO.
+- Vendor onboarding: apply → admin approves / rejects / suspends (emails), store profile, payout details, commission.
+- Products: seller CRUD with gallery, specs and variants (option combinations); submit for review →
+  admin approve / reject / feature (emails); suspended vendors' products are hidden.
+- Inventory: warehouses, stock adjustments with a movement log, low-stock and back-in-stock emails, admin low-stock report.
+
+**Phase 2: Buying flow (in progress)**
+
+- Storefront: home, product listing with filters, category pages, product page with variant picker, sign in / register.
+- Cart: guest cart (cookie) merged into the account at sign-in, stock & price checks, save for later.
+- Checkout & orders (cash on delivery): quote with per-seller shipping, idempotent order placement, stock reservation,
+  one sub-order per seller, confirmation emails; customer order history, detail, cancel, guest order tracking, address book;
+  seller order screens with status actions (shipping deducts stock, tracking number); admin order list / detail / cancel.
+- **Next:** online payment gateway, then shipping. See the roadmap.
+
+**Not built yet:** every module that has not reached its roadmap step still exposes `GET /<module>/status`, and
+every screen not yet built shows a scaffold card listing the features it needs.
 
 ## Backend modules
 
-Every domain in scope section 2.3 has a NestJS module under `apps/api/src/modules/`:
+One NestJS module per domain under `apps/api/src/modules/`:
 
 `auth` · `users` · `rbac` · `vendors` · `catalog` · `inventory` · `search` · `cart` · `checkout` · `pricing` ·
 `promotions` · `orders` · `payments` · `shipping` · `returns` · `reviews` · `wishlist` · `loyalty` ·
 `recommendations` · `cms` · `media` · `notifications` · `marketing` · `support` · `payouts` · `analytics` · `seo` ·
 `settings` · `audit` · `jobs`
 
-**Working end to end now:** register/login/refresh/logout, `GET /users/me`, product listing/detail, category
-tree, brands, search autocomplete, email queue → worker → Mailpit, health check.
-Every other module exposes `GET /<module>/status`, and its service file lists the scope items it still has to deliver.
-
-## Frontend screens
-
-Every screen in scope sections 3–5 exists as a route in its app. Each one shows a scaffold card listing the
-features it needs, so the team can pick up any page and build it.
+Implemented: `auth`, `users` (profile, addresses), `vendors`, `catalog` (categories, brands, attributes, products,
+storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `notifications`, `audit`.
 
 ## Docker
 
@@ -118,6 +158,3 @@ docker build -f docker/Dockerfile.node --build-arg APP=api    -t ecommerce-api .
 docker build -f docker/Dockerfile.node --build-arg APP=worker -t ecommerce-worker .
 docker build -f docker/Dockerfile.next --build-arg APP=web    -t ecommerce-web .
 ```
-
-More detail: [`docs/architecture.md`](docs/architecture.md).
-# ecommerce-platform

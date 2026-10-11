@@ -1,12 +1,13 @@
 # Local Development: URLs & Credentials
 
-> **Local development only.** These are the default values from `.env.example` and `docker-compose.yml`.
-> Never use them in staging or production.
+> **Local development only.** These are the default values from `.env.example`, `docker-compose.yml` and
+> `packages/database/prisma/seed.ts`. Never use them in staging or production.
 
 Start everything first:
 
 ```bash
 pnpm infra:up   # Postgres, Redis, Mailpit, MinIO (Docker)
+pnpm db:seed    # demo data (safe to run again)
 pnpm dev        # web, admin, vendor, api, worker
 ```
 
@@ -16,9 +17,10 @@ pnpm dev        # web, admin, vendor, api, worker
 
 | App | URL | Login |
 |---|---|---|
-| Storefront (customers) | http://localhost:3000 | Register a new account (login screens are not built yet) |
+| Storefront (customers) | http://localhost:3000 | Create an account at http://localhost:3000/register, or check out as a guest |
 | Admin panel | http://localhost:3001/login | `admin@example.com` / `Admin@12345` |
-| Seller center (vendors) | http://localhost:3002/login | `vendor@example.com` / `Vendor@12345` (approved) |
+| Seller center (vendors) | http://localhost:3002/login | `vendor@example.com` / `Vendor@12345` (approved store) |
+| Seller registration | http://localhost:3002/register | New application → shows up in Admin → Vendors |
 | API base URL | http://localhost:4000/api/v1 | JWT (cookie or `Authorization: Bearer <token>`) |
 | API docs (Swagger) | http://localhost:4000/api/docs | Use `POST /auth/login`, then **Authorize** with the `accessToken` |
 | API health check | http://localhost:4000/health | none |
@@ -28,13 +30,59 @@ pnpm dev        # web, admin, vendor, api, worker
 | Role | Email | Password | Where to change |
 |---|---|---|---|
 | Super Admin | `admin@example.com` | `Admin@12345` | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in `.env`, then `pnpm db:seed` |
-| Vendor (approved) — Demo Electronics | `vendor@example.com` | `Vendor@12345` | `seedVendors()` in `packages/database/prisma/seed.ts` |
-| Vendor (pending review) — Pending Fashion | `pending@example.com` | `Vendor@12345` | same |
+| Vendor (approved): Demo Electronics | `vendor@example.com` | `Vendor@12345` | `seedVendors()` in `seed.ts` |
+| Vendor (pending review): Pending Fashion | `pending@example.com` | `Vendor@12345` | same |
+| Customer | none seeded | — | Register at http://localhost:3000/register (e.g. `customer@example.com` / `Customer@123`) |
 
-Create a test customer via Swagger: `POST /api/v1/auth/register`
-```json
-{ "email": "customer@example.com", "password": "Customer@123", "firstName": "Test", "lastName": "Customer" }
-```
+### Seeded demo catalog (vendor: Demo Electronics)
+
+| Product | SKU | Status | Stock (warehouse `DEMO-ELECTRONICS-MAIN`) |
+|---|---|---|---|
+| Galaxy S24 Ultra 256GB (Samsung) | `SAM-S24U-256` | Published | 25 |
+| iPhone 15 128GB (Apple) | `APL-IP15-128` | Published | 3 (shows as low stock) |
+| Dell XPS 13 (Intel Core Ultra 7, 16GB) | `DEL-XPS13-U7-16` | Pending review (approve it in Admin → Products) | 12 |
+| Sony WH-1000XM5 Wireless Headphones | `SNY-WH1000XM5` | Draft | 0 |
+
+Plus categories, brands, attributes, currencies (USD default, PKR) and the settings below.
+
+### Store settings (table `Setting`, edit in Prisma Studio)
+
+`pnpm db:seed` only creates missing keys; it never overwrites a value you changed.
+
+| Key | Default | Effect |
+|---|---|---|
+| `checkout.guestCheckout` | `true` | Allow checkout without an account |
+| `checkout.codFee` | `0` | Cash-on-delivery fee added to the total |
+| `checkout.codMaxOrderTotal` | `5000` | COD hidden above this order total |
+| `shipping.flatRatePerVendor` | `5` | Shipping charged per seller in the order |
+| `shipping.freeShippingAbove` | `50` | Seller subtotal at which that seller's shipping is free |
+| `marketplace.productApprovalRequired` | `true` | New products go to admin review before publishing |
+| `marketplace.defaultCommissionRate` | `10` | % commission when a vendor has no own rate |
+
+---
+
+## Try it: end-to-end walkthroughs
+
+**Buy as a guest (COD)**
+1. http://localhost:3000 → open the Galaxy S24 → Add to cart → Cart → Proceed to checkout.
+2. Enter an email and address → Place order → success page with the order number.
+3. Mailpit (http://localhost:8025): customer confirmation + "new order" email to the vendor.
+4. http://localhost:3000/track-order with the order number + email.
+
+**Fulfil as the seller**
+1. http://localhost:3002/login as `vendor@example.com` → Orders → open the order.
+2. Accept → Mark as packed → Mark as shipped (enter a tracking number) → Mark as delivered.
+3. Inventory shows stock reduced on shipping; the customer gets an email at each step.
+
+**Moderate as admin**
+- Vendors: approve / reject `pending@example.com`'s store.
+- Products: approve the Dell XPS 13 (In review tab) → it appears on the storefront.
+- Orders: see every order, cancel one that has not shipped (stock is released).
+- Inventory: low-stock report (iPhone 15).
+
+**Customer account**
+- Register, add to cart, check out with a new address (saved to the account), then
+  http://localhost:3000/account/orders and /account/addresses. Cancel an order before it ships.
 
 ---
 
@@ -55,6 +103,8 @@ Use with DBeaver, pgAdmin, TablePlus, or:
 ```bash
 docker exec -it ecommerce-postgres psql -U ecommerce -d ecommerce
 ```
+
+Reset everything (deletes all data): `docker compose down -v && pnpm infra:up && pnpm db:migrate && pnpm db:seed`.
 
 ### Prisma Studio (database browser)
 
@@ -79,7 +129,8 @@ docker exec -it ecommerce-redis redis-cli
 
 ### Mailpit (local email inbox)
 
-Every email the platform sends (welcome, order confirmation…) lands here; nothing reaches real inboxes.
+Every email the platform sends (welcome, vendor decisions, product moderation, low stock, order confirmation,
+shipped, delivered, cancelled…) lands here; nothing reaches real inboxes.
 
 | Field | Value |
 |---|---|
@@ -87,6 +138,8 @@ Every email the platform sends (welcome, order confirmation…) lands here; noth
 | SMTP host | `localhost` |
 | SMTP port | `1025` |
 | SMTP username / password | none |
+
+Emails are sent by the worker; if nothing arrives, check that the `worker` app is running in `pnpm dev`.
 
 ### MinIO (S3-compatible file storage)
 
@@ -115,7 +168,7 @@ Every email the platform sends (welcome, order confirmation…) lands here; noth
 | `JWT_ACCESS_TTL_SECONDS` | `900` | Access token lifetime (15 min) |
 | `JWT_REFRESH_TTL_DAYS` | `30` | Refresh token lifetime |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | empty | Google sign-in (not wired yet) |
-| `PAYMENT_*` | empty | Payment gateway (open question in scope) |
+| `PAYMENT_*` | empty | Payment gateway (roadmap step 10) |
 
 ---
 

@@ -16,8 +16,12 @@ It exists so you do **not** have to explore the whole repo or guess conventions.
 6. **Do not change the Prisma schema** unless the step requires it. If you do, create a migration
    (`pnpm db:migrate --name <change>`) and say so explicitly.
 7. **Never commit secrets.** Local defaults live in `.env.example` / `CREDENTIALS.md` only.
+8. **Business rules live in the API.** Frontends never compute totals, stock or allowed status changes themselves;
+   they show what the API returns (shared tables like `VENDOR_ORDER_TRANSITIONS` live in `packages/types`).
 
-Current progress and the next entity to build: **`docs/roadmap.md`**. Full product scope: **`docs/scope.md`**.
+Current progress and the next entity to build: **`docs/roadmap.md`**.
+Business flows (vendor, product, stock, order state machines): **`docs/architecture.md`**.
+Full product scope: **`docs/scope.md`**. URLs, logins, demo data: **`CREDENTIALS.md`**.
 
 ---
 
@@ -43,6 +47,23 @@ docs/        scope.md, roadmap.md, architecture.md
 Stack: pnpm workspaces + Turborepo, Next.js App Router, NestJS, PostgreSQL + Prisma 6, Redis + BullMQ,
 MinIO (S3), Mailpit (SMTP). **Email is the only notification channel.**
 
+### Key folders inside the apps
+
+```
+apps/api/src/
+  common/guards/        JwtAuthGuard (@Public routes still get the user if a valid token is sent), RolesGuard
+  common/utils/         unique-slug.ts, stock-availability.ts (availableByVariant), settings.ts (readSetting), money.ts (toCents/fromCents)
+  modules/<domain>/     one Nest module per domain; implemented: auth, users, vendors, catalog/*, media,
+                        inventory, cart, checkout, orders, notifications, audit
+apps/admin/src/  apps/vendor/src/
+  app/(dashboard)/…     thin pages          features/<entity>/…   list / detail / form components
+  config/navigation.ts  sidebar             components/sidebar-shell.tsx  auth gate
+apps/web/src/
+  app/…                 pages (server components where possible)
+  components/<domain>/  catalog, cart, checkout, orders, account, auth, layout
+  hooks/use-cart.ts     useCart, useMe, useSetCart
+```
+
 ---
 
 ## 2. Where things go (decision table)
@@ -51,17 +72,29 @@ MinIO (S3), Mailpit (SMTP). **Email is the only notification channel.**
 |---|---|---|
 | A type the API returns / accepts | `packages/types/src/<domain>/<entity>.ts` | `catalog/brand.ts` → `BrandDto`, `BrandListItem`, `BrandInput` |
 | A form validation schema (frontend) | `packages/types/src/schemas/<entity>.schema.ts` | `brandFormSchema`, `emptyBrandForm`, `brandToForm`, `brandFormToInput` |
-| A constant list / enum | `packages/types` as `const X = [...] as const` | `ATTRIBUTE_TYPES`, `MEDIA_FOLDERS` |
+| A constant list / enum / labels / badge tones / state-machine table | `packages/types` as `const X = … as const` | `ATTRIBUTE_TYPES`, `ORDER_STATUS_LABELS`, `ORDER_STATUS_TONES`, `VENDOR_ORDER_TRANSITIONS` |
+| Pure helpers shared by API and UI | `packages/types` | `slugify`, `cartesian`, `findVariant`, `formatAddress` |
 | Backend request validation | `apps/api/src/modules/<module>/<entity>/dto/<entity>.dto.ts` (class-validator) | `CreateBrandDto implements BrandInput` |
-| Business rules | `<entity>.service.ts` in the API | `BrandsService` |
-| HTTP routes | `admin-<entity>.controller.ts` (admin) / module controller (public) | `AdminBrandsController` |
-| A fetch call from any Next app | `packages/api-client/src/endpoints/<entity>.ts` | `brandsApi` |
-| A cache key | `packages/api-client/src/query-keys.ts` | `queryKeys.brands.adminList` |
-| A reusable UI component | `packages/ui/src/components/` + export in `index.ts` | `DataTable`, `ImageUploadField` |
-| A screen | `apps/<app>/src/app/(dashboard)/<route>/page.tsx` (thin) + `apps/<app>/src/features/<entity>/*` (logic) | `features/brands/brand-list.tsx` |
+| Business rules | `<entity>.service.ts` in the API; pure rules in `<x>-rules.ts` (unit-testable without Prisma) | `BrandsService`, `orders/order-rules.ts` |
+| Prisma include + mapper to DTO | `<entity>.mapper.ts` (`const xInclude = {…} satisfies Prisma.XInclude`, `toXDto()`) | `products/product.mapper.ts`, `orders/order.mapper.ts` |
+| HTTP routes | admin: `admin-<entity>.controller.ts`; seller: `vendor-<entity>.controller.ts`; customer/public: `<entity>.controller.ts` | `AdminOrdersController`, `VendorOrdersController`, `OrdersController` |
+| A configurable number (fees, limits) | a `Setting` row seeded in `seedSettings()`, read with `readSetting(prisma, key, fallback)` | `shipping.flatRatePerVendor` |
+| A fetch call from any Next app | `packages/api-client/src/endpoints/<entity>.ts` | `brandsApi`, `ordersApi` |
+| A cache key | `packages/api-client/src/query-keys.ts` | `queryKeys.brands.adminList`, `queryKeys.orders.detail(n)` |
+| A reusable UI component | `packages/ui/src/components/` + export in `index.ts` | `DataTable`, `ImageUploadField`, `ReasonDialog`, `Timeline` |
+| An admin / seller screen | `apps/<app>/src/app/(dashboard)/<route>/page.tsx` (thin) + `apps/<app>/src/features/<entity>/*` | `features/brands/brand-list.tsx` |
+| A storefront screen | `apps/web/src/app/<route>/page.tsx` (thin, metadata) + `apps/web/src/components/<domain>/*` | `components/checkout/checkout-view.tsx` |
 | Sample data | `packages/database/prisma/seed.ts` (idempotent `upsert`) | `seedBrands()` |
 
 Apps import the client via `@/lib/api-client` (re-exports `@ecommerce/api-client`).
+
+### Shared UI components available (`@ecommerce/ui`)
+
+`Button` (+ `buttonStyles()` for links), `Card`/`CardTitle`/`CardDescription`, `Input`, `Textarea`, `Select`,
+`Checkbox`, `Badge` (tones gray/green/yellow/red/blue), `Alert`, `Spinner`, `PageHeader`, `DataTable`, `Tabs`,
+`Pagination`, `DetailList`, `EmptyState`, `ConfirmDialog` (yes/no), `ReasonDialog` (needs a written reason),
+`Modal` (custom forms), `Timeline` (history), `ImageUploadField`, `ImageGalleryField`, `AppShell`,
+`PagePlaceholder` (scaffold for unbuilt screens), `cn`, `formatMoney`, `formatDate`, `formatDateTime`.
 
 ---
 
@@ -70,10 +103,11 @@ Apps import the client via `@/lib/api-client` (re-exports `@ecommerce/api-client
 For entity **X** (e.g. `Brand`), module **M** (e.g. `catalog`):
 
 ### Step 1 — Shared types (`packages/types`)
-1. `src/<domain>/x.ts`: `XDto` (dates as ISO **strings**), `XListItem` (adds counts), `XInput` (request body).
+1. `src/<domain>/x.ts`: `XDto` (dates as ISO **strings**, money as numbers), `XListItem` (adds counts), `XInput` (request body).
 2. `src/schemas/x.schema.ts`: `xFormSchema` (zod), `XFormValues`, `emptyXForm`, `xToForm(dto)`, `xFormToInput(values)`.
    - Form values use `''` for "empty"; `xFormToInput` converts `''` → `null` (use `emptyToNull`).
    - Reuse `optionalSlugField`, `optionalUrlField` from `schemas/common.ts`.
+   - Conditional rules (e.g. guest needs email) → `superRefine` (see `checkout.schema.ts`).
 3. Export both from `src/index.ts`.
 
 ### Step 2 — API (`apps/api/src/modules/M/x/`)
@@ -88,31 +122,43 @@ For entity **X** (e.g. `Brand`), module **M** (e.g. `catalog`):
    - Block destructive actions that would break data with `ConflictException` and a human message
      (e.g. "has 4 products — hide it instead").
    - Multi-row changes: `this.prisma.$transaction(async (tx) => …)`.
-3. `admin-x.controller.ts`: `@Controller('admin/M/xs')`, `@Roles(Role.ADMIN)`, `@ApiTags('Admin · Xs')`,
-   `@CurrentUser('sub') actorId`. Delete returns 204 (`@HttpCode(HttpStatus.NO_CONTENT)`).
+   - Ownership: seller endpoints look up the caller's vendor first and filter by `vendorId`; customer endpoints filter by `userId`.
+     Return `NotFoundException` (not 403) for someone else's record.
+   - Emails: call a private helper that wraps `notifications.sendEmail()` in try/catch — an email failure must never fail the action.
+3. Controllers: `@Controller('admin/M/xs')` + `@Roles(Role.ADMIN)`; seller `@Controller('vendor/xs')` + `@Roles(Role.VENDOR)`;
+   `@ApiTags(...)`, `@CurrentUser('sub') actorId`. Delete returns 204 (`@HttpCode(HttpStatus.NO_CONTENT)`).
+   Declare fixed paths (e.g. `@Post('track')`) **before** parameter paths (`@Get(':orderNumber')`).
 4. Public read endpoint (if storefront needs it): add to the module's public controller with `@Public()`.
-5. Register controller + service in `M.module.ts`.
-6. `x.service.spec.ts`: plain unit tests with a mocked Prisma object (see `brands.service.spec.ts`).
+5. Register controller + service in `M.module.ts` (and the module in `app.module.ts` if new).
+6. `x.service.spec.ts`: plain unit tests with a mocked Prisma object (see `brands.service.spec.ts`;
+   for transactions see `orders/orders.service.spec.ts`, which mocks `$transaction` with a `tx` object).
    Mock `findFirst` to return `null` when slug lookups happen.
 
 ### Step 3 — API client (`packages/api-client`)
 1. `src/endpoints/xs.ts`: `xsApi = { adminList, get, create, update, remove, (public list) }`.
-2. Add `queryKeys.xs = { all, adminList, detail(id), … }` in `query-keys.ts`.
+2. Add `queryKeys.xs = { all, adminList, detail(id), … }` in `query-keys.ts` (every key starts with the `all` prefix,
+   so `invalidateQueries({ queryKey: queryKeys.xs.all })` refreshes everything).
 3. Export from `src/index.ts`.
 
 ### Step 4 — UI components (`packages/ui`) — only if a NEW reusable piece is needed.
 
-### Step 5 — Screens (`apps/admin/src/features/xs/`)
-- `x-list.tsx` — `useQuery` + `DataTable` + search + `ConfirmDialog` delete (copy `brand-list.tsx`).
-- `x-form.tsx` — `useForm` + `zodResolver(xFormSchema)` + `useMutation`; images via `<Controller>` + `ImageUploadField` + `mediaApi.uploadUrl(file, '<folder>')`.
-- `x-editor.tsx` — loads data for create/edit, renders the form (`key={id}`).
-- Pages (thin): `app/(dashboard)/<route>/page.tsx`, `/new/page.tsx`, `/[id]/page.tsx`
-  (Next 15: `params` is a **Promise** → `const { id } = await params`).
-- Nav links already exist in `apps/admin/src/config/navigation.ts`.
+### Step 5 — Screens
+- Admin / seller (`apps/<app>/src/features/xs/`):
+  - `x-list.tsx` — `useQuery` (+ `keepPreviousData`) + `Tabs` status filter + search (`useDeferredValue`) + `DataTable` + `Pagination`.
+  - `x-form.tsx` — `useForm` + `zodResolver(xFormSchema)` + `useMutation`; images via `<Controller>` + `ImageUploadField` + `mediaApi.uploadUrl(file, '<folder>')`.
+  - `x-editor.tsx` — loads data for create/edit, renders the form (`key={id}`).
+  - `x-detail.tsx` — status actions in `PageHeader.actions`; confirmations via `ConfirmDialog` / `ReasonDialog`;
+    after a mutation `setQueryData(detail, updated)` then `invalidateQueries({ queryKey: all, refetchType: 'none' })`.
+  - Pages (thin): `app/(dashboard)/<route>/page.tsx`, `/new/page.tsx`, `/[id]/page.tsx`
+    (Next 15: `params` is a **Promise** → `const { id } = await params`).
+  - Nav links already exist in `apps/<app>/src/config/navigation.ts`.
+- Storefront (`apps/web`): SEO pages fetch on the server (see `app/products/[slug]/page.tsx`); interactive parts are
+  client components in `components/<domain>/`. Account pages are gated by `components/account/account-shell.tsx`.
 
 ### Step 6 — Seed + docs
 - Add `seedXs()` (idempotent `upsert` by unique key) and call it in `main()`.
-- Update `docs/roadmap.md` (mark Done, set Next).
+- Update `docs/roadmap.md` (mark Done, set Next); update `CREDENTIALS.md` if logins/demo data/settings changed,
+  and `docs/architecture.md` if a business flow changed.
 
 ---
 
@@ -120,11 +166,19 @@ For entity **X** (e.g. `Brand`), module **M** (e.g. `catalog`):
 
 | Pattern | Copy from |
 |---|---|
-| Simple CRUD (name, slug, image, active) | **Brand** — `modules/catalog/brands/*`, `features/brands/*` |
+| Simple CRUD (name, slug, image, active) | **Brand** — `modules/catalog/brands/*`, `admin/features/brands/*` |
 | Tree / parent-child, cycle prevention | **Category** — `modules/catalog/categories/*` |
 | Parent with editable child list (nested array, `useFieldArray`, transactional sync) | **Attribute** — `modules/catalog/attributes/*`, `features/attributes/attribute-form.tsx` |
 | File upload | **Media** — `modules/media/*`, `ImageUploadField` |
-| Auth / cookies | `modules/auth/*`, `apps/admin/src/app/login/*` |
+| Application → admin approval with reasons + emails | **Vendor** — `modules/vendors/*`, `admin/features/vendors/*`, `vendor/app/register`, `vendor/app/onboarding` |
+| Seller-owned entity + moderation workflow, variant builder | **Product** — `modules/catalog/products/*` (vendor + admin controllers, mapper), `vendor/features/products/*`, `admin/features/products/*` |
+| Quantities with a movement log | **Inventory** — `modules/inventory/*` (`applyChange`), `vendor/features/inventory/*` |
+| Guest + signed-in state via cookie, merge at sign-in | **Cart** — `modules/cart/*` (`CART_COOKIE`), `web/hooks/use-cart.ts`, `web/components/cart/cart-view.tsx` |
+| Big transactional write, idempotency key, settings-driven totals | **Checkout** — `modules/checkout/checkout.service.ts` |
+| State machine with per-role actions, history, emails, stock side effects | **Orders** — `modules/orders/*` (`order-rules.ts`, `order-stock.ts`, three controllers), `vendor/features/orders/order-detail.tsx` |
+| Customer self-service CRUD in a modal | **Addresses** — `users.service.ts` (address methods), `web/components/account/addresses-view.tsx` |
+| Public SEO page + client island | **Product page** — `web/app/products/[slug]/page.tsx` + `components/catalog/product-purchase.tsx` |
+| Auth / cookies | `modules/auth/*`, `apps/admin/src/app/login/*`, `web/components/auth/*` |
 | Sending email | `NotificationsService.sendEmail({ template: EmailTemplateKey.X, to, data })` — never send directly |
 
 ---
@@ -133,21 +187,33 @@ For entity **X** (e.g. `Brand`), module **M** (e.g. `catalog`):
 
 **API**
 - Every route needs a JWT unless `@Public()`. Roles via `@Roles(...)`; `SUPER_ADMIN` passes all checks.
+  On `@Public()` routes the guard still attaches the user when a valid token is sent (used by cart/checkout).
 - Responses are wrapped as `{ success, data }` by a global interceptor; the api-client unwraps it.
 - Login sets HttpOnly cookies `access_token` / `refresh_token`; frontends call with `credentials: 'include'`.
 - **Explicit return types** on services/controllers. Inferred Prisma types caused `TS2742` errors.
-- Money = Prisma `Decimal`, never JS float math.
+  Type Prisma results with `const xInclude = {…} satisfies Prisma.XInclude` + `Prisma.XGetPayload<{ include: typeof xInclude }>`.
+- Money = Prisma `Decimal` in the DB; do arithmetic in integer cents (`toCents`/`fromCents`), never raw float sums.
+- Stock: always use `availableByVariant()` (Σ quantity − reserved over active warehouses); reserve/release/commit only
+  through `orders/order-stock.ts` or `inventory.applyChange()` so movements are logged.
+- `mode: 'insensitive'` inside a spread conditional needs `as const` (`{ contains: q, mode: 'insensitive' as const }`).
 - `apps/api` & `apps/worker` tsconfig: `incremental: false` and `declaration: false` — **keep them**.
   (Incremental + Nest's `deleteOutDir` produced a `dist` missing files → "Cannot find module './config/env'".)
 - Uploads: file type is detected from bytes (`detect-image.ts`), never trust the filename/MIME.
 - Query DTOs extend `PaginationQueryDto`, which has a `skip` getter. `{ ...dto }` loses getters, so internal helpers
   must accept a plain type (e.g. `Pick<Dto, 'page' | 'limit' | …>`), not the DTO class.
+- Seeded settings use `upsert` with `update: {}` — changing a default in `seed.ts` does **not** change an existing DB
+  value. Change it in Prisma Studio, or read it with a code fallback.
+- When a stub file (e.g. an old `x.controller.ts` placeholder) is replaced by new files, delete the stub if it no longer compiles.
 
 **Frontend**
-- Server page files stay thin; client logic lives in `features/*` with `'use client'`.
+- Server page files stay thin; client logic lives in `features/*` (admin/vendor) or `components/*` (web) with `'use client'`.
 - `useSearchParams()` must be inside `<Suspense>`.
 - In `useFieldArray`, do not name a field `id` (RHF reserves it) — use `valueId` etc.
 - Number inputs: `register('x', { valueAsNumber: true })` + `z.number()`.
+- Radio groups: `{...register('field')}` on each `<input type="radio" value=…>`.
+- Status badges: `<Badge tone={ORDER_STATUS_TONES[s]}>{ORDER_STATUS_LABELS[s]}</Badge>` — labels/tones come from `packages/types`.
+- After a mutation that returns the updated record: `setQueryData` for the detail, invalidate the list with `refetchType: 'none'`.
+- Order URLs for customers use the **order number** (`/account/orders/ORD-…`); admin/seller URLs use the id.
 - New workspace package used by Next → add it to `transpilePackages` in each `next.config.ts`.
 
 **Environment (Windows + Git Bash)**
@@ -164,27 +230,30 @@ For entity **X** (e.g. `Brand`), module **M** (e.g. `catalog`):
 ```bash
 pnpm infra:up                 # Postgres, Redis, Mailpit, MinIO
 pnpm dev                      # all apps (or dev:admin / dev:api / dev:web / dev:vendor)
+pnpm db:migrate               # apply pending migrations
 pnpm db:migrate --name <x>    # after schema changes
 pnpm db:seed                  # idempotent sample data
 pnpm db:studio                # browse DB
 pnpm typecheck && pnpm test && pnpm lint
 pnpm --filter @ecommerce/api test        # API unit tests only
 ```
-URLs and logins: `CREDENTIALS.md`. Admin: `admin@example.com` / `Admin@12345`.
+URLs, logins and walkthroughs: `CREDENTIALS.md`. Admin: `admin@example.com` / `Admin@12345`;
+seller: `vendor@example.com` / `Vendor@12345`; customers register at http://localhost:3000/register.
 
 ---
 
 ## 7. Definition of done (per entity)
 
 - [ ] Types + zod schema in `packages/types`, exported
-- [ ] API DTOs mirror the zod rules; service has typed returns, audit logs, conflict rules
+- [ ] API DTOs mirror the zod rules; service has typed returns, audit logs, ownership checks, conflict rules
 - [ ] Controller registered; visible in Swagger
 - [ ] Unit tests for the business rules pass
 - [ ] `xsApi` + `queryKeys.xs` in `packages/api-client`
-- [ ] Admin list / create / edit / delete work in the browser
+- [ ] Every screen the roadmap row lists (admin / seller / storefront) works in the browser
+- [ ] Emails (if any) arrive in Mailpit
 - [ ] Seed data added; `pnpm db:seed` runs twice without errors
 - [ ] `pnpm typecheck` passes
-- [ ] `docs/roadmap.md` updated
+- [ ] `docs/roadmap.md` updated (and `CREDENTIALS.md` / `docs/architecture.md` if affected)
 
 ---
 
@@ -197,9 +266,11 @@ use the same discipline even when editing files directly:
 2. **Write all files for one step from a generator script** (a Python script that writes new files and
    patches existing ones by *exact string replacement*, failing loudly if the target text is not found).
    This makes edits reproducible and prevents silently editing the wrong place.
+   - Patch targets must match the **prettier-formatted** text (multi-line imports!), not how you imagine it.
+   - Patch scripts are not idempotent: if one fails halfway, check which patches already applied before re-running.
 3. **Format + syntax-check** every touched file (`prettier --write`, TypeScript syntactic diagnostics).
 4. **Deliver only the changed files**, then verify on the machine that earlier fixes were not overwritten.
-5. **User runs** `pnpm install` (if deps changed) → `pnpm db:seed` → `pnpm dev`, and reports errors.
+5. **User runs** `pnpm install` (if deps changed) → `pnpm db:migrate` (if schema changed) → `pnpm db:seed` → `pnpm dev`, and reports errors.
 6. Fix errors at the root cause (never by disabling type checks), then update `docs/roadmap.md`.
 
 If you can run commands yourself, replace steps 3–5 with: `pnpm typecheck`, `pnpm test`, open the screen.
@@ -208,6 +279,6 @@ If you can run commands yourself, replace steps 3–5 with: `pnpm typecheck`, `p
 
 ## 9. Prompt template for the next agent
 
-> Read `AGENTS.md` and `docs/roadmap.md`. Build the next entity marked **Next** following §3 exactly,
-> copying the closest reference from §4. Do not modify unrelated files. When done, list the files you
-> changed, the commands I must run, and update the roadmap.
+> Read `AGENTS.md`, `docs/roadmap.md` and `docs/architecture.md`. Build the next entity marked **Next** following §3
+> exactly, copying the closest reference from §4. Do not modify unrelated files. When done, list the files you
+> changed, the commands I must run, and update the roadmap (plus CREDENTIALS/architecture if affected).

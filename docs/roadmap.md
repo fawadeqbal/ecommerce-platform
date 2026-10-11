@@ -9,6 +9,11 @@ We build one entity at a time through every layer:
 5. App screens (admin / vendor / web)
 6. Seed data so the screen has something to show
 
+**Where we are:** Phase 1 done, Phase 2 steps 8–9 done. **Next: step 10, Payments (online gateway).**
+
+**Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
+product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–9 needed no migration.
+
 ## Phase 1: Catalog foundation
 
 | #   | Entity                                              | API                                                                                                  | Admin                                  | Vendor                                         | Storefront                 | Status   |
