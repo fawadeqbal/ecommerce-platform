@@ -10,7 +10,7 @@ export { mediaApi } from './endpoints/media';
 export { vendorsApi } from './endpoints/vendors';
 export { productsApi } from './endpoints/products';
 export { inventoryApi } from './endpoints/inventory';
-export { storefrontApi } from './endpoints/storefront';
+export { searchApi, storefrontApi } from './endpoints/storefront';
 export { cartApi } from './endpoints/cart';
 export { addressesApi, checkoutApi, ordersApi } from './endpoints/orders';
 export { paymentsApi } from './endpoints/payments';

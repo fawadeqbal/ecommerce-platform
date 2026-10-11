@@ -1,15 +1,17 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import type { ProductRecommendations } from '@ecommerce/types';
+import { Public } from '../../common/decorators/public.decorator';
 import { RecommendationsService } from './recommendations.service';
 
 @ApiTags('Recommendations')
-@ApiBearerAuth()
+@Public()
 @Controller('recommendations')
 export class RecommendationsController {
-  constructor(private readonly recommendationsService: RecommendationsService) {}
+  constructor(private readonly recommendations: RecommendationsService) {}
 
-  @Get('status')
-  status() {
-    return this.recommendationsService.status();
+  @Get('products/:slug')
+  forProduct(@Param('slug') slug: string): Promise<ProductRecommendations> {
+    return this.recommendations.forProduct(slug);
   }
 }

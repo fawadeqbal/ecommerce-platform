@@ -116,6 +116,8 @@ export const queryKeys = {
     list: (folder?: string, page = 1) => ['media', 'list', folder ?? 'all', page] as const,
   },
   emailPreferences: ['me', 'email-preferences'] as const,
+  searchSuggest: (q: string) => ['search', 'suggest', q] as const,
+  recentlyViewed: (slugs: string[]) => ['catalog', 'by-slugs', slugs.join(',')] as const,
   authProviders: ['auth', 'providers'] as const,
   reports: {
     all: ['reports'] as const,

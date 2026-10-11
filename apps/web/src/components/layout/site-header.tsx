@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { SearchBox } from '@/components/search/search-box';
 import { getMenu } from '@/lib/cms';
 import { HeaderActions } from './header-actions';
 
@@ -30,14 +32,9 @@ export async function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <form action="/products" className="ml-auto hidden flex-1 md:block md:max-w-md">
-          <input
-            name="q"
-            placeholder="Search products…"
-            aria-label="Search products"
-            className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
-          />
-        </form>
+        <Suspense fallback={<div className="ml-auto hidden flex-1 md:block md:max-w-md" />}>
+          <SearchBox />
+        </Suspense>
         <HeaderActions />
       </div>
     </header>

@@ -1,6 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { STOREFRONT_SORTS, type StorefrontSort } from '@ecommerce/types';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
@@ -34,4 +43,24 @@ export class ProductQueryDto extends PaginationQueryDto {
   @Transform(({ value }) => value === true || value === 'true' || value === '1')
   @IsBoolean()
   featured?: boolean;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 5 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  minRating?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true' || value === '1')
+  @IsBoolean()
+  inStock?: boolean;
+
+  @ApiPropertyOptional({ description: 'Comma-separated attribute value ids' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  values?: string;
 }

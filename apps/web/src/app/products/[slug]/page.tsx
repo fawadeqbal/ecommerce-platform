@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { ProductGallery } from '@/components/catalog/product-gallery';
 import { ProductPurchase } from '@/components/catalog/product-purchase';
+import { ProductRecommendations } from '@/components/catalog/product-recommendations';
+import { RecentlyViewed } from '@/components/catalog/recently-viewed';
 import { ProductQuestions } from '@/components/reviews/product-questions';
 import { ProductReviews } from '@/components/reviews/product-reviews';
 import { Stars } from '@/components/reviews/stars';
@@ -102,7 +104,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <p className="text-gray-600">{product.shortDescription}</p>
             ) : null}
             <p className="text-sm text-gray-500">
-              Sold by <span className="font-medium text-gray-800">{product.vendor.name}</span>
+              Sold by{' '}
+              <Link
+                href={`/stores/${product.vendor.slug}`}
+                className="font-medium text-gray-800 hover:text-brand-700"
+              >
+                {product.vendor.name}
+              </Link>
             </p>
           </div>
           <ProductPurchase product={product} />
@@ -140,6 +148,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <h2 className="mb-4 text-lg font-semibold text-gray-900">Questions &amp; answers</h2>
         <ProductQuestions productId={product.id} slug={product.slug} />
       </section>
+
+      <ProductRecommendations slug={product.slug} />
+      <RecentlyViewed slug={product.slug} />
     </div>
   );
 }

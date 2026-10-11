@@ -10,33 +10,21 @@ import type {
 } from '@ecommerce/types';
 import { paginate } from '../../common/dto/pagination.dto';
 import { availableByVariant } from '../../common/utils/stock-availability';
+import { VISIBLE, cardInclude, toProductCards } from './product-cards';
+import { inStockProductIds, searchScores } from './product-search';
+import { groupValueIds, normalizeQuery, orderByScore } from './search-rules';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { ProductQueryDto, ProductSort } from './dto/product-query.dto';
 
 const SORT: Record<ProductSort, Prisma.ProductOrderByWithRelationInput[]> = {
+  // Used when there is no search text (relevance needs a query).
+  relevance: [{ soldCount: 'desc' }, { publishedAt: 'desc' }],
   newest: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
   price_asc: [{ basePrice: 'asc' }],
   price_desc: [{ basePrice: 'desc' }],
   popular: [{ soldCount: 'desc' }],
   rating: [{ ratingAverage: 'desc' }, { ratingCount: 'desc' }],
 };
-
-/** Only published, not deleted products of approved vendors are ever visible. */
-const VISIBLE: Prisma.ProductWhereInput = {
-  status: 'PUBLISHED',
-  deletedAt: null,
-  vendor: { status: 'APPROVED' },
-};
-
-const cardInclude = {
-  brand: { select: { name: true } },
-  vendor: { select: { name: true, slug: true } },
-  images: { orderBy: { position: 'asc' }, take: 1, select: { url: true } },
-  variants: {
-    where: { isActive: true },
-    select: { id: true, _count: { select: { attributes: true } } },
-  },
-} satisfies Prisma.ProductInclude;
 
 const detailInclude = {
   category: { select: { name: true, slug: true } },
@@ -56,50 +44,93 @@ export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listProducts(q: ProductQueryDto): Promise<Paginated<StorefrontProductCard>> {
-    const categoryIds = q.category ? await this.categoryWithDescendants(q.category) : null;
+    const term = normalizeQuery(q.q);
+    const [categoryIds, scores, inStock, valueGroups] = await Promise.all([
+      q.category ? this.categoryWithDescendants(q.category) : Promise.resolve(null),
+      term ? searchScores(this.prisma, term) : Promise.resolve(null),
+      q.inStock ? inStockProductIds(this.prisma) : Promise.resolve(null),
+      q.values ? this.valueGroups(q.values) : Promise.resolve([] as string[][]),
+    ]);
+
+    // Search and stock filters both narrow the id set; intersect when both are present.
+    let ids: string[] | null = scores ? [...scores.keys()] : null;
+    if (inStock) ids = ids ? ids.filter((id) => inStock.has(id)) : [...inStock];
+
     const where: Prisma.ProductWhereInput = {
       ...VISIBLE,
       ...(q.vendor ? { vendor: { status: 'APPROVED', slug: q.vendor } } : {}),
       ...(categoryIds ? { categoryId: { in: categoryIds } } : {}),
       ...(q.brand ? { brand: { slug: q.brand } } : {}),
       ...(q.featured ? { isFeatured: true } : {}),
-      ...(q.q ? { name: { contains: q.q, mode: 'insensitive' as const } } : {}),
+      ...(ids ? { id: { in: ids } } : {}),
+      ...(q.minRating ? { ratingAverage: { gte: q.minRating } } : {}),
       ...(q.minPrice !== undefined || q.maxPrice !== undefined
         ? { basePrice: { gte: q.minPrice, lte: q.maxPrice } }
         : {}),
+      ...(valueGroups.length > 0
+        ? {
+            AND: valueGroups.map((group) => ({
+              variants: {
+                some: { isActive: true, attributes: { some: { attributeValueId: { in: group } } } },
+              },
+            })),
+          }
+        : {}),
     };
+
+    const sort: ProductSort = q.sort ?? (scores ? 'relevance' : 'newest');
+    const skip = (q.page - 1) * q.limit;
+
+    if (sort === 'relevance' && scores) {
+      const matching = await this.prisma.product.findMany({ where, select: { id: true } });
+      const ordered = orderByScore(
+        matching.map((m) => m.id),
+        scores,
+      );
+      const pageIds = ordered.slice(skip, skip + q.limit);
+      const rows = await this.prisma.product.findMany({
+        where: { id: { in: pageIds } },
+        include: cardInclude,
+      });
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      const cards = await toProductCards(
+        this.prisma,
+        pageIds.flatMap((id) => {
+          const row = byId.get(id);
+          return row ? [row] : [];
+        }),
+      );
+      return paginate(cards, ordered.length, q.page, q.limit);
+    }
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
         where,
         include: cardInclude,
-        orderBy: SORT[q.sort ?? 'newest'],
-        skip: (q.page - 1) * q.limit,
+        orderBy: SORT[sort],
+        skip,
         take: q.limit,
       }),
       this.prisma.product.count({ where }),
     ]);
+    return paginate(await toProductCards(this.prisma, rows), total, q.page, q.limit);
+  }
 
-    const stock = await availableByVariant(
-      this.prisma,
-      rows.flatMap((p) => p.variants.map((v) => v.id)),
-    );
-    const cards: StorefrontProductCard[] = rows.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      imageUrl: p.images[0]?.url ?? null,
-      price: Number(p.basePrice),
-      compareAtPrice: p.compareAtPrice === null ? null : Number(p.compareAtPrice),
-      currency: p.currency,
-      brandName: p.brand?.name ?? null,
-      vendor: p.vendor,
-      ratingAverage: Number(p.ratingAverage),
-      ratingCount: p.ratingCount,
-      inStock: p.variants.some((v) => (stock.get(v.id) ?? 0) > 0),
-      hasOptions: p.variants.some((v) => v._count.attributes > 0),
-    }));
-    return paginate(cards, total, q.page, q.limit);
+  private async valueGroups(raw: string): Promise<string[][]> {
+    const ids = [
+      ...new Set(
+        raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    ].slice(0, 50);
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.attributeValue.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, attributeId: true },
+    });
+    return groupValueIds(rows);
   }
 
   async getProduct(slug: string): Promise<StorefrontProductDetail> {
