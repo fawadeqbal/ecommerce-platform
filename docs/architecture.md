@@ -181,6 +181,17 @@ customer (signed in), delivered sub-order, within returns.windowDays of delivery
 - Emails: customer RETURN_RECEIVED / APPROVED / REJECTED / REFUND_PROCESSED, seller VENDOR_RETURN_REQUEST.
 - Order status is not changed by returns; payouts (later) must subtract refunds.
 
+### Reviews & Q&A
+
+- **Review** = one per customer per product (saving again edits it), only with a DELIVERED order item of that product
+  (`orderItemId` set → "Verified purchase"). `reviews.requireApproval` (default `false`) → new / edited reviews
+  start PENDING. Publishing, hiding, editing or deleting recalculates `Product.ratingAverage / ratingCount` and the
+  store's `Vendor.ratingAverage` from APPROVED reviews only.
+- Seller: one public reply per review (`vendorReply`). Admin / support: publish or hide.
+- **Q&A**: signed-in customers ask; `questions.requireApproval` (default `true`) keeps a question hidden until an
+  admin publishes it **or** the seller / admin answers it (answering publishes). Hidden questions cannot be answered.
+- A delivered sub-order sends the REVIEW_REQUEST marketing email (respects opt-out; signed-in customers only).
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

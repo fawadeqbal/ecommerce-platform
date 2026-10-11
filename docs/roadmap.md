@@ -10,7 +10,7 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-Phase 3: step 12 done. **Next: step 13 — Reviews & Q&A.**
+Phase 3: steps 12–13 done. **Next: step 14 — Wishlist.**
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
@@ -41,9 +41,10 @@ shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.
 
 ## Phase 3: After-sale & growth
 
-| #   | Entity            | API                                                                                                                              | Admin                      | Vendor                  | Storefront                                           | Status   |
-| --- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ----------------------- | ---------------------------------------------------- | -------- |
-| 12  | **Returns (RMA)** | ✅ request within `returns.windowDays`, approve / reject, receive + restock, refund (gateway or recorded manual for COD), emails | ✅ all returns, any action | ✅ own returns, actions | ✅ return items from the order, my returns, withdraw | **Done** |
-| 13  | Reviews & Q&A     |                                                                                                                                  |                            |                         |                                                      | Next     |
+| #   | Entity            | API                                                                                                                                                                                  | Admin                                              | Vendor                                 | Storefront                                                                                    | Status   |
+| --- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------- | -------- |
+| 12  | **Returns (RMA)** | ✅ request within `returns.windowDays`, approve / reject, receive + restock, refund (gateway or recorded manual for COD), emails                                                     | ✅ all returns, any action                         | ✅ own returns, actions                | ✅ return items from the order, my returns, withdraw                                          | **Done** |
+| 13  | **Reviews & Q&A** | ✅ verified-buyer reviews (one per product, editable), ratings recalculated, seller reply, questions + seller / admin answers, moderation settings, review-request email on delivery | ✅ Support → Reviews & Q&A: publish / hide, answer | ✅ reviews + reply, questions + answer | ✅ rating on product page, reviews with star filter, write / edit review, Q&A, JSON-LD rating | **Done** |
+| 14  | Wishlist          |                                                                                                                                                                                      |                                                    |                                        |                                                                                               | Next     |
 
 Then: Wishlist → Coupons/Promotions → Loyalty → Payouts → CMS → Reports

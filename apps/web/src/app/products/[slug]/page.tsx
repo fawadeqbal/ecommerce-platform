@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { ProductGallery } from '@/components/catalog/product-gallery';
 import { ProductPurchase } from '@/components/catalog/product-purchase';
+import { ProductQuestions } from '@/components/reviews/product-questions';
+import { ProductReviews } from '@/components/reviews/product-reviews';
+import { Stars } from '@/components/reviews/stars';
 import { ApiClientError, storefrontApi } from '@/lib/api-client';
 
 /** Stock must be live, so product pages are rendered per request. */
@@ -43,6 +46,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     image: product.images.map((i) => i.url),
     description: product.shortDescription ?? undefined,
     brand: product.brand ? { '@type': 'Brand', name: product.brand.name } : undefined,
+    aggregateRating:
+      product.ratingCount > 0
+        ? {
+            '@type': 'AggregateRating',
+            ratingValue: product.ratingAverage,
+            reviewCount: product.ratingCount,
+          }
+        : undefined,
     offers: {
       '@type': 'Offer',
       priceCurrency: product.currency,
@@ -77,6 +88,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <p className="text-sm uppercase tracking-wide text-gray-500">{product.brand.name}</p>
             ) : null}
             <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+            {product.ratingCount > 0 ? (
+              <a
+                href="#reviews"
+                className="inline-flex items-center gap-2 text-sm text-gray-600 hover:underline"
+              >
+                <Stars value={product.ratingAverage} />
+                {product.ratingAverage.toFixed(1)} · {product.ratingCount} review
+                {product.ratingCount === 1 ? '' : 's'}
+              </a>
+            ) : null}
             {product.shortDescription ? (
               <p className="text-gray-600">{product.shortDescription}</p>
             ) : null}
@@ -109,6 +130,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </section>
         ) : null}
       </div>
+
+      <section id="reviews" className="mt-12 scroll-mt-6">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Customer reviews</h2>
+        <ProductReviews productId={product.id} slug={product.slug} />
+      </section>
+
+      <section id="questions" className="mt-12 scroll-mt-6">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Questions &amp; answers</h2>
+        <ProductQuestions productId={product.id} slug={product.slug} />
+      </section>
     </div>
   );
 }

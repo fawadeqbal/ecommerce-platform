@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { VendorReviews } from '@/features/reviews/vendor-reviews';
 
 export const metadata: Metadata = { title: 'Reviews' };
 
 export default function Page() {
-  return <PagePlaceholder title="Reviews" features={['Reply to product reviews']} />;
+  return <VendorReviews />;
 }

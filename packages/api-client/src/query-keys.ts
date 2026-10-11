@@ -5,6 +5,18 @@ export const queryKeys = {
   savedItems: ['cart', 'saved'] as const,
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
+  reviews: {
+    all: ['reviews'] as const,
+    product: (productId: string, params: object) =>
+      ['reviews', 'product', productId, params] as const,
+    eligibility: (productId: string) => ['reviews', 'eligibility', productId] as const,
+    questions: (productId: string, params: object) =>
+      ['reviews', 'questions', productId, params] as const,
+    vendorReviews: (params: object) => ['reviews', 'vendor-reviews', params] as const,
+    vendorQuestions: (params: object) => ['reviews', 'vendor-questions', params] as const,
+    adminReviews: (params: object) => ['reviews', 'admin-reviews', params] as const,
+    adminQuestions: (params: object) => ['reviews', 'admin-questions', params] as const,
+  },
   returns: {
     all: ['returns'] as const,
     mine: (params: object) => ['returns', 'mine', params] as const,

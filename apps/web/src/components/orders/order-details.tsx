@@ -103,6 +103,14 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
                       >
                         {item.productName}
                       </Link>
+                      {vo.status === 'DELIVERED' ? (
+                        <Link
+                          href={`/products/${item.productSlug}#reviews`}
+                          className="ml-2 text-xs text-brand-700 hover:underline"
+                        >
+                          Write a review
+                        </Link>
+                      ) : null}
                       <p className="text-xs text-gray-500">
                         {item.variantName ? `${item.variantName} · ` : ''}
                         {item.quantity} × {money(item.unitPrice)}

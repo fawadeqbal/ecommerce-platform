@@ -251,6 +251,7 @@ export class OrdersService {
       before: { status: from },
       after: { status: dto.status },
     });
+    if (dto.status === 'DELIVERED') await this.requestReviews(vo.orderId, vo.id);
     if (dto.status === 'CANCELLED') {
       await this.payments.refundOrder(
         vo.orderId,
@@ -446,6 +447,43 @@ export class OrdersService {
   }
 
   /** Seller view + the courier of the delivery option the customer chose (pre-selected when shipping). */
+  /** Marketing email (respects opt-out): ask for reviews of the items just delivered. Never throws. */
+  private async requestReviews(orderId: string, vendorOrderId: string) {
+    try {
+      const order = await this.prisma.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: {
+          email: true,
+          userId: true,
+          shippingAddress: true,
+          items: {
+            where: { vendorOrderId },
+            select: {
+              productName: true,
+              variant: { select: { product: { select: { slug: true } } } },
+            },
+          },
+        },
+      });
+      if (!order.userId || order.items.length === 0) return; // reviews need an account
+      const site = this.config.get<string>('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000');
+      const address = order.shippingAddress as unknown as ShippingAddress;
+      await this.notifications.sendEmail({
+        template: EmailTemplateKey.REVIEW_REQUEST,
+        to: order.email,
+        userId: order.userId,
+        data: {
+          heading: 'How was your order?',
+          body: `Hi ${address.fullName.split(' ')[0]}, your ${order.items.map((i) => i.productName).join(', ')} arrived. A short review helps other shoppers.`,
+          ctaLabel: 'Write a review',
+          ctaUrl: `${site}/products/${order.items[0].variant.product.slug}#reviews`,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Review request email failed for order ${orderId}: ${String(error)}`);
+    }
+  }
+
   private async vendorDetail(vo: VendorOrderFull): Promise<VendorOrderDetailDto> {
     const rate = vo.shippingRateId
       ? await this.prisma.shippingRate.findUnique({

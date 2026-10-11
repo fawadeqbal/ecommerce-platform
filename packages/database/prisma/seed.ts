@@ -148,6 +148,8 @@ async function seedSettings() {
     { key: 'checkout.codMaxOrderTotal', group: 'checkout', value: 5000 },
     { key: 'payments.onlineMethods', group: 'payments', value: 'CARD,WALLET' },
     { key: 'returns.windowDays', group: 'returns', value: 7 },
+    { key: 'reviews.requireApproval', group: 'reviews', value: false },
+    { key: 'questions.requireApproval', group: 'reviews', value: true },
     { key: 'shipping.flatRatePerVendor', group: 'shipping', value: 5 },
     { key: 'shipping.freeShippingAbove', group: 'shipping', value: 50 },
     { key: 'loyalty.pointsPerCurrencyUnit', group: 'loyalty', value: 1 },

@@ -57,6 +57,8 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 | `checkout.reservationMinutes`         | `15`          | Time to pay an online order before it is cancelled and stock released |
 | `payments.onlineMethods`              | `CARD,WALLET` | Online methods offered (add `BANK_TRANSFER`; empty = COD only)        |
 | `returns.windowDays`                  | `7`           | Days after delivery a customer can request a return                   |
+| `reviews.requireApproval`             | `false`       | New / edited reviews wait for admin approval                          |
+| `questions.requireApproval`           | `true`        | Questions hidden until approved or answered by the seller             |
 | `shipping.flatRatePerVendor`          | `5`           | Default shipping per seller when no shipping zone matches the address |
 | `shipping.freeShippingAbove`          | `50`          | Seller subtotal at which that seller's shipping is free               |
 | `marketplace.productApprovalRequired` | `true`        | New products go to admin review before publishing                     |
@@ -92,6 +94,13 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 3. Seller center → Returns → **Approve** → **Mark items received** (condition, restock) → **Refund**. For a COD order
    enter the transfer reference; for a card / wallet order the refund goes through the (mock) gateway.
 4. Inventory shows a RETURN movement; the customer sees "Refunded". Admin → Returns sees every return.
+
+**Reviews & Q&A**
+
+1. As a customer with a **delivered** order: open the product → Customer reviews → **Write a review** (stars, title,
+   text). The rating shows under the product title and in listings. Others see "Sign in" / "only buyers can review".
+2. Ask a question under Questions & answers. Seller center → Questions → **Answer**: it appears on the product page.
+3. Seller center → Reviews → **Reply**. Admin → Support → Reviews & Q&A: publish / hide reviews and questions.
 
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
