@@ -1,0 +1,27 @@
+import { z } from 'zod';
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  API_PORT: z.coerce.number().default(4000),
+  API_PUBLIC_URL: z.string().url().default('http://localhost:4000'),
+  CORS_ORIGINS: z.string().default('http://localhost:3000'),
+  DATABASE_URL: z.string().min(1),
+  REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
+  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
+  JWT_ACCESS_TTL_SECONDS: z.coerce.number().default(900),
+  JWT_REFRESH_TTL_DAYS: z.coerce.number().default(30),
+  NEXT_PUBLIC_SITE_URL: z.string().default('http://localhost:3000'),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+export function validateEnv(config: Record<string, unknown>): Env & Record<string, unknown> {
+  const parsed = envSchema.safeParse(config);
+  if (!parsed.success) {
+    const issues = parsed.error.issues
+      .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Invalid environment variables:\n${issues}`);
+  }
+  return { ...config, ...parsed.data };
+}
