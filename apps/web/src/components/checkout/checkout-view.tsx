@@ -96,14 +96,21 @@ export function CheckoutView() {
   const paymentMethod = watch('paymentMethod');
   // Delivery choice per seller ({ vendorId: rateId }); the API falls back to the cheapest option.
   const [shippingRateIds, setShippingRateIds] = useState<Record<string, string>>({});
+  // Coupon: what the customer typed vs the code sent to the API.
+  const [couponInput, setCouponInput] = useState('');
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const guestEmail = useDeferredValue(watch('email'));
   // Where the parcel goes decides the shipping zone: saved address, or the typed one (debounced).
   const [countryCode, state, city] = watch(['countryCode', 'state', 'city']);
   const typedDestination = useDeferredValue(
     countryCode.trim().length === 2 ? { countryCode: countryCode.trim(), state, city } : undefined,
   );
-  const shippingInput = addressId
-    ? { addressId, shippingRateIds }
-    : { destination: typedDestination, shippingRateIds };
+  const shippingInput = {
+    ...(addressId ? { addressId } : { destination: typedDestination }),
+    shippingRateIds,
+    couponCode,
+    email: guestEmail.includes('@') ? guestEmail.trim() : undefined,
+  };
 
   // Totals depend on the payment method (COD adds its fee), so the method is part of the quote.
   const quote = useQuery({
@@ -124,7 +131,11 @@ export function CheckoutView() {
 
   const place = useMutation({
     mutationFn: (values: CheckoutFormValues) =>
-      checkoutApi.place({ ...checkoutFormToInput(values, idempotencyKey), shippingRateIds }),
+      checkoutApi.place({
+        ...checkoutFormToInput(values, idempotencyKey),
+        shippingRateIds,
+        couponCode: q?.coupon?.applied ? couponCode : null,
+      }),
     onSuccess: async ({ order, payment }) => {
       setPlaced(true);
       await queryClient.invalidateQueries({ queryKey: queryKeys.orders.all, refetchType: 'none' });
@@ -414,9 +425,13 @@ export function CheckoutView() {
                       q.shippingTotal === 0 ? 'Free' : formatMoney(q.shippingTotal, q.currency)
                     }
                   />
-                  {q.discountTotal > 0 ? (
-                    <Row label="Discount" value={`−${formatMoney(q.discountTotal, q.currency)}`} />
-                  ) : null}
+                  {q.discounts.map((d) => (
+                    <Row
+                      key={`${d.source}-${d.label}`}
+                      label={d.label}
+                      value={`−${formatMoney(d.amount, q.currency)}`}
+                    />
+                  ))}
                   {q.taxTotal > 0 ? (
                     <Row label="Tax" value={formatMoney(q.taxTotal, q.currency)} />
                   ) : null}
@@ -435,6 +450,56 @@ export function CheckoutView() {
                     seller.
                   </p>
                 ) : null}
+
+                <div className="space-y-1">
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="Coupon code"
+                      placeholder="Coupon code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          setCouponCode(couponInput.trim() || null);
+                        }
+                      }}
+                    />
+                    {couponCode ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setCouponCode(null);
+                          setCouponInput('');
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={!couponInput.trim()}
+                        onClick={() => setCouponCode(couponInput.trim())}
+                      >
+                        Apply
+                      </Button>
+                    )}
+                  </div>
+                  {q.coupon ? (
+                    <p
+                      className={cn(
+                        'text-xs',
+                        q.coupon.applied ? 'text-green-700' : 'text-red-600',
+                      )}
+                    >
+                      {q.coupon.applied
+                        ? `${q.coupon.code} applied${q.coupon.message ? ` — ${q.coupon.message}` : ''}`
+                        : q.coupon.message}
+                    </p>
+                  ) : null}
+                </div>
 
                 {q.problems.length > 0 ? (
                   <Alert tone="warning">

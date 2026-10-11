@@ -18,3 +18,4 @@ export { shippingApi } from './endpoints/shipping';
 export { returnsApi } from './endpoints/returns';
 export { reviewsApi } from './endpoints/reviews';
 export { wishlistApi } from './endpoints/wishlist';
+export { promotionsApi } from './endpoints/promotions';

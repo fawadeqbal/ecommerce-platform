@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { CouponList } from '@/features/promotions/coupon-list';
 
 export const metadata: Metadata = { title: 'Coupons' };
 
 export default function Page() {
-  return (
-    <PagePlaceholder title="Coupons" features={['Vendor-level coupons (if enabled by admin)']} />
-  );
+  return <CouponList />;
 }

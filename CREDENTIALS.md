@@ -109,6 +109,14 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
    "price drop" email arrives and the item shows **Price dropped**.
 3. Sold-out option → **Notify me** (guests enter an email). Restock it in the seller center → "back in stock" email.
 
+**Coupons & automatic discounts**
+
+1. Admin → Promotions → Coupons → New: code `WELCOME10`, 10 %, 1 use per customer. Checkout → enter the code → Apply:
+   a "Coupon WELCOME10" line; a second order with the same account is refused.
+2. Admin → Promotions → Discounts → New sale 15 % on a category: checkout shows the sale by name. A non-stackable
+   coupon now competes with it — the better deal is applied and the customer is told.
+3. Seller center → Coupons: codes for the seller's own products; the discount is deducted from the seller's net.
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

@@ -293,10 +293,15 @@ export class ReturnsService {
     const vo = current.vendorOrderId
       ? await this.prisma.vendorOrder.findUnique({
           where: { id: current.vendorOrderId },
-          select: { shippingTotal: true },
+          select: { shippingTotal: true, subtotal: true, discountTotal: true },
         })
       : null;
-    const max = fromCents(toCents(itemsTotal(current)) + toCents(Number(vo?.shippingTotal ?? 0)));
+    // Discounts on the sub-order reduce what can be refunded, in proportion to the returned items.
+    const sub = toCents(Number(vo?.subtotal ?? 0));
+    const items = toCents(itemsTotal(current));
+    const paidItems =
+      sub > 0 ? Math.round(items * (1 - toCents(Number(vo?.discountTotal ?? 0)) / sub)) : items;
+    const max = fromCents(Math.max(0, paidItems) + toCents(Number(vo?.shippingTotal ?? 0)));
     if (toCents(dto.amount) > toCents(max))
       throw new BadRequestException(
         `At most ${formatMoney(max, current.order.currency)} (items + shipping)`,

@@ -3,6 +3,7 @@ import type { CartItemDto } from '../cart/cart';
 import type { ShippingAddress } from '../users/address';
 import type { PaymentAttemptDto, PaymentOptionDto, PaymentSessionDto } from '../payments/payment';
 import type { ShippingOptionDto } from '../shipping/shipping';
+import type { CouponResultDto, DiscountLineDto } from '../promotions/promotion';
 
 export type BadgeTone = 'gray' | 'green' | 'yellow' | 'red' | 'blue';
 
@@ -99,6 +100,10 @@ export interface CheckoutGroup {
   estimatedDays: string | null;
   /** Parcel weight used for weight-based rates (0 when products have no weight). */
   weightGrams: number;
+  /** Discounts on this seller's items / shipping. */
+  discount: number;
+  /** Part of `discount` paid by the seller (seller coupons). */
+  sellerFundedDiscount: number;
 }
 
 export interface CheckoutQuoteDto {
@@ -123,6 +128,9 @@ export interface CheckoutQuoteDto {
   freeShippingAbove: number;
   /** Shipping zone that matched the destination; null = store default rate / no address yet. */
   shippingZone: string | null;
+  /** Automatic promotions and the coupon, as applied. */
+  discounts: DiscountLineDto[];
+  coupon: CouponResultDto | null;
 }
 
 export interface PlaceOrderInput {
@@ -136,6 +144,7 @@ export interface PlaceOrderInput {
   paymentMethod: PaymentMethod;
   /** Chosen delivery option per seller: { vendorId: rateId }. Cheapest when omitted. */
   shippingRateIds?: Record<string, string>;
+  couponCode?: string | null;
   customerNote?: string | null;
   /** Random id per checkout attempt — a double click never creates two orders. */
   idempotencyKey: string;
@@ -206,6 +215,7 @@ export interface OrderDto {
   discountTotal: number;
   taxTotal: number;
   grandTotal: number;
+  couponCode: string | null;
   shippingAddress: ShippingAddress;
   customerNote: string | null;
   placedAt: string;

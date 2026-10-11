@@ -145,7 +145,8 @@ Status per entity: [`docs/roadmap.md`](docs/roadmap.md).
   recorded manual refund for COD).
 - Reviews (verified buyers, seller replies, moderation) and product Q&A.
 - Wishlist with price-drop emails, back-in-stock alerts.
-- **Next:** coupons & promotions. See the roadmap.
+- Coupons (store and seller) and automatic discounts (sales, buy X get Y, spend tiers) at checkout.
+- **Next:** loyalty & gift cards. See the roadmap.
 
 **Not built yet:** every module that has not reached its roadmap step still exposes `GET /<module>/status`, and
 every screen not yet built shows a scaffold card listing the features it needs.
@@ -160,7 +161,7 @@ One NestJS module per domain under `apps/api/src/modules/`:
 `settings` · `audit` · `jobs`
 
 Implemented: `auth`, `users` (profile, addresses), `vendors`, `catalog` (categories, brands, attributes, products,
-storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `returns`, `reviews`, `wishlist`, `notifications`, `audit`.
+storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `returns`, `reviews`, `wishlist`, `promotions`, `notifications`, `audit`.
 
 ## Deployment
 

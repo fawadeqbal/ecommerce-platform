@@ -3,11 +3,12 @@ import { CartModule } from '../cart/cart.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { ShippingModule } from '../shipping/shipping.module';
+import { PromotionsModule } from '../promotions/promotions.module';
 import { CheckoutController } from './checkout.controller';
 import { CheckoutService } from './checkout.service';
 
 @Module({
-  imports: [CartModule, NotificationsModule, PaymentsModule, ShippingModule],
+  imports: [CartModule, NotificationsModule, PaymentsModule, ShippingModule, PromotionsModule],
   controllers: [CheckoutController],
   providers: [CheckoutService],
   exports: [CheckoutService],

@@ -126,6 +126,7 @@ export function toOrderDto(o: OrderFull, returnWindowDays = 0): OrderDto {
     discountTotal: n(o.discountTotal),
     taxTotal: n(o.taxTotal),
     grandTotal: n(o.grandTotal),
+    couponCode: o.couponCode,
     shippingAddress: o.shippingAddress as unknown as ShippingAddress,
     customerNote: o.customerNote,
     placedAt: o.placedAt.toISOString(),

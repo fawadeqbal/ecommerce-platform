@@ -60,8 +60,16 @@ const VISIBLE_TO_VENDOR: Prisma.OrderWhereInput = {
 };
 
 /** What the customer paid for a sub-order (refunded when it is cancelled). */
-const subOrderTotal = (v: { subtotal: Prisma.Decimal; shippingTotal: Prisma.Decimal }) =>
-  fromCents(toCents(Number(v.subtotal)) + toCents(Number(v.shippingTotal)));
+const subOrderTotal = (v: {
+  subtotal: Prisma.Decimal;
+  shippingTotal: Prisma.Decimal;
+  discountTotal: Prisma.Decimal;
+}) =>
+  fromCents(
+    toCents(Number(v.subtotal)) +
+      toCents(Number(v.shippingTotal)) -
+      toCents(Number(v.discountTotal)),
+  );
 
 /**
  * Orders after checkout.

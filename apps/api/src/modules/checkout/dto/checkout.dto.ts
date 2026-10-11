@@ -40,6 +40,17 @@ export class QuoteRequestDto implements CheckoutQuoteInput {
   @IsOptional()
   @IsObject()
   shippingRateIds?: Record<string, string>;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  couponCode?: string | null;
+
+  @ApiPropertyOptional({ description: 'Guest email (per-customer coupon limits)' })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 }
 
 export class PlaceOrderDto implements PlaceOrderInput {
@@ -76,6 +87,12 @@ export class PlaceOrderDto implements PlaceOrderInput {
   @IsOptional()
   @IsObject()
   shippingRateIds?: Record<string, string>;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  couponCode?: string | null;
 
   @ApiProperty({ description: 'Random id per checkout attempt' })
   @IsString()

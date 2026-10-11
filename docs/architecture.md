@@ -201,6 +201,27 @@ customer (signed in), delivered sub-order, within returns.windowDays of delivery
 - **Notify me** (sold-out option): `StockAlert` (variant + email; guests type an email). The existing inventory
   back-in-stock email fires when stock returns; subscribing again re-arms a used alert.
 
+### Coupons & promotions
+
+`PromotionsService.evaluate()` → pure `discount-engine.ts` (cents, unit-tested):
+
+```
+lines (seller, product, category, price × qty)
+  1. line promotions: FLASH_SALE (% off scoped items) / BUY_X_GET_Y (free units) — best one per line
+  2. TIERED: % off the remaining order subtotal, highest tier reached
+  3. coupon (code): PERCENTAGE (cap maxDiscount) / FIXED_AMOUNT / FREE_SHIPPING, scoped by seller / products /
+     categories, minOrderTotal, dates, usageLimit, usageLimitPerCustomer (user or guest email)
+     stackable → added on top · not stackable → the bigger of (coupon) vs (promotions) wins
+  → discount lines + per-seller split (items, shipping, seller-funded part)
+```
+
+- Order: `discountTotal`, `couponCode`; each `VendorOrder.discountTotal` gets its share. Store promotions and admin
+  coupons are paid by the store; **seller coupons reduce the seller's `netAmount`**.
+- The coupon use is counted inside the order transaction with a conditional SQL update, so a limit cannot be exceeded
+  by two simultaneous orders (`CouponUsage` row per order).
+- Refunds use what was paid: cancellations refund subtotal + shipping − discount; returns refund the items' share
+  after the sub-order discount (+ shipping).
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

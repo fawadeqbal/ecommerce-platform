@@ -28,6 +28,7 @@ import { orderInclude, toOrderDto, type OrderFull } from '../orders/order.mapper
 import { commissionFor, generateOrderNumber } from '../orders/order-rules';
 import { reserveStock } from '../orders/order-stock';
 import { PaymentsService } from '../payments/payments.service';
+import { PromotionsService } from '../promotions/promotions.service';
 import { shippingMethodLabel } from '../shipping/shipping-rules';
 import { ShippingService } from '../shipping/shipping.service';
 import type { PlaceOrderDto } from './dto/checkout.dto';
@@ -51,6 +52,7 @@ export class CheckoutService {
     private readonly config: ConfigService,
     private readonly payments: PaymentsService,
     private readonly shipping: ShippingService,
+    private readonly promotions: PromotionsService,
   ) {}
 
   async quote(ctx: CartContext, input: CheckoutQuoteInput = {}): Promise<CheckoutQuoteDto> {
@@ -89,11 +91,39 @@ export class CheckoutService {
         shippingMethod: pick ? shippingMethodLabel(pick) : 'Not available',
         estimatedDays: pick?.estimatedDays ?? null,
         weightGrams: g.items.reduce((n, i) => n + (weights.get(i.variantId) ?? 0) * i.quantity, 0),
+        discount: 0,
+        sellerFundedDiscount: 0,
       };
     });
     const subtotal = cart.subtotal;
     const shippingTotal = fromCents(groups.reduce((sum, g) => sum + toCents(g.shipping), 0));
-    const beforeFees = fromCents(toCents(subtotal) + toCents(shippingTotal));
+    // Discounts: automatic promotions + coupon (engine works in cents, per seller).
+    const categories = await this.productCategories(
+      cart.groups.flatMap((g) => g.items.map((i) => i.productId)),
+    );
+    const deals = await this.promotions.evaluate({
+      lines: cart.groups.flatMap((g) =>
+        g.items.map((i) => ({
+          key: i.id,
+          vendorId: g.vendor.id,
+          productId: i.productId,
+          categoryId: categories.get(i.productId) ?? null,
+          unitCents: toCents(i.unitPrice),
+          quantity: i.quantity,
+        })),
+      ),
+      groups: groups.map((g) => ({ vendorId: g.vendor.id, shippingCents: toCents(g.shipping) })),
+      couponCode: input.couponCode,
+      customer: { userId: ctx.userId, email: input.email },
+      money: (c) => formatMoney(fromCents(c), cart.currency),
+    });
+    for (const g of groups) {
+      const d = deals.byVendor.get(g.vendor.id);
+      g.discount = d ? fromCents(d.itemsCents + d.shippingCents) : 0;
+      g.sellerFundedDiscount = d ? fromCents(d.vendorFundedCents) : 0;
+    }
+    const discountTotal = fromCents(deals.totalCents);
+    const beforeFees = fromCents(toCents(subtotal) + toCents(shippingTotal) - deals.totalCents);
     // COD fee = store fee + the selected delivery options' COD fees.
     const codFeeTotal = fromCents(toCents(codFeeSetting) + shipping.codFeeCents);
     const codTotal = fromCents(toCents(beforeFees) + toCents(codFeeTotal));
@@ -149,7 +179,7 @@ export class CheckoutService {
       groups,
       subtotal,
       shippingTotal,
-      discountTotal: 0,
+      discountTotal,
       taxTotal: 0,
       codFee,
       grandTotal,
@@ -160,6 +190,15 @@ export class CheckoutService {
       problems,
       freeShippingAbove: shipping.freeShippingAbove,
       shippingZone: shipping.zoneName,
+      discounts: deals.lines.map((l) => ({
+        source: l.source,
+        label: l.label,
+        amount: fromCents(l.amountCents),
+      })),
+      coupon:
+        deals.couponCode && deals.coupon
+          ? { code: deals.couponCode, applied: deals.coupon.applied, message: deals.coupon.message }
+          : null,
     };
   }
 
@@ -195,7 +234,11 @@ export class CheckoutService {
       paymentMethod: dto.paymentMethod,
       destination: address,
       shippingRateIds: dto.shippingRateIds,
+      couponCode: dto.couponCode,
+      email,
     });
+    if (dto.couponCode && !quote.coupon?.applied)
+      throw new BadRequestException(quote.coupon?.message ?? 'This coupon cannot be used');
     if (!quote.canPlace) throw new BadRequestException(quote.problems.join(' '));
     if (!quote.paymentMethods.includes(dto.paymentMethod))
       throw new BadRequestException('This payment method is not available');
@@ -270,6 +313,16 @@ export class CheckoutService {
     return input.destination?.countryCode ? input.destination : null;
   }
 
+  /** Product → category, for category-scoped discounts. */
+  private async productCategories(productIds: string[]): Promise<Map<string, string>> {
+    if (productIds.length === 0) return new Map();
+    const rows = await this.prisma.product.findMany({
+      where: { id: { in: [...new Set(productIds)] } },
+      select: { id: true, categoryId: true },
+    });
+    return new Map(rows.map((r) => [r.id, r.categoryId]));
+  }
+
   /** Grams per variant (variant weight, else product weight, else 0). */
   private async parcelWeights(items: { variantId: string }[]): Promise<Map<string, number>> {
     if (items.length === 0) return new Map();
@@ -341,7 +394,8 @@ export class CheckoutService {
                 currency: quote.currency,
                 subtotal: quote.subtotal,
                 shippingTotal: quote.shippingTotal,
-                discountTotal: 0,
+                discountTotal: quote.discountTotal,
+                couponCode: quote.coupon?.applied ? quote.coupon.code : null,
                 taxTotal: 0,
                 grandTotal: quote.grandTotal,
                 shippingAddress: address as unknown as Prisma.InputJsonValue,
@@ -377,11 +431,15 @@ export class CheckoutService {
                   status: initialStatus,
                   shippingRateId: group.shippingRateId,
                   shippingMethod: group.shippingMethod,
+                  discountTotal: group.discount,
                   subtotal: group.subtotal,
                   shippingTotal: group.shipping,
                   commissionAmount: commission,
                   netAmount: fromCents(
-                    toCents(group.subtotal) + toCents(group.shipping) - toCents(commission),
+                    toCents(group.subtotal) +
+                      toCents(group.shipping) -
+                      toCents(commission) -
+                      toCents(group.sellerFundedDiscount),
                   ),
                 },
               });
@@ -427,6 +485,16 @@ export class CheckoutService {
                 currency: quote.currency,
               },
             });
+            if (quote.coupon?.applied) {
+              const couponLine = quote.discounts.find((d) => d.source === 'coupon');
+              await this.promotions.recordUsage(
+                tx,
+                quote.coupon.code,
+                order.id,
+                userId,
+                couponLine?.amount ?? 0,
+              );
+            }
             await tx.cartItem.deleteMany({ where: { cartId: cartRow.id } });
             return order.id;
           },

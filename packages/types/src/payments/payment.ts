@@ -41,6 +41,9 @@ export interface CheckoutQuoteInput {
   destination?: ShippingDestination;
   /** Chosen delivery option per seller: { vendorId: rateId }. */
   shippingRateIds?: Record<string, string>;
+  couponCode?: string | null;
+  /** Guest email, for per-customer coupon limits. */
+  email?: string;
 }
 
 /** Where to send the customer to pay (the gateway's hosted page). */
