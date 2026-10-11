@@ -119,6 +119,11 @@ export const queryKeys = {
   searchSuggest: (q: string) => ['search', 'suggest', q] as const,
   recentlyViewed: (slugs: string[]) => ['catalog', 'by-slugs', slugs.join(',')] as const,
   authProviders: ['auth', 'providers'] as const,
+  customers: {
+    all: ['customers'] as const,
+    list: (q: object) => ['customers', 'list', q] as const,
+    detail: (id: string) => ['customers', 'detail', id] as const,
+  },
   reports: {
     all: ['reports'] as const,
     adminSales: (range: object) => ['reports', 'admin-sales', range] as const,

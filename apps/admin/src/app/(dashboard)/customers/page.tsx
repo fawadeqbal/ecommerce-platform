@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { CustomerList } from '@/features/customers/customer-list';
 
 export const metadata: Metadata = { title: 'Customers' };
 
-export default function Page() {
-  return (
-    <PagePlaceholder title="Customers" features={['Customer list and segments', 'Block/unblock']} />
-  );
+export default function CustomersPage() {
+  return <CustomerList />;
 }

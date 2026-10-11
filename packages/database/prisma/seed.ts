@@ -141,6 +141,11 @@ async function seedSettings() {
     { key: 'store.maintenanceMode', group: 'general', value: false },
     // IANA zone used for report day boundaries (e.g. 'UTC', 'Asia/Karachi', 'Europe/London').
     { key: 'store.timezone', group: 'general', value: 'Asia/Karachi' },
+    // Customer segments (Admin → Customers)
+    { key: 'customers.newDays', group: 'customers', value: 30 },
+    { key: 'customers.repeatOrders', group: 'customers', value: 2 },
+    { key: 'customers.highValueSpend', group: 'customers', value: 500 },
+    { key: 'customers.inactiveDays', group: 'customers', value: 90 },
     { key: 'marketplace.productApprovalRequired', group: 'vendors', value: true },
     { key: 'marketplace.defaultCommissionRate', group: 'vendors', value: 10 },
     { key: 'marketplace.payoutCycle', group: 'vendors', value: 'MONTHLY' },

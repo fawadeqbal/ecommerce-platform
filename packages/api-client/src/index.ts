@@ -24,3 +24,4 @@ export { payoutsApi } from './endpoints/payouts';
 export { cmsApi } from './endpoints/cms';
 export { reportsApi } from './endpoints/reports';
 export { blogApi } from './endpoints/blog';
+export { customersApi } from './endpoints/customers';
