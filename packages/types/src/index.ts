@@ -19,6 +19,7 @@ export * from './payments/payment';
 export * from './shipping/shipping';
 export * from './returns/return';
 export * from './reviews/review';
+export * from './wishlist/wishlist';
 export * from './schemas/common';
 export * from './schemas/auth.schema';
 export * from './schemas/category.schema';

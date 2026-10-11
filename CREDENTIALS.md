@@ -102,6 +102,13 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 2. Ask a question under Questions & answers. Seller center → Questions → **Answer**: it appears on the product page.
 3. Seller center → Reviews → **Reply**. Admin → Support → Reviews & Q&A: publish / hide reviews and questions.
 
+**Wishlist & alerts**
+
+1. Signed in: product page → **♡ Save**; header shows Wishlist (n). Wishlist page → **Move to cart** / Remove.
+2. Price drop: lower the variant price in the seller center; within 15 minutes (or on API restart + 15 min) a
+   "price drop" email arrives and the item shows **Price dropped**.
+3. Sold-out option → **Notify me** (guests enter an email). Restock it in the seller center → "back in stock" email.
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

@@ -5,6 +5,7 @@ export const queryKeys = {
   savedItems: ['cart', 'saved'] as const,
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
+  wishlist: ['wishlist'] as const,
   reviews: {
     all: ['reviews'] as const,
     product: (productId: string, params: object) =>

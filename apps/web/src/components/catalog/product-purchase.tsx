@@ -6,6 +6,8 @@ import { useMemo, useState } from 'react';
 import { MAX_LINE_QUANTITY, findVariant, type StorefrontProductDetail } from '@ecommerce/types';
 import { Alert, Button, buttonStyles, cn, formatMoney } from '@ecommerce/ui';
 import { useSetCart } from '@/hooks/use-cart';
+import { NotifyMe } from '@/components/wishlist/notify-me';
+import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { cartApi } from '@/lib/api-client';
 
 /** Option picker + quantity + add to cart. Stock and price follow the selected variant. */
@@ -147,7 +149,10 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
         >
           Add to cart
         </Button>
+        <WishlistButton productId={product.id} variantId={variant?.id} slug={product.slug} />
       </div>
+
+      {variant && available <= 0 ? <NotifyMe key={variant.id} variantId={variant.id} /> : null}
 
       {add.error ? <Alert tone="error">{add.error.message}</Alert> : null}
       {added ? (

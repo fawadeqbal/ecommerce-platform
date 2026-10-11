@@ -144,7 +144,8 @@ Status per entity: [`docs/roadmap.md`](docs/roadmap.md).
 - Returns (RMA): request from a delivered order, seller / admin approve, receive + restock, refund (gateway or
   recorded manual refund for COD).
 - Reviews (verified buyers, seller replies, moderation) and product Q&A.
-- **Next:** wishlist. See the roadmap.
+- Wishlist with price-drop emails, back-in-stock alerts.
+- **Next:** coupons & promotions. See the roadmap.
 
 **Not built yet:** every module that has not reached its roadmap step still exposes `GET /<module>/status`, and
 every screen not yet built shows a scaffold card listing the features it needs.
@@ -159,7 +160,7 @@ One NestJS module per domain under `apps/api/src/modules/`:
 `settings` · `audit` · `jobs`
 
 Implemented: `auth`, `users` (profile, addresses), `vendors`, `catalog` (categories, brands, attributes, products,
-storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `returns`, `reviews`, `notifications`, `audit`.
+storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `payments`, `shipping`, `returns`, `reviews`, `wishlist`, `notifications`, `audit`.
 
 ## Deployment
 

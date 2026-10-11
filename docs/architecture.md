@@ -192,6 +192,15 @@ customer (signed in), delivered sub-order, within returns.windowDays of delivery
   admin publishes it **or** the seller / admin answers it (answering publishes). Hidden questions cannot be answered.
 - A delivered sub-order sends the REVIEW_REQUEST marketing email (respects opt-out; signed-in customers only).
 
+### Wishlist & alerts
+
+- One default `Wishlist` per customer; an item is a product (optionally a specific variant) with `priceAtAdd`.
+- `WishlistSweepService` (API, every 15 min) emails WISHLIST_PRICE_DROP (marketing → opt-out respected) when the
+  current price is ≥ 1 % below the saved price, one email per customer, then re-bases `priceAtAdd`.
+- **Move to cart** adds the saved variant (or the cheapest active one) through `CartService` and removes the item.
+- **Notify me** (sold-out option): `StockAlert` (variant + email; guests type an email). The existing inventory
+  back-in-stock email fires when stock returns; subscribing again re-arms a used alert.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

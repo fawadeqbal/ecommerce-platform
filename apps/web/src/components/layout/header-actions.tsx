@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart, useMe } from '@/hooks/use-cart';
+import { useWishlist } from '@/hooks/use-wishlist';
 import { authApi } from '@/lib/api-client';
 
 export function HeaderActions() {
@@ -12,6 +13,7 @@ export function HeaderActions() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const count = cart?.itemCount ?? 0;
+  const saved = useWishlist().data?.items.length ?? 0;
 
   const signOut = async () => {
     await authApi.logout().catch(() => undefined);
@@ -31,6 +33,9 @@ export function HeaderActions() {
       </Link>
       {me ? (
         <>
+          <Link href="/account/wishlist" className="hover:text-brand-700">
+            Wishlist{saved > 0 ? ` (${saved})` : ''}
+          </Link>
           <Link href="/account/orders" className="ml-3 hover:text-brand-700">
             Hi, {me.firstName}
           </Link>
