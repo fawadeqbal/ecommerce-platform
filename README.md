@@ -151,7 +151,11 @@ One NestJS module per domain under `apps/api/src/modules/`:
 Implemented: `auth`, `users` (profile, addresses), `vendors`, `catalog` (categories, brands, attributes, products,
 storefront), `media`, `inventory`, `cart`, `checkout`, `orders`, `notifications`, `audit`.
 
-## Docker
+## Deployment
+
+One-container production image, generic server deploy script and CI/CD pipeline: [`docs/deployment.md`](docs/deployment.md).
+
+## Docker (one image per app, optional)
 
 ```bash
 docker build -f docker/Dockerfile.node --build-arg APP=api    -t ecommerce-api .
