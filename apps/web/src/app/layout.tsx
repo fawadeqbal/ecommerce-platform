@@ -6,7 +6,7 @@ import { SiteFooter } from '@/components/layout/site-footer';
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: { default: 'Ecommerce', template: '%s | Ecommerce' },
   description: 'Shop thousands of products from trusted sellers.',
 };

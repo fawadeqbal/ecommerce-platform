@@ -6,7 +6,7 @@ const groups = [
     links: [
       ['All products', '/products'],
       ['Track order', '/track-order'],
-      ['Sell with us', process.env.NEXT_PUBLIC_VENDOR_URL ?? 'http://localhost:3002'],
+      ['Sell with us', process.env.NEXT_PUBLIC_VENDOR_URL || 'http://localhost:3002'],
     ],
   },
   {

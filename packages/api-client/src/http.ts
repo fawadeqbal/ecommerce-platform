@@ -3,7 +3,7 @@ import type { ApiError, ApiResponse } from '@ecommerce/types';
 // Next.js inlines NEXT_PUBLIC_* at build time; declared here so this package needs no @types/node.
 declare const process: { env: Record<string, string | undefined> };
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 export class ApiClientError extends Error {
   constructor(
