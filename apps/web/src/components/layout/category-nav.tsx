@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- category images are served from object storage */
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Portal, cn } from '@ecommerce/ui';
 import { GridIcon } from '@/components/icons';
 import { container } from './container';
@@ -399,7 +399,7 @@ function CategoryDetail({ root }: { root: NavItem }) {
 }
 
 /** White menu card whose height animates to fit its content (no jump between categories). */
-function SmoothCard({ children }: { children: React.ReactNode }) {
+function SmoothCard({ children }: { children: ReactNode }) {
   const inner = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   useEffect(() => {
