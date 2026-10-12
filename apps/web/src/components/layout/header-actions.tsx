@@ -44,15 +44,19 @@ export function HeaderActions() {
       <Link
         href="/cart"
         aria-label={`${t('header.cart')} (${count})`}
-        className="flex h-10 items-center gap-2 rounded-xl bg-white px-3 text-sm font-bold text-gray-900 shadow-[0_6px_16px_-8px_rgba(27,15,73,.6)] hover:-translate-y-px hover:text-brand-600"
+        className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-900 shadow-[0_6px_16px_-8px_rgba(27,15,73,.6)] hover:-translate-y-px hover:text-brand-600"
       >
         <CartIcon />
-        <span className="hidden sm:inline">{t('header.cart')}</span>
-        <span
-          key={count}
-          className="inline-flex h-5 min-w-5 animate-bump items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-bold text-white"
-        >
-          {count}
+        {count > 0 ? (
+          <span
+            key={count}
+            className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-5 animate-bump items-center justify-center rounded-full bg-accent px-1 text-[11px] font-extrabold text-gray-900 ring-2 ring-brand-600"
+          >
+            {count}
+          </span>
+        ) : null}
+        <span role="tooltip" className={headerTip}>
+          {t('header.cart')}
         </span>
       </Link>
     </div>
