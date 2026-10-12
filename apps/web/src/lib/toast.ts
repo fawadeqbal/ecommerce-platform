@@ -11,9 +11,13 @@ export interface ToastItem {
   title: string;
   description?: string;
   action?: { label: string; href: string };
+  /** Small product picture (add to cart, wishlist). */
+  image?: string | null;
+  /** How long it stays, in ms. */
+  duration: number;
 }
 
-type Options = Omit<ToastItem, 'id' | 'tone' | 'title'>;
+type Options = Partial<Omit<ToastItem, 'id' | 'tone' | 'title'>>;
 
 let items: ToastItem[] = [];
 let nextId = 1;
@@ -27,10 +31,14 @@ export function dismissToast(id: number) {
 
 function show(tone: ToastTone, title: string, options: Options = {}): number {
   const id = nextId++;
+  const duration = options.duration ?? (tone === 'error' ? 5000 : 3500);
   // Same message twice in a row replaces the old one instead of stacking.
-  items = [...items.filter((t) => t.title !== title), { id, tone, title, ...options }].slice(-3);
+  items = [
+    ...items.filter((t) => t.title !== title),
+    { id, tone, title, ...options, duration },
+  ].slice(-3);
   emit();
-  setTimeout(() => dismissToast(id), tone === 'error' ? 5000 : 3200);
+  setTimeout(() => dismissToast(id), duration);
   return id;
 }
 

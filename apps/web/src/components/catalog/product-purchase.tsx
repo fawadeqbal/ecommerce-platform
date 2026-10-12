@@ -47,7 +47,9 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
       setCart(cart);
       setAdded(true);
       haptic();
-      toast.success(`${quantity > 1 ? `${quantity} × ` : ''}${product.name} added`, {
+      toast.success('Added to cart', {
+        description: `${quantity > 1 ? `${quantity} × ` : ''}${product.name}`,
+        image: product.images[0]?.url,
         action: { label: 'View cart', href: '/cart' },
       });
     },

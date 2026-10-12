@@ -118,7 +118,15 @@ export function ProductCard({
         </div>
         {showVendor ? <p className="text-xs text-gray-500">Sold by {p.vendor.name}</p> : null}
       </div>
-      {quickAdd ? <QuickAdd slug={p.slug} hasOptions={p.hasOptions} inStock={p.inStock} /> : null}
+      {quickAdd ? (
+        <QuickAdd
+          slug={p.slug}
+          hasOptions={p.hasOptions}
+          inStock={p.inStock}
+          name={p.name}
+          imageUrl={p.imageUrl}
+        />
+      ) : null}
     </div>
   );
 }

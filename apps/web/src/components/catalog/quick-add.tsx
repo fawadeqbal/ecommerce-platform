@@ -12,10 +12,15 @@ export function QuickAdd({
   slug,
   hasOptions,
   inStock,
+  name,
+  imageUrl,
 }: {
   slug: string;
   hasOptions: boolean;
   inStock: boolean;
+  /** For the confirmation toast. */
+  name?: string;
+  imageUrl?: string | null;
 }) {
   const router = useRouter();
   const setCart = useSetCart();
@@ -31,7 +36,11 @@ export function QuickAdd({
     onSuccess: (cart) => {
       setCart(cart);
       haptic();
-      toast.success('Added to cart', { action: { label: 'View cart', href: '/cart' } });
+      toast.success('Added to cart', {
+        description: name,
+        image: imageUrl,
+        action: { label: 'View cart', href: '/cart' },
+      });
     },
     onError: (e) => toast.error(e.message),
   });
