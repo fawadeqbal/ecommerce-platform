@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { StorefrontProductCard } from '@ecommerce/types';
 import { cn } from '@ecommerce/ui';
 import { Money } from '@/components/locale/locale-provider';
+import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { QuickAdd } from './quick-add';
 
 export interface ProductCardProps {
@@ -15,9 +16,21 @@ export interface ProductCardProps {
   quickAdd?: boolean;
   /** Price in violet (deal rows). */
   dealPrice?: boolean;
+  /** "Sold by …" line (listings). */
+  showVendor?: boolean;
+  /** Heart button in the image corner (listings). */
+  wishlist?: boolean;
 }
 
-export function ProductCard({ product: p, badge, rank, quickAdd, dealPrice }: ProductCardProps) {
+export function ProductCard({
+  product: p,
+  badge,
+  rank,
+  quickAdd,
+  dealPrice,
+  showVendor,
+  wishlist,
+}: ProductCardProps) {
   const discount = p.compareAtPrice ? Math.round((1 - p.price / p.compareAtPrice) * 100) : 0;
   const href = `/products/${p.slug}`;
   return (
@@ -51,11 +64,16 @@ export function ProductCard({ product: p, badge, rank, quickAdd, dealPrice }: Pr
           </span>
         ) : null}
         {!p.inStock ? (
-          <span className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-gray-900/80 px-2.5 py-1 text-xs font-semibold text-white">
+          <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-gray-900/80 px-2.5 py-1 text-xs font-semibold text-white">
             Out of stock
           </span>
         ) : null}
       </Link>
+      {wishlist ? (
+        <span className="absolute right-4 top-4">
+          <WishlistButton productId={p.id} slug={p.slug} variant="icon" />
+        </span>
+      ) : null}
       {rank !== undefined ? (
         <span
           className={cn(
@@ -98,6 +116,7 @@ export function ProductCard({ product: p, badge, rank, quickAdd, dealPrice }: Pr
             </span>
           ) : null}
         </div>
+        {showVendor ? <p className="text-xs text-gray-500">Sold by {p.vendor.name}</p> : null}
       </div>
       {quickAdd ? <QuickAdd slug={p.slug} hasOptions={p.hasOptions} inStock={p.inStock} /> : null}
     </div>

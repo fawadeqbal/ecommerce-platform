@@ -5,10 +5,12 @@ import {
   STOREFRONT_SORT_LABELS,
   flattenCategoryTree,
   type AttributeDto,
+  type CategoryTreeNode,
   type StorefrontProductQuery,
   type StorefrontSort,
 } from '@ecommerce/types';
-import { Alert, EmptyState, buttonStyles } from '@ecommerce/ui';
+import { Alert, EmptyState, cn } from '@ecommerce/ui';
+import { container } from '@/components/layout/container';
 import {
   attributesApi,
   brandsApi,
@@ -16,6 +18,7 @@ import {
   searchApi,
   storefrontApi,
 } from '@/lib/api-client';
+import { FilterPanel } from './filter-panel';
 import { ProductCard } from './product-card';
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -27,7 +30,35 @@ const all = (v: string | string[] | undefined) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
-const select = 'h-10 w-full rounded-lg border border-gray-300 px-2';
+const SORT_SHORT: Record<StorefrontSort, string> = {
+  relevance: 'Best match',
+  newest: 'Newest',
+  price_asc: 'Price ↑',
+  price_desc: 'Price ↓',
+  popular: 'Popular',
+  rating: 'Top rated',
+};
+
+const groupTitle = 'text-sm font-bold';
+const rowLabel =
+  'flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-sm text-gray-900 hover:bg-gray-50 has-[:checked]:bg-brand-100 has-[:checked]:font-bold has-[:checked]:text-brand-700';
+const checkRow = 'flex cursor-pointer items-center gap-2.5 py-0.5 text-sm text-gray-900';
+const box =
+  'flex h-5 w-5 flex-none items-center justify-center rounded-[7px] border-2 border-gray-300 bg-white text-xs font-extrabold text-transparent peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand-300';
+const priceInput =
+  'h-[42px] min-w-0 flex-1 rounded-xl border-[1.5px] border-gray-200 px-3 focus:border-brand-500 focus:outline-none';
+
+/** Page numbers with gaps: 1 … 4 5 6 … 20 */
+function pageList(page: number, total: number): (number | '…')[] {
+  const set = new Set([1, total, page - 1, page, page + 1].filter((n) => n >= 1 && n <= total));
+  const sorted = [...set].sort((a, b) => a - b);
+  const out: (number | '…')[] = [];
+  sorted.forEach((n, i) => {
+    if (i > 0 && n - sorted[i - 1]! > 1) out.push('…');
+    out.push(n);
+  });
+  return out;
+}
 
 /** Server-rendered listing with GET-form filters (works without JavaScript, SEO friendly). */
 export async function ProductListing({
@@ -77,167 +108,334 @@ export async function ProductListing({
     attributesApi.filters(),
   ]);
 
-  const categories = tree.status === 'fulfilled' ? flattenCategoryTree(tree.value) : [];
+  const topLevel: CategoryTreeNode[] = tree.status === 'fulfilled' ? tree.value : [];
+  const categories = flattenCategoryTree(topLevel);
   const brandList = brands.status === 'fulfilled' ? brands.value : [];
   const attributeList: AttributeDto[] =
     attributes.status === 'fulfilled' ? attributes.value.filter((a) => a.values.length > 0) : [];
+  const total = result.status === 'fulfilled' ? result.value.meta.total : 0;
   const empty = result.status === 'fulfilled' && result.value.items.length === 0;
   const didYouMean =
     empty && q ? await searchApi.didYouMean(q, { cache: 'no-store' }).catch(() => null) : null;
 
-  const pageHref = (page: number) => {
+  /** Current URL with some params replaced (undefined = removed); page resets unless given. */
+  const href = (changes: Record<string, string | undefined>) => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(searchParams)) {
-      if (key === 'page') continue;
+      if (key === 'page' || key in changes) continue;
       for (const v of Array.isArray(value) ? value : value ? [value] : []) params.append(key, v);
     }
-    params.set('page', String(page));
-    return `?${params.toString()}`;
+    for (const [key, value] of Object.entries(changes)) if (value) params.set(key, value);
+    const s = params.toString();
+    return s ? `?${s}` : '?';
   };
+  const resetHref = q ? `${basePath}?q=${encodeURIComponent(q)}` : basePath;
+
+  // Active filter chips (× removes one filter).
+  const valueLabel = new Map(
+    attributeList.flatMap((a) => a.values.map((v) => [v.id, v.label ?? v.value] as const)),
+  );
+  const chips: { label: string; href: string }[] = [
+    ...(!fixedCategory && query.category
+      ? [
+          {
+            label: categories.find((c) => c.slug === query.category)?.name ?? query.category,
+            href: href({ category: undefined }),
+          },
+        ]
+      : []),
+    ...(!fixedBrand && query.brand
+      ? [
+          {
+            label: brandList.find((b) => b.slug === query.brand)?.name ?? query.brand,
+            href: href({ brand: undefined }),
+          },
+        ]
+      : []),
+    ...values.map((id) => ({
+      label: valueLabel.get(id) ?? 'Option',
+      href: href({ values: values.filter((v) => v !== id).join(',') || undefined }),
+    })),
+    ...(query.minPrice || query.maxPrice
+      ? [
+          {
+            label: `Price ${query.minPrice ?? 0}–${query.maxPrice ?? '∞'}`,
+            href: href({ minPrice: undefined, maxPrice: undefined }),
+          },
+        ]
+      : []),
+    ...(query.minRating
+      ? [{ label: `${query.minRating}★ & up`, href: href({ minRating: undefined }) }]
+      : []),
+    ...(query.inStock ? [{ label: 'In stock', href: href({ inStock: undefined }) }] : []),
+    ...(query.featured ? [{ label: 'Featured', href: href({ featured: undefined }) }] : []),
+  ];
 
   const sorts = STOREFRONT_SORTS.filter((s) => s !== 'relevance' || q);
+  const activeSort = query.sort ?? (q ? 'relevance' : 'newest');
+  const heading = q ? `Results for “${q}”` : title;
+  const meta = result.status === 'fulfilled' ? result.value.meta : null;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className={`${container} flex flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`}>
       {header ?? (
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">
-          {q ? `Results for “${q}”` : title}
-        </h1>
+        <div className="flex flex-col gap-1.5">
+          <nav aria-label="Breadcrumb" className="flex gap-2 text-[13px] text-gray-500">
+            <Link href="/" className="text-gray-500 hover:text-brand-600">
+              Home
+            </Link>
+            <span>/</span>
+            <span className="text-gray-900">{heading}</span>
+          </nav>
+          <div className="flex flex-wrap items-baseline justify-between gap-2.5">
+            <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-none tracking-display">
+              {heading}
+            </h1>
+            <span className="text-sm text-gray-500">{total.toLocaleString()} results</span>
+          </div>
+        </div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
-        <form method="get" className="space-y-5 text-sm">
-          {q ? <input type="hidden" name="q" value={q} /> : null}
-          {query.featured ? <input type="hidden" name="featured" value="true" /> : null}
-          {!fixedCategory ? (
-            <label className="block space-y-1">
-              <span className="font-medium text-gray-700">Category</span>
-              <select name="category" defaultValue={query.category ?? ''} className={select}>
-                <option value="">All categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>
-                    {'\u00a0\u00a0'.repeat(c.depth)}
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          {!fixedBrand ? (
-            <label className="block space-y-1">
-              <span className="font-medium text-gray-700">Brand</span>
-              <select name="brand" defaultValue={query.brand ?? ''} className={select}>
-                <option value="">All brands</option>
-                {brandList.map((b) => (
-                  <option key={b.id} value={b.slug}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          <fieldset className="space-y-1">
-            <legend className="font-medium text-gray-700">Price</legend>
-            <div className="flex gap-2">
-              <input
-                name="minPrice"
-                type="number"
-                min={0}
-                placeholder="Min"
-                defaultValue={query.minPrice ?? ''}
-                className={select}
-              />
-              <input
-                name="maxPrice"
-                type="number"
-                min={0}
-                placeholder="Max"
-                defaultValue={query.maxPrice ?? ''}
-                className={select}
-              />
-            </div>
-          </fieldset>
-          <label className="block space-y-1">
-            <span className="font-medium text-gray-700">Rating</span>
-            <select
-              name="minRating"
-              defaultValue={query.minRating ? String(query.minRating) : ''}
-              className={select}
-            >
-              <option value="">Any rating</option>
-              <option value="4">4★ and up</option>
-              <option value="3">3★ and up</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="inStock"
-              value="true"
-              defaultChecked={query.inStock}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <span className="text-gray-700">In stock only</span>
-          </label>
-          {attributeList.map((a) => (
-            <fieldset key={a.id} className="space-y-1">
-              <legend className="font-medium text-gray-700">{a.name}</legend>
-              <div className="max-h-40 space-y-1 overflow-y-auto">
-                {a.values.map((v) => (
-                  <label key={v.id} className="flex items-center gap-2">
+      {!fixedCategory && topLevel.length > 0 ? (
+        <div className="scrollbar-none flex gap-2 overflow-x-auto">
+          {[{ name: 'All', slug: '' }, ...topLevel].map((c) => {
+            const on = (query.category ?? '') === c.slug;
+            return (
+              <Link
+                key={c.slug || 'all'}
+                href={href({ category: c.slug || undefined })}
+                className={cn(
+                  'flex-none rounded-full px-4 py-[9px] text-sm font-semibold',
+                  on ? 'bg-brand-600 text-white hover:text-white' : 'bg-white text-gray-900',
+                )}
+              >
+                {c.name}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
+
+      <div className="grid items-start gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
+        <div className="flex flex-col gap-3">
+          <FilterPanel activeCount={chips.length} total={total} resetHref={resetHref}>
+            {q ? <input type="hidden" name="q" value={q} /> : null}
+            {query.featured ? <input type="hidden" name="featured" value="true" /> : null}
+            {query.sort ? <input type="hidden" name="sort" value={query.sort} /> : null}
+
+            {!fixedCategory && categories.length > 0 ? (
+              <fieldset className="flex flex-col gap-2.5">
+                <legend className={cn(groupTitle, 'mb-2.5')}>Category</legend>
+                <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
+                  <label className={rowLabel}>
                     <input
-                      type="checkbox"
-                      name="values"
-                      value={v.id}
-                      defaultChecked={values.includes(v.id)}
-                      className="h-4 w-4 rounded border-gray-300"
+                      type="radio"
+                      name="category"
+                      value=""
+                      defaultChecked={!query.category}
+                      className="sr-only"
                     />
-                    {v.swatch ? (
-                      <span
-                        className="h-3.5 w-3.5 rounded-full border border-gray-300"
-                        style={{ background: v.swatch }}
+                    All
+                  </label>
+                  {categories.map((c) => (
+                    <label
+                      key={c.id}
+                      className={rowLabel}
+                      style={{ paddingLeft: 10 + c.depth * 12 }}
+                    >
+                      <input
+                        type="radio"
+                        name="category"
+                        value={c.slug}
+                        defaultChecked={query.category === c.slug}
+                        className="sr-only"
                       />
-                    ) : null}
-                    <span className="text-gray-700">{v.label ?? v.value}</span>
+                      {c.name}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : null}
+
+            <fieldset className="flex flex-col gap-2.5">
+              <legend className={cn(groupTitle, 'mb-2.5')}>Price</legend>
+              <div className="flex gap-2">
+                <input
+                  name="minPrice"
+                  type="number"
+                  min={0}
+                  placeholder="Min"
+                  aria-label="Minimum price"
+                  defaultValue={query.minPrice ?? ''}
+                  className={priceInput}
+                />
+                <input
+                  name="maxPrice"
+                  type="number"
+                  min={0}
+                  placeholder="Max"
+                  aria-label="Maximum price"
+                  defaultValue={query.maxPrice ?? ''}
+                  className={priceInput}
+                />
+              </div>
+            </fieldset>
+
+            {!fixedBrand && brandList.length > 0 ? (
+              <fieldset className="flex flex-col gap-2.5">
+                <legend className={cn(groupTitle, 'mb-2.5')}>Brand</legend>
+                <div className="flex max-h-56 flex-col gap-2 overflow-y-auto">
+                  {[{ id: '', slug: '', name: 'All brands' }, ...brandList].map((b) => (
+                    <label key={b.id || 'all'} className={checkRow}>
+                      <input
+                        type="radio"
+                        name="brand"
+                        value={b.slug}
+                        defaultChecked={(query.brand ?? '') === b.slug}
+                        className="peer sr-only"
+                      />
+                      <span aria-hidden className={box}>
+                        ✓
+                      </span>
+                      {b.name}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : null}
+
+            {attributeList.map((a) => {
+              const swatches = a.values.every((v) => v.swatch);
+              return (
+                <fieldset key={a.id} className="flex flex-col gap-2.5">
+                  <legend className={cn(groupTitle, 'mb-2.5')}>{a.name}</legend>
+                  {swatches ? (
+                    <div className="flex flex-wrap gap-2">
+                      {a.values.map((v) => (
+                        <label key={v.id} title={v.label ?? v.value} className="cursor-pointer">
+                          <input
+                            type="checkbox"
+                            name="values"
+                            value={v.id}
+                            defaultChecked={values.includes(v.id)}
+                            className="peer sr-only"
+                          />
+                          <span
+                            aria-hidden
+                            className="block h-8 w-8 rounded-full border-[3px] border-white shadow-[0_0_0_2px_#e6e3f0] peer-checked:shadow-[0_0_0_2px_#6445df] peer-focus-visible:shadow-[0_0_0_2px_#958aff]"
+                            style={{ background: v.swatch ?? undefined }}
+                          />
+                          <span className="sr-only">{v.label ?? v.value}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex max-h-48 flex-col gap-2 overflow-y-auto">
+                      {a.values.map((v) => (
+                        <label key={v.id} className={checkRow}>
+                          <input
+                            type="checkbox"
+                            name="values"
+                            value={v.id}
+                            defaultChecked={values.includes(v.id)}
+                            className="peer sr-only"
+                          />
+                          <span aria-hidden className={box}>
+                            ✓
+                          </span>
+                          {v.label ?? v.value}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </fieldset>
+              );
+            })}
+
+            <fieldset className="flex flex-col gap-2.5">
+              <legend className={cn(groupTitle, 'mb-2.5')}>Rating</legend>
+              <div className="flex gap-2">
+                {[
+                  ['', 'Any'],
+                  ['4', '4★ & up'],
+                  ['3', '3★ & up'],
+                ].map(([value, label]) => (
+                  <label
+                    key={value || 'any'}
+                    className="flex-1 cursor-pointer rounded-xl bg-gray-50 p-[9px] text-center text-sm font-semibold has-[:checked]:bg-brand-600 has-[:checked]:text-white"
+                  >
+                    <input
+                      type="radio"
+                      name="minRating"
+                      value={value}
+                      defaultChecked={(query.minRating ? String(query.minRating) : '') === value}
+                      className="sr-only"
+                    />
+                    {label}
                   </label>
                 ))}
               </div>
             </fieldset>
-          ))}
-          <label className="block space-y-1">
-            <span className="font-medium text-gray-700">Sort by</span>
-            <select
-              name="sort"
-              defaultValue={query.sort ?? (q ? 'relevance' : 'newest')}
-              className={select}
+
+            <label className="flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-3.5 py-3 text-sm font-semibold">
+              In stock only
+              <input
+                type="checkbox"
+                name="inStock"
+                value="true"
+                defaultChecked={query.inStock}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden
+                className="relative h-6 w-10 rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[19px]"
+              />
+            </label>
+          </FilterPanel>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {chips.map((c) => (
+                <Link
+                  key={c.label}
+                  href={c.href}
+                  className="flex items-center gap-1.5 rounded-full bg-brand-100 px-3 py-[7px] text-[13px] font-semibold text-brand-700 hover:text-brand-900"
+                >
+                  {c.label} <span className="font-extrabold">×</span>
+                </Link>
+              ))}
+            </div>
+            <nav
+              aria-label="Sort"
+              className="scrollbar-none flex max-w-full items-center gap-1 overflow-x-auto rounded-[14px] bg-white p-1"
             >
               {sorts.map((s) => (
-                <option key={s} value={s}>
-                  {STOREFRONT_SORT_LABELS[s]}
-                </option>
+                <Link
+                  key={s}
+                  href={href({ sort: s })}
+                  title={STOREFRONT_SORT_LABELS[s]}
+                  aria-current={s === activeSort ? 'true' : undefined}
+                  className={cn(
+                    'whitespace-nowrap rounded-[10px] px-3 py-[7px] text-[13px] font-semibold',
+                    s === activeSort
+                      ? 'bg-gray-900 text-white hover:text-white'
+                      : 'text-gray-600 hover:text-gray-900',
+                  )}
+                >
+                  {SORT_SHORT[s]}
+                </Link>
               ))}
-            </select>
-          </label>
-          <div className="flex gap-2">
-            <button type="submit" className={buttonStyles({ className: 'flex-1' })}>
-              Apply
-            </button>
-            <Link
-              href={q ? `${basePath}?q=${encodeURIComponent(q)}` : basePath}
-              className={buttonStyles({ variant: 'outline' })}
-            >
-              Reset
-            </Link>
+            </nav>
           </div>
-        </form>
 
-        <div>
           {result.status === 'rejected' ? (
             <Alert tone="error" title="Could not load products">
               The store is temporarily unavailable. Please try again in a moment.
             </Alert>
           ) : result.value.items.length === 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-4 rounded-3xl bg-white p-6">
               {didYouMean?.suggestion ? (
                 <p className="text-sm text-gray-700">
                   Did you mean{' '}
@@ -258,41 +456,54 @@ export async function ProductListing({
               />
             </div>
           ) : (
-            <>
-              <p className="mb-4 text-sm text-gray-500">{result.value.meta.total} products</p>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-                {result.value.items.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </div>
-              {result.value.meta.totalPages > 1 ? (
-                <nav
-                  className="mt-8 flex items-center justify-center gap-2 text-sm"
-                  aria-label="Pagination"
-                >
-                  {query.page && query.page > 1 ? (
-                    <Link
-                      href={pageHref(query.page - 1)}
-                      className={buttonStyles({ variant: 'outline', size: 'sm' })}
-                    >
-                      Previous
-                    </Link>
-                  ) : null}
-                  <span className="px-2 text-gray-600">
-                    Page {result.value.meta.page} of {result.value.meta.totalPages}
-                  </span>
-                  {result.value.meta.page < result.value.meta.totalPages ? (
-                    <Link
-                      href={pageHref(result.value.meta.page + 1)}
-                      className={buttonStyles({ variant: 'outline', size: 'sm' })}
-                    >
-                      Next
-                    </Link>
-                  ) : null}
-                </nav>
-              ) : null}
-            </>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,17vw,220px),1fr))] gap-3">
+              {result.value.items.map((p) => (
+                <ProductCard key={p.id} product={p} quickAdd showVendor wishlist />
+              ))}
+            </div>
           )}
+
+          {meta && meta.totalPages > 1 ? (
+            <nav aria-label="Pagination" className="mt-3 flex justify-center gap-1.5">
+              {[
+                { label: '‹', target: meta.page > 1 ? meta.page - 1 : null, aria: 'Previous page' },
+                ...pageList(meta.page, meta.totalPages).map((n) => ({
+                  label: String(n),
+                  target: n === '…' ? null : n,
+                  aria: undefined as string | undefined,
+                })),
+                {
+                  label: '›',
+                  target: meta.page < meta.totalPages ? meta.page + 1 : null,
+                  aria: 'Next page',
+                },
+              ].map(({ label, target, aria }, i) =>
+                target === null ? (
+                  <span
+                    key={`${label}-${i}`}
+                    className="flex h-[42px] min-w-[42px] items-center justify-center rounded-[14px] bg-white font-bold text-gray-400"
+                  >
+                    {label}
+                  </span>
+                ) : (
+                  <Link
+                    key={`${label}-${i}`}
+                    href={href({ page: String(target) })}
+                    aria-label={aria}
+                    aria-current={target === meta.page && !aria ? 'page' : undefined}
+                    className={cn(
+                      'flex h-[42px] min-w-[42px] items-center justify-center rounded-[14px] px-2 font-bold',
+                      target === meta.page && !aria
+                        ? 'bg-brand-600 text-white hover:text-white'
+                        : 'bg-white text-gray-900',
+                    )}
+                  >
+                    {label}
+                  </Link>
+                ),
+              )}
+            </nav>
+          ) : null}
         </div>
       </div>
     </div>

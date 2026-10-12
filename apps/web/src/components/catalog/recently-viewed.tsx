@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { RECENTLY_VIEWED_KEY, pushRecentlyViewed } from '@ecommerce/types';
 import { queryKeys, storefrontApi } from '@/lib/api-client';
+import { productGrid } from '@/components/home/section-head';
 import { ProductCard } from './product-card';
 
 const VISITOR_KEY = 'visitor-id';
@@ -57,9 +58,11 @@ export function RecentlyViewed({ slug }: { slug: string }) {
 
   if (!data || data.length === 0) return null;
   return (
-    <section className="mt-12">
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">Recently viewed</h2>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <section className="flex flex-col gap-4">
+      <h2 className="text-[clamp(24px,2.8vw,34px)] font-extrabold tracking-heading">
+        Recently viewed
+      </h2>
+      <div className={productGrid}>
         {data.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}
