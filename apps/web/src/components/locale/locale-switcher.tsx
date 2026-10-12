@@ -9,7 +9,7 @@ export function LocaleSwitcher() {
   const select =
     'h-9 rounded-[14px] border-0 bg-white/[.14] px-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/40 [&>option]:text-gray-900';
   return (
-    <div className="hidden items-center gap-2 lg:flex">
+    <div className="hidden items-center gap-2 xl:flex">
       {info.currencies.length > 1 ? (
         <select
           aria-label={t('locale.currency')}

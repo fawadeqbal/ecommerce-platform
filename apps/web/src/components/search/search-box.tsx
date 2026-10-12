@@ -51,12 +51,15 @@ export function SearchBox() {
   };
 
   return (
-    <div ref={boxRef} className="relative order-3 min-w-0 flex-[1_1_400px]">
+    <div
+      ref={boxRef}
+      className="relative order-last w-full min-w-0 md:order-none md:w-auto md:min-w-[200px] md:max-w-[720px] md:flex-1"
+    >
       <form
         action="/search"
         onSubmit={submit}
         role="search"
-        className="flex h-12 items-center gap-2 rounded-2xl bg-white pl-[18px] pr-1.5"
+        className="flex h-11 items-center gap-2 rounded-2xl bg-white pl-4 pr-1.5"
       >
         <input
           name="q"
@@ -77,7 +80,7 @@ export function SearchBox() {
         />
         <button
           type="submit"
-          className="h-9 rounded-xl bg-accent px-[18px] font-bold text-gray-900 hover:bg-accent-strong"
+          className="h-8 rounded-xl bg-accent px-4 text-sm font-bold text-gray-900 hover:bg-accent-strong"
         >
           {t('header.search')}
         </button>
@@ -85,7 +88,7 @@ export function SearchBox() {
       {open && hasResults ? (
         <div
           id={listId}
-          className="absolute left-0 right-0 top-[52px] z-40 animate-pop-in rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
+          className="absolute left-0 right-0 top-[50px] z-40 animate-pop-in rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
         >
           {data.products.map((p) => (
             <Link

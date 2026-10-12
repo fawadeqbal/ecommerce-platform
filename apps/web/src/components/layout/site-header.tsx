@@ -28,21 +28,23 @@ export async function SiteHeader() {
       <header id="site-header" className="sticky top-0 z-30 bg-brand-600 text-white">
         <HeaderHeight />
         <div
-          className={`${container} flex flex-wrap items-center gap-x-[clamp(14px,2.4vw,36px)] gap-y-3 py-3.5`}
+          className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,1.8vw,28px)] gap-y-3 py-3 md:flex-nowrap`}
         >
           <StoreLogo name={storeName(settings)} logoUrl={settings?.logoUrl} />
           <Link
             href="/products"
-            className="hidden items-center gap-1.5 rounded-[14px] bg-white/[.14] px-3.5 py-[9px] text-sm font-semibold text-white hover:bg-white/20 hover:text-white md:flex"
+            className="hidden items-center gap-1.5 rounded-[14px] bg-white/[.14] px-3.5 py-[9px] text-sm font-semibold text-white hover:bg-white/20 hover:text-white lg:flex"
           >
             Categories <span aria-hidden>▾</span>
           </Link>
           <Suspense
-            fallback={<div className="order-3 h-12 flex-[1_1_400px] rounded-2xl bg-white" />}
+            fallback={
+              <div className="order-last h-11 w-full rounded-2xl bg-white md:order-none md:w-auto md:min-w-[200px] md:flex-1" />
+            }
           >
             <SearchBox />
           </Suspense>
-          <div className="order-2 ml-auto flex items-center gap-1.5">
+          <div className="ml-auto flex flex-none items-center gap-1 md:ml-0">
             <LocaleSwitcher />
             <HeaderActions />
           </div>

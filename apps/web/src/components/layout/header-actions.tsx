@@ -8,7 +8,7 @@ import { useWishlist } from '@/hooks/use-wishlist';
 import { useLocale } from '@/components/locale/locale-provider';
 import { authApi } from '@/lib/api-client';
 
-const link = 'rounded-lg px-3 py-[9px] text-white hover:text-white/80';
+const link = 'whitespace-nowrap rounded-lg px-2.5 py-[9px] text-white hover:text-white/80';
 
 export function HeaderActions() {
   const { data: cart } = useCart();
@@ -27,12 +27,12 @@ export function HeaderActions() {
 
   return (
     <div className="flex items-center gap-1.5 text-sm font-semibold">
-      <Link href="/track-order" className={`${link} hidden md:inline`}>
+      <Link href="/track-order" className={`${link} hidden xl:inline`}>
         {t('header.trackOrder')}
       </Link>
       <Link
         href={me ? '/account/wishlist' : '/login?next=/account/wishlist'}
-        className={`${link} hidden sm:inline`}
+        className={`${link} hidden lg:inline`}
       >
         {t('header.wishlist')}
         {saved > 0 ? ` (${saved})` : ''}
@@ -45,7 +45,7 @@ export function HeaderActions() {
           <button
             type="button"
             onClick={signOut}
-            className="hidden px-2 py-[9px] text-[13px] font-medium text-white/70 hover:text-white lg:inline"
+            className="hidden px-2 py-[9px] text-[13px] font-medium text-white/70 hover:text-white xl:inline"
           >
             {t('header.signOut')}
           </button>
