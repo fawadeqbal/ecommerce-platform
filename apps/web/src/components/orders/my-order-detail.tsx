@@ -8,6 +8,7 @@ import { Alert, Button, ReasonDialog, Spinner } from '@ecommerce/ui';
 import { ordersApi, queryKeys } from '@/lib/api-client';
 import { ReturnDialog } from '@/components/returns/return-dialog';
 import { OrderDetails } from './order-details';
+import { OrderDocuments } from './order-documents';
 
 export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
   const queryClient = useQueryClient();
@@ -62,6 +63,7 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
           ) : null
         }
       />
+      <OrderDocuments order={order} />
       {returnable.length > 0 ? (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm">
           <span className="text-gray-700">Something wrong with your items?</span>

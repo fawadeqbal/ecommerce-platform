@@ -18,6 +18,7 @@ import {
   CardTitle,
   DetailList,
   PageHeader,
+  buttonStyles,
   ReasonDialog,
   Spinner,
   Timeline,
@@ -26,8 +27,10 @@ import {
   formatMoney,
 } from '@ecommerce/ui';
 import { ordersApi, queryKeys } from '@/lib/api-client';
+import { documentsApi } from '@/lib/api-client';
 import { OrderRewards } from './order-rewards';
 import { OrderStatusBadge } from './order-status-badge';
+import { OrderNotes } from './order-notes';
 
 export function AdminOrderDetail({ id }: { id: string }) {
   const queryClient = useQueryClient();
@@ -70,17 +73,35 @@ export function AdminOrderDetail({ id }: { id: string }) {
         title={`Order ${o.orderNumber}`}
         description={`Placed ${formatDateTime(o.placedAt)} · ${o.email}`}
         actions={
-          o.canCancel ? (
-            <Button
-              variant="danger"
-              onClick={() => {
-                cancel.reset();
-                setCancelling(true);
-              }}
+          <>
+            <a
+              href={documentsApi.adminInvoiceUrl(o.id)}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonStyles({ variant: 'outline' })}
             >
-              Cancel order
-            </Button>
-          ) : null
+              Invoice (PDF)
+            </a>
+            <a
+              href={documentsApi.adminPackingSlipUrl(o.id)}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonStyles({ variant: 'outline' })}
+            >
+              Packing slip
+            </a>
+            {o.canCancel ? (
+              <Button
+                variant="danger"
+                onClick={() => {
+                  cancel.reset();
+                  setCancelling(true);
+                }}
+              >
+                Cancel order
+              </Button>
+            ) : null}
+          </>
         }
       />
 
@@ -198,6 +219,11 @@ export function AdminOrderDetail({ id }: { id: string }) {
           </Card>
 
           <OrderRewards orderId={o.id} />
+
+          <OrderNotes
+            id={o.id}
+            sellers={o.vendorOrders.map((v) => ({ id: v.id, name: v.vendor.name }))}
+          />
 
           {o.payments.length > 0 && o.paymentMethod !== 'COD' ? (
             <Card>

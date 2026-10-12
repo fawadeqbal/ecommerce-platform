@@ -22,6 +22,7 @@ import {
   Modal,
   Select,
   PageHeader,
+  buttonStyles,
   Spinner,
   Textarea,
   Timeline,
@@ -30,7 +31,9 @@ import {
   formatMoney,
 } from '@ecommerce/ui';
 import { ordersApi, queryKeys, shippingApi } from '@/lib/api-client';
+import { documentsApi } from '@/lib/api-client';
 import { OrderStatusBadge } from './order-status-badge';
+import { OrderNotes } from './order-notes';
 
 const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
   PROCESSING: 'Accept & start processing',
@@ -106,15 +109,37 @@ export function VendorOrderDetail({ id }: { id: string }) {
         }
         title={`Order ${o.orderNumber}`}
         description={`Placed ${formatDateTime(o.placedAt)}`}
-        actions={o.nextStatuses.map((s) => (
-          <Button
-            key={s}
-            variant={s === 'CANCELLED' ? 'danger' : 'primary'}
-            onClick={() => open(s)}
-          >
-            {ACTION_LABELS[s] ?? ORDER_STATUS_LABELS[s]}
-          </Button>
-        ))}
+        actions={
+          <>
+            <a
+              href={documentsApi.vendorPackingSlipUrl(o.id)}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonStyles({ variant: 'outline' })}
+            >
+              Packing slip
+            </a>
+            {o.status !== 'CANCELLED' ? (
+              <a
+                href={documentsApi.vendorInvoiceUrl(o.id)}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonStyles({ variant: 'outline' })}
+              >
+                Invoice
+              </a>
+            ) : null}
+            {o.nextStatuses.map((s) => (
+              <Button
+                key={s}
+                variant={s === 'CANCELLED' ? 'danger' : 'primary'}
+                onClick={() => open(s)}
+              >
+                {ACTION_LABELS[s] ?? ORDER_STATUS_LABELS[s]}
+              </Button>
+            ))}
+          </>
+        }
       />
 
       <div className="mb-6 flex items-center gap-3">
@@ -224,6 +249,7 @@ export function VendorOrderDetail({ id }: { id: string }) {
               ]}
             />
           </Card>
+          <OrderNotes id={o.id} />
         </div>
       </div>
 

@@ -6,6 +6,7 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
   wishlist: ['wishlist'] as const,
+  orderNotes: (scope: string, id: string) => ['order-notes', scope, id] as const,
   seo: {
     redirects: ['seo', 'redirects'] as const,
   },

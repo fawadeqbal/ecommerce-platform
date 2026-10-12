@@ -26,6 +26,7 @@ export { paymentAdminApi } from './endpoints/payment-admin';
 export { marketingApi } from './endpoints/marketing';
 export { emailAdminApi } from './endpoints/email-admin';
 export { seoApi } from './endpoints/seo';
+export { documentsApi } from './endpoints/documents';
 export { cmsApi } from './endpoints/cms';
 export { reportsApi } from './endpoints/reports';
 export { blogApi } from './endpoints/blog';
