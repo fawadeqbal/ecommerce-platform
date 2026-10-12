@@ -22,6 +22,8 @@ const envSchema = z.object({
   PAYMENT_PROVIDER: z.string().default('mock'),
   PAYMENT_API_KEY: z.string().optional(),
   PAYMENT_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
   PAYMENT_ALLOW_MOCK_IN_PRODUCTION: z.enum(['true', 'false']).default('false'),
 
   // Object storage (MinIO locally, any S3-compatible service in production)

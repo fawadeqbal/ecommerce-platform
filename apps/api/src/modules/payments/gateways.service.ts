@@ -172,8 +172,8 @@ export class PaymentGatewaysService {
         break;
       case 'stripe':
         provider = new StripePaymentProvider({
-          secretKey: creds.secretKey ?? '',
-          webhookSecret: creds.webhookSecret ?? '',
+          secretKey: creds.secretKey || this.config.get<string>('STRIPE_SECRET_KEY') || '',
+          webhookSecret: creds.webhookSecret || this.config.get<string>('STRIPE_WEBHOOK_SECRET') || '',
         });
         break;
       default:

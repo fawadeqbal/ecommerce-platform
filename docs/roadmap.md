@@ -10,7 +10,7 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 32.** (Step 22 support is deferred: it will be built together with the RAG support assistant.)
+Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 32.** (Step 22 support is deferred: it will be built together with the RAG support assistant. The assistant's Python backend was imported as-is into `services/support-ai`; integration pending.)
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
