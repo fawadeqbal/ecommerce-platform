@@ -8,6 +8,7 @@ import { SupportWidget } from '@/components/support/support-widget';
 import { OrganizationJsonLd } from '@/components/seo/organization-json-ld';
 import { MaintenanceGate } from '@/components/layout/maintenance-gate';
 import { MobileTabBar } from '@/components/layout/mobile-tab-bar';
+import { StoreChrome } from '@/components/layout/store-chrome';
 import './globals.css';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' });
@@ -25,11 +26,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <MaintenanceGate>
           <Providers>
             <OrganizationJsonLd />
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-            <MobileTabBar />
-            <SupportWidget />
+            <StoreChrome
+              header={<SiteHeader />}
+              footer={<SiteFooter />}
+              extras={
+                <>
+                  <MobileTabBar />
+                  <SupportWidget />
+                </>
+              }
+            >
+              {children}
+            </StoreChrome>
           </Providers>
         </MaintenanceGate>
       </body>

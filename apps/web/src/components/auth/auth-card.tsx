@@ -22,7 +22,7 @@ export async function AuthCard({
 }) {
   const name = storeName(await getStoreSettings());
   return (
-    <div className="flex min-h-[calc(100vh-140px)] flex-wrap">
+    <div className="flex min-h-dvh flex-wrap">
       <div className="relative flex min-h-[280px] flex-[1_1_480px] flex-col justify-between gap-8 overflow-hidden bg-brand-600 p-[clamp(24px,4vw,56px)]">
         <span
           aria-hidden
@@ -32,10 +32,14 @@ export async function AuthCard({
           aria-hidden
           className="absolute bottom-16 right-16 h-40 w-40 rounded-full bg-accent/90"
         />
-        <span className="relative flex items-center gap-1.5 text-[30px] font-extrabold leading-none tracking-display text-white">
+        <Link
+          href="/"
+          aria-label={`${name} home`}
+          className="relative flex items-center gap-1.5 self-start text-[30px] font-extrabold leading-none tracking-display text-white hover:text-white"
+        >
           {name}
           <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full bg-accent" />
-        </span>
+        </Link>
         <div className="relative flex max-w-[440px] flex-col gap-3">
           <span className="-rotate-2 self-start rounded-full bg-accent px-3 py-1.5 text-[13px] font-bold text-gray-900">
             Earn points on every order
@@ -48,6 +52,12 @@ export async function AuthCard({
 
       <div className="flex flex-[1_1_420px] items-center justify-center px-4 py-[clamp(24px,4vw,56px)]">
         <div className="flex w-full max-w-[420px] flex-col gap-4">
+          <Link
+            href="/"
+            className="self-start text-sm font-semibold text-gray-500 hover:text-brand-600"
+          >
+            ← Back to the store
+          </Link>
           {mode ? (
             <div className="flex gap-1 rounded-2xl bg-white p-1">
               {(
@@ -85,11 +95,7 @@ export async function AuthCard({
                 Track your order
               </Link>
             </div>
-          ) : (
-            <p className="text-center text-xs text-gray-500">
-              <Link href="/">Back to the store</Link>
-            </p>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
