@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { setSellerRate } from './commission-resolver';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import type { Prisma, Vendor } from '@ecommerce/database';
@@ -219,29 +220,29 @@ export class VendorsService {
     dto: AdminUpdateVendorDto,
     actorId?: string,
   ): Promise<VendorAdminDto> {
-    const before = await this.findWithOwner(id);
-    const updated = await this.prisma.vendor.update({
-      where: { id },
-      data: { commissionRate: dto.commissionRate },
-      include: vendorAdminInclude,
-    });
-    await this.audit.log({
-      actorId,
-      action: 'vendor.update',
-      entityType: 'Vendor',
-      entityId: id,
-      before,
-      after: updated,
-    });
-    return toVendorAdminDto(updated);
+    const before = toVendorAdminDto(await this.findWithOwner(id));
+    if (dto.commissionRate !== undefined) {
+      // The seller's rate is their own commission rule (see Commissions page).
+      await setSellerRate(this.prisma, id, dto.commissionRate);
+      await this.audit.log({
+        actorId,
+        action: 'vendor.commission',
+        entityType: 'Vendor',
+        entityId: id,
+        before: { commissionRate: before.commissionRate },
+        after: { commissionRate: dto.commissionRate },
+      });
+    }
+    return toVendorAdminDto(await this.findWithOwner(id));
   }
 
   async approve(id: string, dto: ApproveVendorDto, actorId?: string): Promise<VendorAdminDto> {
     const vendor = await this.transition(id, ['PENDING', 'REJECTED'], 'APPROVED', {
       actorId,
       action: 'vendor.approve',
-      data: dto.commissionRate !== undefined ? { commissionRate: dto.commissionRate } : {},
+      data: {},
     });
+    if (dto.commissionRate !== undefined) await setSellerRate(this.prisma, id, dto.commissionRate);
     await this.email({
       template: EmailTemplateKey.VENDOR_APPROVED,
       to: vendor.email,
@@ -253,7 +254,9 @@ export class VendorsService {
         ctaUrl: this.vendorUrl('/'),
       },
     });
-    return toVendorAdminDto(vendor);
+    return dto.commissionRate !== undefined
+      ? toVendorAdminDto(await this.findWithOwner(id))
+      : toVendorAdminDto(vendor);
   }
 
   async reject(id: string, reason: string, actorId?: string): Promise<VendorAdminDto> {

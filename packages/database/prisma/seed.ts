@@ -489,7 +489,7 @@ async function seedVendors() {
         emailPreference: { create: {} },
       },
     });
-    await prisma.vendor.upsert({
+    const store = await prisma.vendor.upsert({
       where: { slug: v.slug },
       update: {},
       create: {
@@ -500,7 +500,6 @@ async function seedVendors() {
         description: v.description,
         status: v.status,
         approvedAt: v.status === 'APPROVED' ? new Date() : null,
-        commissionRate: v.status === 'APPROVED' ? 10 : null,
         policies:
           v.status === 'APPROVED'
             ? {
@@ -510,6 +509,16 @@ async function seedVendors() {
             : undefined,
       },
     });
+    // Seller commission is a CommissionRule (scope VENDOR, no category).
+    if (v.status === 'APPROVED') {
+      const hasRule = await prisma.commissionRule.findFirst({
+        where: { vendorId: store.id, scope: 'VENDOR', categoryId: null },
+      });
+      if (!hasRule)
+        await prisma.commissionRule.create({
+          data: { scope: 'VENDOR', vendorId: store.id, rate: 10 },
+        });
+    }
   }
   console.log(`  ✓ vendors (${vendors.length}) — password Vendor@12345`);
 }

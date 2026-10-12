@@ -35,7 +35,7 @@ export interface VendorDto {
   status: VendorStatus;
   /** Why the vendor was rejected or suspended. */
   statusReason: string | null;
-  /** Percentage, e.g. 10 = 10%. null = platform default. */
+  /** The seller's own commission rule (scope VENDOR, no category), e.g. 10 = 10%. null = no seller rule. */
   commissionRate: number | null;
   ratingAverage: number;
   approvedAt: string | null;

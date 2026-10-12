@@ -7,10 +7,33 @@ import {
 } from '@ecommerce/types';
 import type { PrismaService } from '../../prisma/prisma.service';
 
+/** Where-clause of a seller's own rule: scope VENDOR, no category, active. */
+export const sellerRuleWhere = (vendorId: string) => ({
+  scope: 'VENDOR' as const,
+  vendorId,
+  categoryId: null,
+  isActive: true,
+});
+
+/** Sets (number) or removes (null) the seller's own commission rule. */
+export async function setSellerRate(
+  prisma: PrismaService,
+  vendorId: string,
+  rate: number | null,
+): Promise<void> {
+  const current = await prisma.commissionRule.findFirst({ where: sellerRuleWhere(vendorId) });
+  if (rate === null) {
+    if (current) await prisma.commissionRule.delete({ where: { id: current.id } });
+  } else if (current) {
+    await prisma.commissionRule.update({ where: { id: current.id }, data: { rate } });
+  } else {
+    await prisma.commissionRule.create({ data: { scope: 'VENDOR', vendorId, rate } });
+  }
+}
+
 export type CommissionResolver = (args: {
   vendorId: string;
   categoryId: string | null;
-  vendorRate: number | null;
 }) => CommissionResolution;
 
 /** Loads active rules and the category tree once, then resolves rates in memory. */
@@ -31,11 +54,10 @@ export async function loadCommissionResolver(
     isActive: r.isActive,
   }));
   const parents = new Map(categories.map((c) => [c.id, c.parentId]));
-  return ({ vendorId, categoryId, vendorRate }) =>
+  return ({ vendorId, categoryId }) =>
     resolveCommissionRate(rules, {
       vendorId,
       categoryPath: categoryPathOf(categoryId, parents),
-      vendorRate,
       defaultRate,
     });
 }

@@ -120,7 +120,7 @@ export class CommissionsService {
   async preview(q: CommissionPreviewQuery): Promise<CommissionPreviewDto> {
     const vendor = await this.prisma.vendor.findUnique({
       where: { id: q.vendorId },
-      select: { commissionRate: true },
+      select: { id: true },
     });
     if (!vendor) throw new NotFoundException('Seller not found');
     const defaultRate = await readSetting(this.prisma, 'marketplace.defaultCommissionRate', 10);
@@ -128,7 +128,6 @@ export class CommissionsService {
     const result = resolve({
       vendorId: q.vendorId,
       categoryId: q.categoryId ?? null,
-      vendorRate: vendor.commissionRate === null ? null : Number(vendor.commissionRate),
     });
     return { ...result, label: COMMISSION_SOURCE_LABELS[result.source] };
   }

@@ -33,7 +33,6 @@ export interface CommissionRuleInput {
 export type CommissionSource =
   | 'vendor_category'
   | 'vendor_rule'
-  | 'vendor_rate'
   | 'category'
   | 'global'
   | 'default';
@@ -41,7 +40,6 @@ export type CommissionSource =
 export const COMMISSION_SOURCE_LABELS: Record<CommissionSource, string> = {
   vendor_category: 'Seller rule for this category',
   vendor_rule: 'Seller rule',
-  vendor_rate: "Rate on the seller's profile",
   category: 'Category rule',
   global: 'Marketplace rule',
   default: 'Default setting (marketplace.defaultCommissionRate)',
@@ -60,8 +58,6 @@ export interface CommissionContext {
   vendorId: string;
   /** The product's category first, then its parent, grandparent… */
   categoryPath: string[];
-  /** Vendor.commissionRate (null = not set). */
-  vendorRate: number | null;
   defaultRate: number;
 }
 
@@ -73,7 +69,7 @@ export interface CommissionResolution {
 
 /**
  * Most specific wins:
- * seller+category rule (nearest category) → seller rule → seller profile rate →
+ * seller+category rule (nearest category) → seller rule →
  * category rule (nearest category) → marketplace rule → default setting.
  */
 export function resolveCommissionRate(
@@ -97,7 +93,6 @@ export function resolveCommissionRate(
     (x) => x.scope === 'VENDOR' && x.vendorId === ctx.vendorId && !x.categoryId,
   );
   if (vendorRule) return hit(vendorRule, 'vendor_rule');
-  if (ctx.vendorRate !== null) return { rate: ctx.vendorRate, source: 'vendor_rate', ruleId: null };
   for (const categoryId of ctx.categoryPath) {
     const r = active.find((x) => x.scope === 'CATEGORY' && x.categoryId === categoryId);
     if (r) return hit(r, 'category');

@@ -23,7 +23,6 @@ const parents = new Map<string, string | null>([
 const ctx = (over: Partial<Parameters<typeof resolveCommissionRate>[1]> = {}) => ({
   vendorId: 'v1',
   categoryPath: categoryPathOf('phones', parents),
-  vendorRate: null,
   defaultRate: 10,
   ...over,
 });
@@ -52,12 +51,12 @@ describe('commission rules', () => {
     expect(resolveCommissionRate(rules, ctx()).ruleId).toBe('p');
   });
 
-  it('prefers the seller profile rate over category rules', () => {
-    const rules = [rule({ scope: 'CATEGORY', categoryId: 'phones', rate: 6 })];
-    expect(resolveCommissionRate(rules, ctx({ vendorRate: 15 }))).toMatchObject({
-      rate: 15,
-      source: 'vendor_rate',
-    });
+  it('prefers the seller rule over category rules', () => {
+    const rules = [
+      rule({ id: 'c', scope: 'CATEGORY', categoryId: 'phones', rate: 6 }),
+      rule({ id: 'v', scope: 'VENDOR', vendorId: 'v1', rate: 15 }),
+    ];
+    expect(resolveCommissionRate(rules, ctx())).toMatchObject({ rate: 15, source: 'vendor_rule' });
   });
 
   it('prefers seller rules, and seller+category above all', () => {
@@ -66,7 +65,7 @@ describe('commission rules', () => {
       rule({ id: 'vc', scope: 'VENDOR', vendorId: 'v1', categoryId: 'electronics', rate: 5 }),
       rule({ id: 'other', scope: 'VENDOR', vendorId: 'v2', rate: 1 }),
     ];
-    expect(resolveCommissionRate(rules, ctx({ vendorRate: 15 })).ruleId).toBe('vc');
+    expect(resolveCommissionRate(rules, ctx()).ruleId).toBe('vc');
     expect(
       resolveCommissionRate(rules, ctx({ categoryPath: categoryPathOf('shirts', parents) })).ruleId,
     ).toBe('vr');

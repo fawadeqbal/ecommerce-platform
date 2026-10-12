@@ -12,13 +12,21 @@ import type {
 export const vendorAdminInclude = {
   owner: { select: { id: true, email: true, firstName: true, lastName: true } },
   _count: { select: { products: true, vendorOrders: true } },
+  commissionRules: {
+    where: { scope: 'VENDOR', categoryId: null, isActive: true },
+    select: { rate: true },
+    take: 1,
+  },
 } satisfies Prisma.VendorInclude;
+
+/** Vendor row, optionally with its own commission rule loaded (vendorAdminInclude). */
+type VendorRow = Vendor & { commissionRules?: { rate: Prisma.Decimal | number }[] };
 
 export type VendorWithOwner = Prisma.VendorGetPayload<{ include: typeof vendorAdminInclude }>;
 
 const policiesOf = (v: Vendor) => (v.policies as unknown as VendorPolicies | null) ?? null;
 
-export function toVendorDto(v: Vendor): VendorDto {
+export function toVendorDto(v: VendorRow): VendorDto {
   return {
     id: v.id,
     name: v.name,
@@ -31,7 +39,7 @@ export function toVendorDto(v: Vendor): VendorDto {
     policies: policiesOf(v),
     status: v.status as VendorStatus,
     statusReason: v.statusReason,
-    commissionRate: v.commissionRate === null ? null : Number(v.commissionRate),
+    commissionRate: v.commissionRules?.[0] ? Number(v.commissionRules[0].rate) : null,
     ratingAverage: Number(v.ratingAverage),
     approvedAt: v.approvedAt?.toISOString() ?? null,
     createdAt: v.createdAt.toISOString(),
@@ -39,7 +47,7 @@ export function toVendorDto(v: Vendor): VendorDto {
   };
 }
 
-export function toVendorSelfDto(v: Vendor): VendorSelfDto {
+export function toVendorSelfDto(v: VendorRow): VendorSelfDto {
   return {
     ...toVendorDto(v),
     payout: {

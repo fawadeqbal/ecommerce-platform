@@ -19,7 +19,6 @@ const vendor = (over: Record<string, unknown> = {}) => ({
   policies: null,
   status: 'PENDING',
   statusReason: null,
-  commissionRate: null,
   bankAccountName: null,
   bankAccountNumber: null,
   bankName: null,
@@ -39,6 +38,12 @@ function setup() {
     vendor: {
       findUnique: jest.fn(),
       update: jest.fn(({ data }) => Promise.resolve(vendor(data))),
+    },
+    commissionRule: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     },
   };
   const audit = { log: jest.fn() };
@@ -74,12 +79,17 @@ describe('VendorsService', () => {
 
   it('approves a pending vendor, sets approvedAt and emails the seller', async () => {
     const { prisma, notifications, service } = setup();
-    prisma.vendor.findUnique.mockResolvedValue(vendor());
+    prisma.vendor.findUnique
+      .mockResolvedValueOnce(vendor())
+      .mockResolvedValueOnce(vendor({ status: 'APPROVED' }));
 
     const result = await service.approve('v1', { commissionRate: 12.5 }, 'admin');
 
     const data = prisma.vendor.update.mock.calls[0][0].data;
-    expect(data).toMatchObject({ status: 'APPROVED', statusReason: null, commissionRate: 12.5 });
+    expect(data).toMatchObject({ status: 'APPROVED', statusReason: null });
+    expect(prisma.commissionRule.create).toHaveBeenCalledWith({
+      data: { scope: 'VENDOR', vendorId: 'v1', rate: 12.5 },
+    });
     expect(data.approvedAt).toBeInstanceOf(Date);
     expect(result.status).toBe('APPROVED');
     expect(notifications.sendEmail).toHaveBeenCalledWith(

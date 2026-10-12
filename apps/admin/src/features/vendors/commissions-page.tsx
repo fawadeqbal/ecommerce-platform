@@ -220,7 +220,7 @@ export function CommissionsPage() {
     <div className="mx-auto max-w-6xl p-6">
       <PageHeader
         title="Commissions"
-        description="The marketplace's cut of each item sold. The most specific rule wins: seller + category, then seller, then the rate on the seller's profile, then category (inherited by sub-categories), then the marketplace rule, then the default setting."
+        description="The marketplace's cut of each item sold. The most specific rule wins: seller + category, then seller, then category (inherited by sub-categories), then the marketplace rule, then the default setting."
         actions={<Button onClick={() => open('new')}>New rule</Button>}
       />
       {error ? (
@@ -239,7 +239,7 @@ export function CommissionsPage() {
         rows={data}
         rowKey={(r) => r.id}
         loading={isLoading}
-        empty="No rules yet. Every item uses the seller's profile rate or the default setting."
+        empty="No rules yet. Every item uses the default setting (marketplace.defaultCommissionRate)."
       />
       <p className="mt-3 text-xs text-gray-500">
         Rules apply to new orders only. Orders already placed keep the commission they were charged.

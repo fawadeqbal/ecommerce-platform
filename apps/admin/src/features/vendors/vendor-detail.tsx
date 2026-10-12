@@ -19,7 +19,7 @@ import {
   formatDateTime,
 } from '@ecommerce/ui';
 import { BrandLogo } from '@/features/brands/brand-logo';
-import { queryKeys, vendorsApi } from '@/lib/api-client';
+import { commissionsApi, queryKeys, vendorsApi } from '@/lib/api-client';
 import { VendorStatusBadge } from './vendor-status-badge';
 
 type Action = 'approve' | 'reject' | 'suspend' | 'reactivate';
@@ -67,6 +67,7 @@ export function VendorDetail({ id }: { id: string }) {
   const onSaved = async (updated: VendorAdminDto) => {
     queryClient.setQueryData(queryKeys.vendors.detail(id), updated);
     await queryClient.invalidateQueries({ queryKey: queryKeys.vendors.all });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.commissions.all });
   };
 
   const decide = useMutation({
@@ -250,9 +251,10 @@ export function VendorDetail({ id }: { id: string }) {
                 min={0}
                 max={100}
                 step="0.01"
-                placeholder="Platform default"
+                placeholder="Use the marketplace rules"
                 value={approveCommission}
                 onChange={(e) => setApproveCommission(e.target.value)}
+                hint="Creates this seller's commission rule. Leave empty to use category / marketplace rules."
               />
             ) : null}
           </div>
@@ -279,22 +281,35 @@ function CommissionCard({
   });
   const invalid =
     value !== '' && (Number.isNaN(Number(value)) || Number(value) < 0 || Number(value) > 100);
+  const effective = useQuery({
+    queryKey: queryKeys.commissions.preview({ vendorId: vendor.id }),
+    queryFn: () => commissionsApi.preview({ vendorId: vendor.id }),
+  });
 
   return (
     <Card className="space-y-3">
       <CardTitle>Commission</CardTitle>
+      {effective.data ? (
+        <p className="text-sm text-gray-600">
+          Charged now: <span className="font-semibold text-gray-900">{effective.data.rate}%</span>{' '}
+          <span className="text-gray-500">({effective.data.label})</span>
+        </p>
+      ) : null}
       <Input
-        label="Commission %"
+        label="Seller rate %"
         type="number"
         min={0}
         max={100}
         step="0.01"
-        placeholder="Platform default"
+        placeholder="No seller rule"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        hint="Leave empty to use the platform default."
+        hint="Saved as this seller's commission rule. Leave empty to use category / marketplace rules."
         error={invalid ? 'Enter a value between 0 and 100' : undefined}
       />
+      <Link href="/vendors/commissions" className="block text-xs text-brand-700 hover:underline">
+        Category-specific rates → Commissions
+      </Link>
       {save.error ? <Alert tone="error">{save.error.message}</Alert> : null}
       {save.isSuccess ? <Alert tone="success">Saved</Alert> : null}
       <Button

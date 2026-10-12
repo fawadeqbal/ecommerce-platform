@@ -481,18 +481,13 @@ export class CheckoutService {
               const commission = commissionForLines(
                 cartRow.items
                   .filter((i) => i.variant.product.vendorId === group.vendor.id)
-                  .map((i) => {
-                    const vendor = i.variant.product.vendor;
-                    return {
-                      amount: fromCents(toCents(Number(i.variant.price)) * i.quantity),
-                      rate: commissionRate({
-                        vendorId: vendor.id,
-                        categoryId: i.variant.product.categoryId,
-                        vendorRate:
-                          vendor.commissionRate === null ? null : Number(vendor.commissionRate),
-                      }).rate,
-                    };
-                  }),
+                  .map((i) => ({
+                    amount: fromCents(toCents(Number(i.variant.price)) * i.quantity),
+                    rate: commissionRate({
+                      vendorId: i.variant.product.vendorId,
+                      categoryId: i.variant.product.categoryId,
+                    }).rate,
+                  })),
               );
               const vendorOrder = await tx.vendorOrder.create({
                 data: {

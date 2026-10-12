@@ -275,9 +275,11 @@ Computed by the API only (`POST /checkout/quote`); the UI never calculates total
 - Online methods: the gateway's methods ∩ setting `payments.onlineMethods` (`CARD,WALLET`; empty = COD only).
 - Guest checkout: `checkout.guestCheckout`. Commission is worked out per item (Step 25,
   `resolveCommissionRate` in `@ecommerce/types`): seller+category rule (nearest category) → seller
-  rule → `Vendor.commissionRate` → category rule (inherited from parents) → GLOBAL rule →
+  rule → category rule (inherited from parents) → GLOBAL rule →
   `marketplace.defaultCommissionRate`. Rules are managed at admin Sellers → Commissions
-  (`/admin/vendors/commissions`); placed orders keep the commission they were charged.
+  (`/admin/vendors/commissions`). The seller rate on the seller detail page and in the approve dialog
+  is the seller's own rule (there is no `Vendor.commissionRate` column). Placed orders keep the
+  commission they were charged.
 - Settings are rows in the `Setting` table, read with `readSetting(prisma, key, fallback)`.
 
 ## Conventions

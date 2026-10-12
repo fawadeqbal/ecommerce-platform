@@ -118,7 +118,10 @@ export class VendorReasonDto implements VendorReasonInput {
 }
 
 export class AdminUpdateVendorDto implements VendorAdminUpdateInput {
-  @ApiPropertyOptional({ nullable: true, description: 'null = use the platform default' })
+  @ApiPropertyOptional({
+    nullable: true,
+    description: "Sets the seller's commission rule; null removes it",
+  })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)

@@ -378,7 +378,6 @@ model Vendor {
   policies          Json?
   status            VendorStatus @default(PENDING)
   statusReason      String?      @db.Text // why rejected / suspended (shown to the vendor)
-  commissionRate    Decimal?     @db.Decimal(5, 2)
   bankAccountName   String?
   bankAccountNumber String?
   bankName          String?
