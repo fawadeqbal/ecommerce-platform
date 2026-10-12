@@ -693,6 +693,90 @@ async function seedInventory() {
   console.log('  ✓ inventory (main warehouse + opening stock)');
 }
 
+/** Demo colour/storage variants so the product page shows option pickers. Runs once per product. */
+async function seedVariantOptions() {
+  const warehouse = await prisma.warehouse.findUnique({ where: { code: 'DEMO-ELECTRONICS-MAIN' } });
+  const value = async (code: string, v: string) =>
+    (
+      await prisma.attributeValue.findFirstOrThrow({
+        where: { value: v, attribute: { code } },
+      })
+    ).id;
+  const plans: {
+    slug: string;
+    sku: string;
+    colors: string[];
+    storage: { v: string; extra: number }[];
+  }[] = [
+    {
+      slug: 'iphone-15-128gb',
+      sku: 'APL-IP15',
+      colors: ['Black', 'Blue', 'Green'],
+      storage: [
+        { v: '128GB', extra: 0 },
+        { v: '256GB', extra: 100 },
+      ],
+    },
+    {
+      slug: 'galaxy-s24-ultra-256gb',
+      sku: 'SAM-S24U',
+      colors: ['Black', 'Gray'],
+      storage: [
+        { v: '256GB', extra: 0 },
+        { v: '512GB', extra: 120 },
+      ],
+    },
+  ];
+  for (const plan of plans) {
+    const product = await prisma.product.findUnique({
+      where: { slug: plan.slug },
+      include: { variants: { include: { attributes: true } } },
+    });
+    if (!product || product.variants.some((v) => v.attributes.length > 0)) continue;
+    const base = Number(product.basePrice);
+    const compare = product.compareAtPrice === null ? null : Number(product.compareAtPrice);
+    let first = true;
+    for (const color of plan.colors) {
+      for (const st of plan.storage) {
+        const valueIds = [await value('color', color), await value('storage', st.v)];
+        const price = base + st.extra;
+        const data = {
+          name: `${color} / ${st.v}`,
+          price,
+          compareAtPrice: compare === null ? null : compare + st.extra,
+        };
+        let variantId: string;
+        if (first) {
+          // Reuse the existing default variant (keeps its stock and any orders).
+          variantId = product.variants.find((v) => v.isDefault)?.id ?? product.variants[0]!.id;
+          await prisma.productVariant.update({ where: { id: variantId }, data });
+          first = false;
+        } else {
+          const created = await prisma.productVariant.create({
+            data: {
+              ...data,
+              productId: product.id,
+              sku: `${plan.sku}-${color.toUpperCase()}-${st.v}`,
+              isDefault: false,
+            },
+          });
+          variantId = created.id;
+          if (warehouse) {
+            await prisma.stockLevel.create({
+              data: { variantId, warehouseId: warehouse.id, quantity: 10 },
+            });
+          }
+        }
+        await prisma.productVariantAttribute.createMany({
+          data: valueIds.map((attributeValueId) => ({ variantId, attributeValueId })),
+          skipDuplicates: true,
+        });
+      }
+    }
+  }
+  console.log('  ✓ demo colour/storage variants');
+}
+
 // ---------------------------------------------------------------- CMS (Step 18)
 
 type SeedBlock =
@@ -967,6 +1051,7 @@ async function main() {
   await seedVendors();
   await seedProducts();
   await seedInventory();
+  await seedVariantOptions();
   await seedShipping();
   await seedCms();
   await seedBlog();
