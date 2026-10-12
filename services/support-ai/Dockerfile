@@ -16,7 +16,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install --no-cache-dir --default-timeout=180 --retries 15 -r requirements.txt gunicorn
 
 # Download both models at build time, so the container never needs Hugging Face at runtime.
 # Keep these names in sync with EMBEDDING_MODEL and RERANK_MODEL in app/core/config.py.
