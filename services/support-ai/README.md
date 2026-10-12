@@ -1,12 +1,25 @@
-# ShopEase support bot: backend
+# Support assistant (services/support-ai)
 
-Flask API + LangGraph workflow + RAG (LangChain, PostgreSQL + pgvector).
-Every model and store is replaceable from settings: Claude, Ollama, OpenAI, ... see [docs/PROVIDERS.md](docs/PROVIDERS.md).
+The customer-support chat of the store: Flask API + LangGraph workflow + RAG (PostgreSQL + pgvector).
+Imported from the standalone RAG project; the browser never calls it directly. The NestJS API proxies it at
+`/api/v1/support/assistant/*` (see `docs/architecture.md` → Support assistant) and the storefront shows the chat
+widget (`apps/web/src/components/support`). Models are replaceable: Claude, Ollama, OpenAI, ... see [docs/PROVIDERS.md](docs/PROVIDERS.md).
+
+## What it knows
+
+| Source | What | Updated |
+| --- | --- | --- |
+| `data/store_handbook.md` | How the store works: accounts, ordering, payments, statuses, tracking, cancelling, returns, refunds, points … | Edit the file, re-run ingest |
+| Store database (read at ingest) | Admin settings (contact, payment limits, shipping, return window, points), published CMS pages, active FAQs | Re-run ingest after changing them |
+| Tools (live, per question) | `lookup_order` (signed in: own orders; guest: order number + checkout email), `search_products` | Always current |
+
+Store data is only read: fixed, customer-scoped queries over a read-only connection (`app/db/store.py`).
+Any `.pdf` or `.md` file added to `data/` is ingested too.
 
 ## Layout
 
 ```
-backend/
+services/support-ai/
 ├── app/
 │   ├── main.py                 Flask app factory: create_app()
 │   ├── core/                   config.py (settings) · container.py (builds the real parts) · logging.py · security.py
@@ -21,17 +34,18 @@ backend/
 │   │   ├── state.py · deps.py · events.py · edges.py · graph.py · studio.py
 │   │   └── nodes/              memory · router · retrieval · generation · handoff
 │   ├── prompts/                system.md · rewrite_query.md · summarize.md · handoff_reply.md
-│   ├── tools/                  registry.py (all tools) · orders.py (lookup_order)
+│   ├── tools/                  registry.py · orders.py (lookup_order) · products.py (search_products) · support.py
 │   ├── rag/
-│   │   ├── ingestion/          loaders (PDF, tables, OCR) · cleaning · chunking · pipeline
+│   │   ├── ingestion/          loaders (PDF, Markdown) · cleaning · chunking · store_docs (live store facts) · pipeline
 │   │   ├── retrieval.py        embed -> hybrid search -> filter -> rerank
 │   │   └── generation.py       query rewriting, streamed answers with tools, summaries
 │   ├── providers/              replaceable models: base interfaces, factory, Claude, OpenAI-compatible, embeddings, rerankers
 │   ├── stores/pgvector.py      the knowledge-base table + hybrid search
 │   └── db/
 │       ├── connection.py · migrate.py
-│       ├── migrations/         001_initial.sql · 002_demo_orders.sql
-│       └── repositories/       conversations · feedback · orders  (all SQL lives here)
+│       ├── store.py            read-only store look-ups (orders, products, settings)
+│       ├── migrations/         numbered SQL files
+│       └── repositories/       conversations · feedback · tickets
 ├── scripts/                    ingest · evaluate · chat · migrate
 ├── tests/                      pytest: chunking, graph routes, API contract, providers
 ├── data/ · eval/ · docs/
@@ -42,21 +56,21 @@ backend/
 
 ## Run locally
 
-Start the database (and, for local models, Ollama) from the project root:
-`docker compose up -d` (or `docker compose --profile ollama up -d`). Then, from this `backend` folder:
+Everything is configured in the monorepo `.env` (see `.env.example` → Support assistant). Postgres must have
+pgvector: the root `docker compose up -d` uses `pgvector/pgvector:pg16`. From this folder:
 
 ```bash
+python -m venv .venv && source .venv/Scripts/activate   # Windows Git Bash (Linux/macOS: .venv/bin/activate)
 pip install -r requirements-dev.txt
-pytest                               # 25 tests, no database or API key needed
+pytest                               # no database or API key needed
 python -m scripts.ingest --preview   # look at the chunks
-python -m scripts.ingest             # build the knowledge base (re-run when documents change)
-python -m scripts.evaluate --sweep   # how well does retrieval work?
-python -m app.main                   # API on http://localhost:5000
+python -m scripts.ingest             # build the knowledge base (re-run when the handbook or store settings change)
+python -m scripts.evaluate --sweep   # how well does retrieval work? (eval/questions.json)
+python -m app.main                   # API on http://localhost:5000 (internal; the NestJS API calls it)
 python -m scripts.chat               # or chat in the terminal
-python -m app.graph.graph            # print the workflow graph
 ```
 
-Database migrations run automatically on startup (`python -m scripts.migrate` to run them by hand).
+Its own tables live in a separate database (`SUPPORT_AI_DATABASE_URL`, created on first start); migrations run on startup.
 
 ## API
 
@@ -72,4 +86,5 @@ Database migrations run automatically on startup (`python -m scripts.migrate` to
 | POST | `/api/handoff` | "Talk to a person" ticket |
 | GET | `/api/admin/stats` | Usage numbers (`Authorization: Bearer ADMIN_TOKEN`) |
 
-Every request sends `X-Visitor-Id` (a random id the browser keeps), so visitors only see their own chats.
+Every request comes from the NestJS API with `X-Service-Key` (= `SUPPORT_AI_KEY`), `X-Visitor-Id` (guest browser id, or a stable id
+per signed-in customer) and `X-Customer-Id` / `X-Customer-Email` for signed-in customers. Requests without the key get 401.

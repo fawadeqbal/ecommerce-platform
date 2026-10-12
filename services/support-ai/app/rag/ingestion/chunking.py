@@ -54,15 +54,41 @@ def split_sections(pages):
             out.append({"title": s["title"], "text": text, "page": s["page"]})
     return out
 
+def markdown_sections(text):
+    """Markdown -> [{"title", "text", "page"}], one entry per heading; "page" is the section number."""
+    sections, current = [], None
+    for line in text.splitlines():
+        if line.startswith("#"):
+            current = {"title": line.lstrip("#").strip(), "lines": []}
+            sections.append(current)
+        elif current is None:
+            current = {"title": "", "lines": [line]}
+            sections.append(current)
+        else:
+            current["lines"].append(line)
+    out = []
+    for s in sections:
+        body = "\n".join(s["lines"]).strip()
+        if body:
+            out.append({"title": s["title"], "text": body, "page": len(out) + 1})
+    return out
+
+
 def make_chunks(path):
-    reader = READERS[os.path.splitext(path)[1].lower()]
-    pages = remove_headers_footers(reader(path))
-    sections = split_sections(pages)
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".md":
+        sections = markdown_sections(READERS[ext](path)[0][1])
+    else:
+        sections = split_sections(remove_headers_footers(READERS[ext](path)))
+    return section_chunks(sections, os.path.basename(path))
+
+
+def section_chunks(sections, source):
+    """Sections -> chunks; long sections are split with overlap, each part keeps its title."""
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=config.CHUNK_SIZE, chunk_overlap=config.CHUNK_OVERLAP,
         separators=["\n\n", "\n", ". ", " ", ""],
     )
-    source = os.path.basename(path)
     chunks = []
     for s in sections:
         parts = splitter.split_text(s["text"]) if len(s["text"]) > config.CHUNK_SIZE else [s["text"]]

@@ -16,7 +16,7 @@ DATABASE_URL = os.getenv("SUPPORT_AI_DATABASE_URL", "postgresql://ecommerce:ecom
 # The store (orders, products): read-only, see app/db/store.py. Defaults to the API's DATABASE_URL.
 STORE_DATABASE_URL = (os.getenv("STORE_DATABASE_URL") or os.getenv("DATABASE_URL")
                       or "postgresql://ecommerce:ecommerce@localhost:5432/ecommerce")
-STORE_NAME = os.getenv("STORE_NAME", "Our Store")
+STORE_NAME = os.getenv("STORE_NAME", "")   # empty = Admin → Settings → store name (app/db/store.py)
 STORE_URL = os.getenv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000").rstrip("/")
 # Shared with the NestJS API (SUPPORT_AI_KEY). Empty = no check (local experiments only).
 SERVICE_KEY = os.getenv("SUPPORT_AI_KEY", "")

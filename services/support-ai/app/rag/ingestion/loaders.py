@@ -10,6 +10,8 @@ To support another file type, add a reader and register it in READERS.
 """
 import pdfplumber
 
+from app.db.store import store_name
+
 
 def ocr_page(page):
     """Scanned page (an image, no text layer) -> text with Tesseract, if installed."""
@@ -50,4 +52,10 @@ def read_pdf(path):
     return pages
 
 
-READERS = {".pdf": read_pdf}
+def read_text(path):
+    """Markdown / text: one page; make_chunks splits it on its # headings."""
+    with open(path, encoding="utf-8") as f:
+        return [(1, f.read().replace("{store_name}", store_name()))]
+
+
+READERS = {".pdf": read_pdf, ".md": read_text}

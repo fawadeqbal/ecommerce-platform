@@ -1,9 +1,10 @@
-"""The real handbook PDF must split into one chunk per policy, without page headers/footers."""
-from app.core import config
+"""A real handbook PDF must split into one chunk per policy, without page headers/footers."""
+from pathlib import Path
+
 from app.rag.ingestion.chunking import make_chunks
 from app.rag.ingestion.cleaning import join_wrapped_lines, remove_headers_footers
 
-PDF = config.DATA_DIR / "shopease_support_handbook.pdf"
+PDF = Path(__file__).parent / "fixtures" / "shopease_support_handbook.pdf"   # sample PDF for the PDF reader
 
 
 def test_handbook_splits_into_one_chunk_per_policy():

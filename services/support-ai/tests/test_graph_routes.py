@@ -38,11 +38,11 @@ def test_nothing_found_widens_search_once():
     assert q2.startswith("standalone:") and s2 < s1 and c2 > c1
 
 
-def test_talk_to_a_person_asks_for_the_ticket_form():
+def test_talk_to_a_person_points_to_the_support_team():
     deps, events = run("I want to talk to a person please")
     text = "".join(e["data"]["text"] for e in events if e["event"] == "delta")
-    assert "form" in text
-    assert {"event": "handoff", "data": {"form": True}} in events     # the panel shows the ticket form
+    assert "contact link" in text
+    assert {"event": "handoff", "data": {"form": True}} in events     # the panel shows how to reach support
     assert deps.tickets.rows == {}                                      # the form opens the ticket
     done = next(e["data"] for e in events if e["event"] == "done")
     assert done["usage"]["input"] == 0 and done["usage"]["route"] == "handoff"

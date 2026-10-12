@@ -62,5 +62,5 @@ Test it alone by calling it with a state and fake deps (see `tests/test_graph_ro
 
 ```bash
 pip install "langgraph-cli[inmem]"
-langgraph dev        # from the backend folder; needs the database and models like the API
+langgraph dev        # from services/support-ai; needs the database and models like the API
 ```

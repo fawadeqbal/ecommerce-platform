@@ -22,13 +22,13 @@ Check what is running: `GET /api/health` lists the active providers.
 
 **Default: fully local and free** (nothing to set)
 ```
-LLM_PROVIDER=ollama             # the rag-ollama container started by docker compose
+LLM_PROVIDER=ollama             # a local Ollama (https://ollama.com) on port 11434
 LLM_MODEL=qwen2.5:3b            # downloaded automatically by the ollama-pull job
 LLM_SUPPORTS_TOOLS=false        # small models call tools unreliably; order numbers are looked up for them
 ```
 Embeddings (`paraphrase-multilingual-MiniLM-L12-v2`) and the reranker run inside the API itself.
 Smaller/faster: `qwen2.5:1.5b`. Better answers (needs more RAM/CPU or a GPU): `qwen2.5:7b`, `llama3.1:8b`.
-Change the model in both places: `LLM_MODEL=... docker compose up -d` and `LLM_MODEL=...` in `.env`.
+Pull the model in Ollama (`ollama pull <model>`) and set `LLM_MODEL=...` in the root `.env`.
 
 **Claude for answers** (best quality, pay per token)
 ```

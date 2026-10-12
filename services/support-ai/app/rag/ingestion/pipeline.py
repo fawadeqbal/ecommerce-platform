@@ -20,9 +20,16 @@ from app.rag.ingestion.loaders import READERS
 
 def load_all_chunks():
     files = sorted(f for f in os.listdir(config.DATA_DIR) if os.path.splitext(f)[1].lower() in READERS)
-    if not files:
-        raise SystemExit(f"No supported documents found in {config.DATA_DIR}. Add some and run again.")
     chunks = []
+    try:
+        from app.rag.ingestion.chunking import section_chunks
+        from app.rag.ingestion.store_docs import SOURCE, store_sections
+        chunks = section_chunks(store_sections(), SOURCE)
+        print(f"[read]   store settings, pages and FAQs: {len(chunks)} chunks")
+    except Exception as e:  # store database not reachable: the documents still work
+        print(f"[skip]   store settings, pages and FAQs ({e.__class__.__name__}: {e})")
+    if not files and not chunks:
+        raise SystemExit(f"No supported documents found in {config.DATA_DIR}. Add some and run again.")
     for f in files:
         file_chunks = make_chunks(os.path.join(config.DATA_DIR, f))
         print(f"[read]   {f}: {len(file_chunks)} chunks")

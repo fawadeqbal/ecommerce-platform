@@ -5,6 +5,7 @@ Chat in the terminal, running the same LangGraph workflow as the API.
 
 Each step of the graph is printed as it runs.
 """
+from app.db.store import store_name
 from app.core.container import build_deps
 from app.core.logging import setup_logging
 from app.graph.graph import build_graph
@@ -16,7 +17,7 @@ def main():
     workflow = build_graph(deps)
     conversation = None
 
-    print("\nShopEase Support Bot ready. ('reset' = new chat, 'quit' = exit)")
+    print(f"\n{store_name()} support assistant ready. ('reset' = new chat, 'quit' = exit)")
     print("Try: 'where is my order SE10482931?' or 'refund kitne din mein milta hai?'\n")
     while True:
         question = input("You: ").strip()

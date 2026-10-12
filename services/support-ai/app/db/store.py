@@ -37,6 +37,18 @@ _ORDER = ('SELECT o.id, o."orderNumber" AS order_number, o.status, o."paymentSta
           'o."shippingAddress"->>\'city\' AS city, o."cancelReason" AS cancel_reason FROM "Order" o ')
 
 
+def store_name():
+    """STORE_NAME, else the store name set in Admin → Settings, else "our store"."""
+    if config.STORE_NAME:
+        return config.STORE_NAME
+    try:
+        with _connect() as conn:
+            row = conn.execute('SELECT value FROM "Setting" WHERE key = %s', ("store.name",)).fetchone()
+        return str(row["value"]) if row and row["value"] else "our store"
+    except psycopg.Error:
+        return "our store"
+
+
 class StoreRepository:
     def order(self, order_number, customer_id=None, email=None):
         """One order of this customer (by account), or of this guest (order number + checkout email)."""
