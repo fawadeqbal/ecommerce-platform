@@ -13,6 +13,8 @@ export interface NavItem {
   label: string;
   image?: string | null;
   children?: NavItem[];
+  /** 'all' = the "All categories" browser (vertical list + hovered category's tree). */
+  kind?: 'all';
 }
 
 const SHOW_GRANDCHILDREN = 6;
@@ -115,7 +117,18 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
         );
       })}
 
-      {current?.children?.length ? (
+      {current?.kind === 'all' && current.children?.length ? (
+        <Portal>
+          <div
+            className="fixed inset-x-0 z-[60] animate-fade-in"
+            style={{ top }}
+            onMouseEnter={cancelClose}
+            onMouseLeave={scheduleClose}
+          >
+            <AllCategoriesPanel item={current} />
+          </div>
+        </Portal>
+      ) : current?.children?.length ? (
         <Portal>
           <div
             className="fixed inset-x-0 z-[60] animate-fade-in"
@@ -211,5 +224,111 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
         </Portal>
       ) : null}
     </>
+  );
+}
+
+/** Amazon-style browser: top-level categories on the left, the hovered one's tree on the right. */
+function AllCategoriesPanel({ item }: { item: NavItem }) {
+  const roots = item.children ?? [];
+  const [hover, setHover] = useState(0);
+  const root = roots[hover] ?? roots[0];
+  if (!root) return null;
+  const kids = root.children ?? [];
+
+  return (
+    <div className="border-y border-gray-200 bg-white shadow-[0_24px_48px_-12px_rgba(27,24,48,0.18)]">
+      <div className={cn(container, 'flex max-h-[min(70vh,560px)] gap-0 py-0')}>
+        {/* Top-level list */}
+        <ul className="scrollbar-none w-64 flex-none overflow-y-auto border-r border-gray-100 py-3 pr-3">
+          {roots.map((r, i) => (
+            <li key={r.href}>
+              <Link
+                href={r.href}
+                onMouseEnter={() => setHover(i)}
+                onFocus={() => setHover(i)}
+                className={cn(
+                  'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors',
+                  i === hover ? 'bg-brand-50 text-brand-700' : 'text-gray-700 hover:bg-gray-50',
+                )}
+              >
+                {r.image ? (
+                  <img src={r.image} alt="" className="h-8 w-8 flex-none rounded-lg object-cover" />
+                ) : (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'flex h-8 w-8 flex-none items-center justify-center rounded-lg text-xs font-extrabold',
+                      i === hover ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
+                    )}
+                  >
+                    {r.label.charAt(0)}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 truncate">{r.label}</span>
+                {r.children?.length ? (
+                  <span aria-hidden className={cn('text-xs', i === hover ? 'text-brand-600' : 'text-gray-300')}>
+                    ›
+                  </span>
+                ) : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* Hovered category */}
+        <div key={root.href} className="min-w-0 flex-1 animate-fade-in overflow-y-auto py-5 pl-8">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-xl font-extrabold tracking-heading text-gray-900">{root.label}</h3>
+            <Link
+              href={root.href}
+              className="flex-none rounded-full bg-gray-900 px-3.5 py-1.5 text-sm font-bold text-white hover:bg-brand-700"
+            >
+              Shop all →
+            </Link>
+          </div>
+          {kids.length === 0 ? (
+            <Link
+              href={root.href}
+              className="flex items-center gap-4 rounded-3xl bg-brand-50 p-5 text-brand-800 hover:bg-brand-100"
+            >
+              <span className="text-3xl" aria-hidden>
+                🛍️
+              </span>
+              <span>
+                <b className="block">Browse every product in {root.label}</b>
+                <span className="text-sm text-brand-700/80">Filters, deals and new arrivals inside.</span>
+              </span>
+            </Link>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-x-8 gap-y-6">
+              {kids.map((child) => (
+                <div key={child.href} className="flex min-w-0 flex-col gap-1.5">
+                  <Link
+                    href={child.href}
+                    className="truncate font-bold text-gray-900 hover:text-brand-700"
+                  >
+                    {child.label}
+                  </Link>
+                  {child.children?.slice(0, SHOW_GRANDCHILDREN).map((g) => (
+                    <Link
+                      key={g.href}
+                      href={g.href}
+                      className="truncate text-sm text-gray-500 transition-colors hover:text-brand-700"
+                    >
+                      {g.label}
+                    </Link>
+                  ))}
+                  {(child.children?.length ?? 0) > SHOW_GRANDCHILDREN ? (
+                    <Link href={child.href} className="text-sm font-semibold text-brand-700 hover:underline">
+                      View all →
+                    </Link>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

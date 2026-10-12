@@ -40,7 +40,9 @@ export async function SiteHeader() {
   const extras =
     menu.length > 0 ? menu.map((i) => ({ href: i.url, label: i.label })) : fallbackNav.slice(1);
   const seen = new Set<string>();
-  const nav: NavItem[] = [fallbackNav[0]!, ...categories, ...extras].filter((item) => {
+  // "All categories" opens the full browser: every top-level category with its tree.
+  const all: NavItem = { ...fallbackNav[0]!, kind: 'all', children: tree.map((c) => toItem(c, 0)) };
+  const nav: NavItem[] = [all, ...categories, ...extras].filter((item) => {
     const key = item.href.toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
