@@ -318,6 +318,18 @@ for 60 s, and falls back to built-in links/hero when the CMS is empty or unreach
 - `EmailLog`: one row per email (queued → sent / failed, or suppressed). `EmailSuppression`: addresses that never
   receive any email (bounce, complaint, manual).
 
+### SEO
+
+- **Redirects** (Admin → SEO, `Redirect` table): old path → path or full URL, 301 / 302. Paths are normalised by the
+  shared `normalizePath` (no query, no trailing slash) both when saving and in the storefront middleware
+  (`web/src/middleware.ts`, list cached 60 s). The home page and app paths cannot be redirected; loops are refused.
+  Bulk import "old new [code]" per line.
+- **Sitemap** (`/sitemap.xml`): static routes, CMS pages, blog posts, and from `GET /seo/sitemap` every visible
+  product, active category / brand and approved store.
+- **Canonical URLs** on product, category, brand and store pages (filters and tracking parameters point to the base
+  page). **JSON-LD**: Organization + WebSite search on every page, Product + BreadcrumbList on product pages,
+  BreadcrumbList on category pages, FAQ / blog markup from the CMS.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

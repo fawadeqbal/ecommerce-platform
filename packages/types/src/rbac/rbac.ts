@@ -14,7 +14,7 @@ export const ADMIN_AREAS = [
   { key: 'promotions', label: 'Promotions & gift cards', routes: ['promotions', 'gift-cards'] },
   { key: 'loyalty', label: 'Loyalty', routes: ['loyalty'] },
   { key: 'cms', label: 'Content', routes: ['cms'] },
-  { key: 'marketing', label: 'Marketing', routes: ['marketing'] },
+  { key: 'marketing', label: 'Marketing & SEO', routes: ['marketing', 'seo'] },
   { key: 'reviews', label: 'Reviews & Q&A', routes: ['reviews', 'questions'] },
   { key: 'reports', label: 'Reports', routes: ['reports'] },
   {
@@ -64,7 +64,7 @@ export function areaForAdminHref(href: string): AdminArea | null {
   if (path === '/') return null;
   if (path.startsWith('/settings/shipping')) return 'shipping';
   if (path.startsWith('/support')) return 'reviews';
-  if (path.startsWith('/seo')) return 'settings';
+  if (path.startsWith('/seo')) return 'marketing';
   const first = path.split('/').filter(Boolean)[0] ?? '';
   return (
     ADMIN_AREAS.find((a) => a.key === first || (a.routes as readonly string[]).includes(first))

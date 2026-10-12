@@ -169,6 +169,13 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 2. A generic email (e.g. Gift card received): edit heading / text / button. Reset to default undoes it.
 3. Email log: every email with status; Blocked addresses: block an address and no email goes to it.
 
+**SEO**
+
+1. Admin → SEO → New redirect: `/old-shoes` → `/categories/fashion` (301). Open http://localhost:3000/old-shoes
+   (within a minute). Import several at once with "old new 301" lines.
+2. http://localhost:3000/sitemap.xml lists products, categories, brands, stores, pages and posts.
+3. Product page source: canonical link, Product + BreadcrumbList JSON-LD; every page: Organization.
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

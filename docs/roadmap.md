@@ -10,7 +10,7 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 30.** (Step 22 support is deferred: it will be built together with the RAG support assistant.)
+Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 31.** (Step 22 support is deferred: it will be built together with the RAG support assistant.)
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
@@ -71,8 +71,8 @@ encrypted credentials). Step 28: `cart_recovery` (CartRecovery: abandoned-cart e
 | 27  | **Payment settings & logs**        | Enable / disable gateways, credentials, COD by zone, transaction & webhook logs (5.12)                                                                                        | **Done**                      |
 | 28  | **Email marketing**                | Newsletter subscribers, campaigns to segments with scheduling, abandoned-cart sequence, win-back (5.14)                                                                       | **Done**                      |
 | 29  | **Email templates & logs**         | Template editor (subject / blocks overrides) and email log viewer (5.18, 6)                                                                                                   | **Done**                      |
-| 30  | **SEO tools**                      | Redirect manager (301), canonical URLs, full sitemap (products, categories, brands, stores), Organization / Breadcrumb structured data (5.17)                                 | Next                          |
-| 31  | **Documents & bulk tools**         | Invoice PDF, packing slips, order notes, manual orders, reorder / buy now, CSV product import / export (3.7, 4.2, 4.4, 5.2, 5.4)                                              |                               |
+| 30  | **SEO tools**                      | Redirect manager (301), canonical URLs, full sitemap (products, categories, brands, stores), Organization / Breadcrumb structured data (5.17)                                 | **Done**                      |
+| 31  | **Documents & bulk tools**         | Invoice PDF, packing slips, order notes, manual orders, reorder / buy now, CSV product import / export (3.7, 4.2, 4.4, 5.2, 5.4)                                              | Next                          |
 | 32  | **Reports extras**                 | Customer, coupon, tax, inventory & abandoned-cart reports, conversion rate, scheduled report emails (5.1, 5.16, 4.6)                                                          |                               |
 
 Later (optional, not in scope doc): branches / multi-location.

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Providers } from './providers';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
+import { OrganizationJsonLd } from '@/components/seo/organization-json-ld';
 import { MaintenanceGate } from '@/components/layout/maintenance-gate';
 import './globals.css';
 
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="flex min-h-screen flex-col">
         <MaintenanceGate>
           <Providers>
+            <OrganizationJsonLd />
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />

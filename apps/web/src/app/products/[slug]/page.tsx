@@ -9,6 +9,7 @@ import { RecentlyViewed } from '@/components/catalog/recently-viewed';
 import { ProductQuestions } from '@/components/reviews/product-questions';
 import { ProductReviews } from '@/components/reviews/product-reviews';
 import { Stars } from '@/components/reviews/stars';
+import { JsonLd, breadcrumbLd } from '@/components/seo/json-ld';
 import { ApiClientError, storefrontApi } from '@/lib/api-client';
 
 /** Stock must be live, so product pages are rendered per request. */
@@ -33,6 +34,7 @@ export async function generateMetadata({
     title: product.seoTitle ?? product.name,
     description: product.seoDescription ?? product.shortDescription ?? undefined,
     openGraph: { images: product.images[0] ? [product.images[0].url] : undefined },
+    alternates: { canonical: `/products/${product.slug}` },
   };
 }
 
@@ -71,6 +73,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <JsonLd
+        data={breadcrumbLd([
+          { name: product.category.name, path: `/categories/${product.category.slug}` },
+          { name: product.name, path: `/products/${product.slug}` },
+        ])}
       />
       <nav className="mb-6 text-sm text-gray-500" aria-label="Breadcrumb">
         <Link href="/products" className="hover:text-gray-800">

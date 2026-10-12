@@ -21,7 +21,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const brand = await getBrand((await params).slug);
   if (!brand) return { title: 'Brand not found' };
-  return { title: brand.name, description: brand.description ?? `Shop ${brand.name} products.` };
+  return {
+    title: brand.name,
+    description: brand.description ?? `Shop ${brand.name} products.`,
+    alternates: { canonical: `/brands/${brand.slug}` },
+  };
 }
 
 export default async function BrandPage({

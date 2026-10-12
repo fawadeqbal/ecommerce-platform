@@ -6,6 +6,9 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
   wishlist: ['wishlist'] as const,
+  seo: {
+    redirects: ['seo', 'redirects'] as const,
+  },
   emailAdmin: {
     all: ['email-admin'] as const,
     templates: ['email-admin', 'templates'] as const,
