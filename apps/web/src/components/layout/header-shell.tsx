@@ -51,6 +51,12 @@ export function HeaderShell({ children }: { children: ReactNode }) {
         scrolled && 'shadow-[0_10px_30px_-12px_rgba(46,27,114,0.55)]',
       )}
     >
+      {/* Decorative layer: faint dot grid + soft glows (colour stays solid violet). */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:linear-gradient(to_right,transparent,#000_30%,#000_70%,transparent)]" />
+        <div className="absolute -right-24 -top-28 h-64 w-64 rounded-full bg-accent/25 blur-3xl" />
+        <div className="absolute -left-24 -bottom-32 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+      </div>
       <div className="relative">{children}</div>
     </header>
   );

@@ -57,10 +57,30 @@ const SLIDES: HeroSlide[] = [
 ];
 
 const TRUST = [
-  { k: 'C', title: 'Cash on delivery', sub: 'Pay when it arrives', tint: 'bg-tint-yellow' },
-  { k: '↺', title: 'Easy returns', sub: 'Request from your orders', tint: 'bg-tint-mint' },
-  { k: '✓', title: 'Verified sellers', sub: 'Every store reviewed', tint: 'bg-tint-violet' },
-  { k: '%', title: 'Secure payments', sub: 'Card, wallet or cash', tint: 'bg-tint-rose' },
+  {
+    title: 'Cash on delivery',
+    sub: 'Pay when it arrives',
+    tint: 'bg-tint-yellow text-amber-700',
+    icon: 'M3 7h18v10H3zM7 12h.01M17 12h.01M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  },
+  {
+    title: 'Easy returns',
+    sub: 'Request from your orders',
+    tint: 'bg-tint-mint text-emerald-700',
+    icon: 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4',
+  },
+  {
+    title: 'Verified sellers',
+    sub: 'Every store reviewed',
+    tint: 'bg-tint-violet text-brand-700',
+    icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3ZM9 12l2 2 4-4',
+  },
+  {
+    title: 'Secure payments',
+    sub: 'Card, wallet or cash',
+    tint: 'bg-tint-rose text-rose-700',
+    icon: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5zM12 15v2',
+  },
 ];
 
 const TINTS = [
@@ -176,11 +196,22 @@ export default async function HomePage() {
             >
               <span
                 className={cn(
-                  'flex h-10 w-10 flex-none items-center justify-center rounded-xl font-extrabold',
+                  'flex h-11 w-11 flex-none items-center justify-center rounded-2xl',
                   t.tint,
                 )}
               >
-                {t.k}
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                  className="h-5 w-5"
+                >
+                  <path d={t.icon} />
+                </svg>
               </span>
               <div>
                 <p className="text-[15px] font-bold">{t.title}</p>
