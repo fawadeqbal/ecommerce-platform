@@ -18,7 +18,7 @@ fi
 
 if [ "${RUN_SEED:-false}" = "true" ]; then
   echo "[entrypoint] seeding database"
-  (cd "$DB_DIR" && ./node_modules/.bin/tsx prisma/seed.ts) || { echo "[entrypoint] seed failed"; exit 1; }
+  (cd "$DB_DIR" && ./node_modules/.bin/tsx prisma/seed.ts) || echo "[entrypoint] WARNING: seed failed - starting the apps anyway"
 fi
 
 pids=()
