@@ -142,11 +142,16 @@ remote_part() {
   say "Starting everything"
   dc up -d
   local ok=""
-  for _ in $(seq 1 60); do
+  # migrations + seed + 5 processes on 2 cores: allow up to 6 minutes
+  for _ in $(seq 1 120); do
     if docker exec "$NGINX_CONTAINER" wget -qO- http://ecommerce-app:4000/health >/dev/null 2>&1; then ok=1; break; fi
     sleep 3
   done
-  [ -n "$ok" ] || fail "ecommerce-app is not answering. See: docker logs ecommerce-app"
+  if [ -z "$ok" ]; then
+    echo "---- last 60 lines of ecommerce-app ----"
+    docker logs --tail 60 ecommerce-app 2>&1 || true
+    fail "ecommerce-app is not answering (log above)."
+  fi
 
   # ---- media bucket, publicly readable (uses the API's S3 client, no mc needed) ----
   local js
@@ -175,7 +180,16 @@ JS
   if [ "${#missing[@]}" -gt 0 ]; then
     say "Getting an SSL certificate for: ${DOMAINS[*]}"
     for d in "${DOMAINS[@]}"; do
-      getent hosts "$d" >/dev/null || fail "$d does not resolve yet. Add the A record in Namecheap, wait, run again."
+      # ask public DNS (what Let's Encrypt sees), not the server's possibly stale cache
+      local ip=""
+      for ns in 1.1.1.1 8.8.8.8; do
+        ip="$(dig +short A "$d" @"$ns" 2>/dev/null | tail -n1)"
+        [ -z "$ip" ] && ip="$(nslookup "$d" "$ns" 2>/dev/null | awk '/^Address: /{a=$2} END{print a}')"
+        [ -n "$ip" ] && break
+      done
+      [ -z "$ip" ] && ip="$(getent hosts "$d" | awk '{print $1; exit}')"
+      [ -n "$ip" ] || fail "$d does not resolve yet. Add the A record in Namecheap, wait, run again."
+      echo "  $d -> $ip"
     done
     local auth
     auth="$(sudo sh -c 'grep -h "^authenticator" /etc/letsencrypt/renewal/*.conf 2>/dev/null' | head -1 | awk -F'= *' '{print $2}')"
