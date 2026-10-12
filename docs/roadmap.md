@@ -14,7 +14,8 @@ Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progres
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
-shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.vendorOrderId / decisionNote / refundedAt).
+shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.vendorOrderId / decisionNote / refundedAt). Step 25: `commission_rules_only`
+(per-seller rates moved into `CommissionRule`, `Vendor.commissionRate` dropped — run `pnpm db:migrate`).
 
 ## Phase 1: Catalog foundation
 

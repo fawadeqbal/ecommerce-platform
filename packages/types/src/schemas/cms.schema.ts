@@ -16,7 +16,13 @@ import {
   type PageDto,
   type PageInput,
 } from '../cms/cms';
-import { emptyToNull, optionalSlugField, optionalUrlField } from './common';
+import {
+  emptyToNull,
+  isoToLocalInput,
+  localInputToIso,
+  optionalSlugField,
+  optionalUrlField,
+} from './common';
 
 const linkField = z
   .string()
@@ -179,16 +185,6 @@ export function pageFormToInput(v: PageFormValues): PageInput {
 }
 
 // ================================================================ banner form
-
-/** "2026-10-12T09:30" (datetime-local) ↔ ISO. */
-export function isoToLocalInput(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-const localInputToIso = (v: string): string | null =>
-  v.trim() === '' ? null : new Date(v).toISOString();
 
 export const bannerFormSchema = z
   .object({

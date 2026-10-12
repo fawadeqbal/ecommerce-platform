@@ -9,13 +9,15 @@ import {
   type PromotionInput,
   type PromotionRules,
 } from '../promotions/promotion';
+import { isoToLocalInput, localInputToIso } from './common';
 
 const optionalNumber = z.number({ invalid_type_error: 'Enter a number' }).min(0).nullable();
 const optionalInt = z.number({ invalid_type_error: 'Enter a number' }).int().min(1).nullable();
 /** <input type="datetime-local"> value or '' */
 const localDate = z.string();
-const toIso = (v: string) => (v ? new Date(v).toISOString() : null);
-const toLocal = (iso: string | null) => (iso ? new Date(iso).toISOString().slice(0, 16) : '');
+// The form shows browser-local time; the API stores ISO (UTC). Shared helpers from ./common.
+const toIso = localInputToIso;
+const toLocal = isoToLocalInput;
 
 export const couponFormSchema = z
   .object({
@@ -142,7 +144,7 @@ export const emptyPromotionForm = (): PromotionFormValues => ({
   categoryIds: [],
   vendorIds: [],
   priority: 0,
-  startsAt: new Date().toISOString().slice(0, 16),
+  startsAt: isoToLocalInput(new Date().toISOString()),
   endsAt: '',
   isActive: true,
 });
