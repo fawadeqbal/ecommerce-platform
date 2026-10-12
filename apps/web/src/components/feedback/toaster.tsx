@@ -25,13 +25,13 @@ export function Toaster() {
     <Portal>
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-3 top-[calc(var(--header-h)+8px)] z-[70] flex flex-col items-stretch gap-2 md:inset-x-auto md:right-6 md:top-[calc(var(--header-h)+12px)] md:w-[380px]"
+        className="pointer-events-none fixed inset-x-3 bottom-[calc(80px+env(safe-area-inset-bottom))] z-[70] flex flex-col-reverse items-stretch gap-2 md:inset-x-auto md:bottom-7 md:left-1/2 md:w-[400px] md:-translate-x-1/2"
       >
         {list.map((t) => (
           <div
             key={t.id}
             role={t.tone === 'error' ? 'alert' : 'status'}
-            className="pointer-events-auto relative flex animate-pop-in items-center gap-3 overflow-hidden rounded-2xl border border-gray-200 bg-white p-3 pr-2 text-sm text-gray-900 shadow-card"
+            className="pointer-events-auto relative flex animate-sheet-up items-center gap-3 overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-3 pr-2 text-sm text-gray-900 shadow-[0_20px_50px_-16px_rgba(30,26,51,.4)]"
           >
             {t.image ? (
               <span className="relative h-12 w-12 flex-none overflow-hidden rounded-xl bg-gray-50">
