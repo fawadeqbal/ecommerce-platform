@@ -295,6 +295,19 @@ for 60 s, and falls back to built-in links/hero when the CMS is empty or unreach
 - `payments.codEnabled` turns cash on delivery off; COD per zone / delivery option stays in Shipping.
 - Logs: payment attempts (with transactions and refunds) and webhook events (processed / failed / pending + payload).
 
+### Email marketing
+
+- **Newsletter**: double opt-in from the storefront footer (`marketing.newsletter-confirm` email). Links in emails carry
+  an HMAC of the address (`marketing-rules.ts`, key `JWT_ACCESS_SECRET`): `/newsletter/confirm`, `/unsubscribe`.
+  Unsubscribing also turns off the customer's marketing preference.
+- **Campaigns**: draft → scheduled (time or now) → sending → sent; cancel while scheduled. Audience = confirmed
+  subscribers and / or active customers (optional segment), deduplicated; unsubscribed, opted-out and suppressed
+  addresses are skipped. Each campaign is claimed once (SCHEDULED → SENDING) so it is never sent twice.
+- **Automations** (`MarketingSweepService`): due campaigns every minute; abandoned carts every 15 min (signed-in carts,
+  one email per delay in `marketing.abandonedCartDelays`, progress in `CartRecovery`, restarts when the cart changes,
+  optional coupon in the last one); win-back every 6 h (last order older than `marketing.winBackDays`, once per
+  inactive period). Marketing emails respect opt-outs in `NotificationsService`.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

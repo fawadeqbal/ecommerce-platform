@@ -221,6 +221,22 @@ export class CustomersService {
     return this.get(id);
   }
 
+  /** Active customers who allow marketing emails, optionally in one segment (campaign audiences). */
+  async marketingAudience(
+    segment: CustomerSegment | null,
+  ): Promise<{ userId: string; email: string; firstName: string }[]> {
+    const rules = await this.rules();
+    const extra = segment
+      ? Prisma.sql`AND ${this.segmentSql(segment, rules, new Date())}`
+      : Prisma.empty;
+    return this.prisma.$queryRaw<{ userId: string; email: string; firstName: string }[]>(Prisma.sql`
+      SELECT u."id" AS "userId", u."email", u."firstName"
+      ${BASE}
+        AND u."status"::text = 'ACTIVE'
+        AND NOT EXISTS (SELECT 1 FROM "EmailPreference" ep WHERE ep."userId" = u."id" AND ep."marketing" = false)
+        ${extra}`);
+  }
+
   // ================================================================ helpers
 
   private segmentSql(segment: CustomerSegment, rules: SegmentRules, now: Date): Prisma.Sql {

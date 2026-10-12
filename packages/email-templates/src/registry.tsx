@@ -133,6 +133,8 @@ export const templateRegistry: Record<EmailTemplateKey, TemplateDefinition> = {
   [EmailTemplateKey.REFERRAL_REWARD]: generic('You earned a referral reward'),
   [EmailTemplateKey.NEWSLETTER]: generic((d) => str(d.subject, 'News from our store')),
   [EmailTemplateKey.CAMPAIGN]: generic((d) => str(d.subject, 'Special offer for you')),
+  [EmailTemplateKey.NEWSLETTER_CONFIRM]: generic('Confirm your newsletter subscription'),
+  [EmailTemplateKey.WIN_BACK]: generic((d) => str(d.subject, 'We miss you')),
   [EmailTemplateKey.GIFT_CARD_RECEIVED]: generic('You received a gift card'),
 
   // Vendor

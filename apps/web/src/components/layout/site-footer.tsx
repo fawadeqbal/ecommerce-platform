@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { NewsletterSignup } from '@/components/marketing/newsletter-signup';
 import { getMenu } from '@/lib/cms';
 
 /** Used until the footer menu is set up in Admin → Content → Menus. */
@@ -46,6 +47,7 @@ export async function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-gray-200 bg-gray-50">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-4">
+        <NewsletterSignup />
         {groups.map((g) => (
           <div key={g.title}>
             <p className="mb-3 text-sm font-semibold">{g.title}</p>

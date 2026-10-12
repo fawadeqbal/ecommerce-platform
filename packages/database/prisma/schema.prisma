@@ -1429,6 +1429,18 @@ model Subscriber {
   source         String?
   unsubscribedAt DateTime?
   createdAt      DateTime  @default(now())
+
+  @@index([isConfirmed, unsubscribedAt])
+}
+
+/// Abandoned-cart email sequence progress per cart (reset when the customer changes the cart).
+model CartRecovery {
+  cartId        String   @id
+  /// Emails sent so far in the sequence.
+  step          Int      @default(0)
+  /// Cart.updatedAt when the last email went out: a newer cart activity restarts the sequence.
+  cartUpdatedAt DateTime
+  lastSentAt    DateTime
 }
 
 model Campaign {

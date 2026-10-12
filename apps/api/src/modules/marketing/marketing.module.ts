@@ -1,10 +1,22 @@
 import { Module } from '@nestjs/common';
-import { MarketingController } from './marketing.controller';
-import { MarketingService } from './marketing.service';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersModule } from '../users/users.module';
+import { MarketingAutomationsService } from './automations.service';
+import { CampaignsService } from './campaigns.service';
+import { AdminMarketingController, NewsletterController } from './marketing.controller';
+import { MarketingSweepService } from './marketing-sweep.service';
+import { NewsletterService } from './newsletter.service';
 
+/** Newsletter (double opt-in), campaigns, abandoned-cart and win-back emails. */
 @Module({
-  controllers: [MarketingController],
-  providers: [MarketingService],
-  exports: [MarketingService],
+  imports: [NotificationsModule, UsersModule],
+  controllers: [NewsletterController, AdminMarketingController],
+  providers: [
+    NewsletterService,
+    CampaignsService,
+    MarketingAutomationsService,
+    MarketingSweepService,
+  ],
+  exports: [NewsletterService, CampaignsService, MarketingAutomationsService],
 })
 export class MarketingModule {}

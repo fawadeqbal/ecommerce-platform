@@ -153,6 +153,15 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 2. Enter a webhook secret: it is saved encrypted and shown as `••••` + last 4 characters.
 3. Pay an order online (mock page), then open Payment log (attempt, transactions, refunds) and Webhooks (event payload).
 
+**Email marketing**
+
+1. Storefront footer → Newsletter → subscribe; Mailpit (http://localhost:8025) has the confirmation email → confirm.
+   Admin → Marketing → Subscribers lists it; Export CSV.
+2. Admin → Marketing → Campaigns → New: write it, check the audience count, Send test, then Send now (or schedule).
+   Every email has an unsubscribe link (`/unsubscribe`).
+3. Abandoned cart: sign in, add to cart, wait past the first delay (Settings → Marketing emails, default 1 h).
+   Win-back: customers with no order for 90 days get one email.
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

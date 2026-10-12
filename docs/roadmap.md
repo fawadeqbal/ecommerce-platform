@@ -10,7 +10,7 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 28.** (Step 22 support is deferred: it will be built together with the RAG support assistant.)
+Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 29.** (Step 22 support is deferred: it will be built together with the RAG support assistant.)
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
@@ -18,7 +18,7 @@ shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.
 (per-seller rates moved into `CommissionRule`, `Vendor.commissionRate` dropped — run `pnpm db:migrate`).
 Step 26: `order_tax_language_rtl` (Order / VendorOrder `taxAdded`, OrderItem `taxRate` / `taxInclusive` / `taxName`,
 Language `isRtl`). Step 27: `payment_gateways` (PaymentGateway: enabled, test mode, methods, priority,
-encrypted credentials).
+encrypted credentials). Step 28: `cart_recovery` (CartRecovery: abandoned-cart email progress per cart).
 
 ## Phase 1: Catalog foundation
 
@@ -69,8 +69,8 @@ encrypted credentials).
 | 25  | **Commission rules**               | Global / per-category / per-seller commission applied at checkout (5.7)                                                                                                       | **Done**                      |
 | 26  | **Taxes, currencies & languages**  | Tax classes & regional rates (inclusive / exclusive) at checkout, currency switcher with exchange rates, storefront languages (5.13)                                          | **Done**                      |
 | 27  | **Payment settings & logs**        | Enable / disable gateways, credentials, COD by zone, transaction & webhook logs (5.12)                                                                                        | **Done**                      |
-| 28  | **Email marketing**                | Newsletter subscribers, campaigns to segments with scheduling, abandoned-cart sequence, win-back (5.14)                                                                       | Next                          |
-| 29  | **Email templates & logs**         | Template editor (subject / blocks overrides) and email log viewer (5.18, 6)                                                                                                   |                               |
+| 28  | **Email marketing**                | Newsletter subscribers, campaigns to segments with scheduling, abandoned-cart sequence, win-back (5.14)                                                                       | **Done**                      |
+| 29  | **Email templates & logs**         | Template editor (subject / blocks overrides) and email log viewer (5.18, 6)                                                                                                   | Next                          |
 | 30  | **SEO tools**                      | Redirect manager (301), canonical URLs, full sitemap (products, categories, brands, stores), Organization / Breadcrumb structured data (5.17)                                 |                               |
 | 31  | **Documents & bulk tools**         | Invoice PDF, packing slips, order notes, manual orders, reorder / buy now, CSV product import / export (3.7, 4.2, 4.4, 5.2, 5.4)                                              |                               |
 | 32  | **Reports extras**                 | Customer, coupon, tax, inventory & abandoned-cart reports, conversion rate, scheduled report emails (5.1, 5.16, 4.6)                                                          |                               |

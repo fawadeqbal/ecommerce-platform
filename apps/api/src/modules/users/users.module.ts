@@ -11,6 +11,6 @@ import { UsersService } from './users.service';
   imports: [NotificationsModule],
   controllers: [UsersController, AccountController, AdminCustomersController],
   providers: [UsersService, AccountService, CustomersService],
-  exports: [UsersService],
+  exports: [UsersService, CustomersService],
 })
 export class UsersModule {}

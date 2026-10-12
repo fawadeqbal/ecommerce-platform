@@ -23,6 +23,7 @@ export { loyaltyApi } from './endpoints/loyalty';
 export { payoutsApi } from './endpoints/payouts';
 export { localizationApi } from './endpoints/localization';
 export { paymentAdminApi } from './endpoints/payment-admin';
+export { marketingApi } from './endpoints/marketing';
 export { cmsApi } from './endpoints/cms';
 export { reportsApi } from './endpoints/reports';
 export { blogApi } from './endpoints/blog';

@@ -38,6 +38,8 @@ export const EmailTemplateKey = {
   LOYALTY_POINTS_EXPIRING: 'loyalty.points-expiring',
   REFERRAL_REWARD: 'loyalty.referral-reward',
   NEWSLETTER: 'marketing.newsletter',
+  NEWSLETTER_CONFIRM: 'marketing.newsletter-confirm',
+  WIN_BACK: 'marketing.win-back',
   CAMPAIGN: 'marketing.campaign',
   GIFT_CARD_RECEIVED: 'giftcard.received',
 
@@ -74,6 +76,7 @@ export const MARKETING_EMAILS: EmailTemplateKey[] = [
   EmailTemplateKey.REVIEW_REQUEST,
   EmailTemplateKey.NEWSLETTER,
   EmailTemplateKey.CAMPAIGN,
+  EmailTemplateKey.WIN_BACK,
 ];
 
 export interface EmailJobPayload {
