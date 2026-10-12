@@ -56,6 +56,7 @@ export function CheckoutView() {
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
@@ -88,6 +89,11 @@ export function CheckoutView() {
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [redeemPoints, setRedeemPoints] = useState(false);
   const [giftInput, setGiftInput] = useState('');
+  // Checkout is a 4-step flow: address → delivery → payment → review (savings, note).
+  const [step, setStep] = useState(0);
+  // Steps the customer tried to leave (or submit) while incomplete: shown in red.
+  const [flagged, setFlagged] = useState<number[]>([]);
+  const flag = (i: number) => setFlagged((f) => (f.includes(i) ? f : [...f, i]));
   useEffect(() => {
     const fromCart = new URLSearchParams(window.location.search).get('coupon');
     if (fromCart) {
@@ -164,7 +170,14 @@ export function CheckoutView() {
     },
   });
 
-  const onSubmit = handleSubmit((values) => place.mutate(values));
+  const onSubmit = handleSubmit(
+    (values) => place.mutate(values),
+    () => {
+      // Hidden address fields failed validation: take the customer back there.
+      flag(0);
+      setStep(0);
+    },
+  );
 
   const wrap = `${container} flex max-w-[1240px] flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`;
   if (cartLoading || me.isPending || placed) return <Spinner className="mx-auto p-8" />;
@@ -197,16 +210,63 @@ export function CheckoutView() {
   const q = quote.data;
   const savedAddresses = signedIn ? (addresses.data ?? []) : [];
   const online = isOnlinePayment(paymentMethod);
+  const [email, fullName, phone, line1] = watch(['email', 'fullName', 'phone', 'line1']);
+  const addressDone =
+    (signedIn || /\S+@\S+\.\S+/.test(email)) &&
+    (Boolean(addressId) ||
+      Boolean(
+        fullName.trim() &&
+        phone.trim() &&
+        line1.trim() &&
+        city.trim() &&
+        countryCode.trim().length === 2,
+      ));
+  const deliveryDone = Boolean(q) && q!.groups.every((g) => g.shippingOptions.length > 0);
+  const paymentDone = Boolean(
+    q?.paymentOptions.some((o) => o.method === paymentMethod && o.available),
+  );
   const steps = [
-    { id: 'step-address', label: 'Address', done: Boolean(addressId) || Boolean(countryCode) },
-    { id: 'step-delivery', label: 'Delivery', done: Boolean(q) },
-    { id: 'step-payment', label: 'Payment', done: Boolean(paymentMethod) },
-    {
-      id: 'step-savings',
-      label: 'Savings',
-      done: Boolean(couponCode || redeemPoints || giftCardCode),
-    },
+    { label: 'Address', done: addressDone, required: true },
+    { label: 'Delivery', done: deliveryDone, required: true },
+    { label: 'Payment', done: paymentDone, required: true },
+    { label: 'Review', done: false, required: false },
   ];
+  const missing = steps.filter((st) => st.required && !st.done).map((st) => st.label);
+  const ready = missing.length === 0;
+  const scrollUp = () =>
+    document
+      .getElementById('checkout-steps')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const goTo = (i: number) => {
+    // Going back is always fine; going forward needs the steps before it.
+    const blocker = steps.findIndex((st, j) => j < i && st.required && !st.done);
+    if (i > step && blocker !== -1) {
+      flag(blocker);
+      setStep(blocker);
+    } else setStep(i);
+    scrollUp();
+  };
+  const next = async () => {
+    if (step === 0) {
+      const ok = await trigger([
+        'email',
+        'fullName',
+        'phone',
+        'line1',
+        'line2',
+        'city',
+        'state',
+        'postalCode',
+        'countryCode',
+      ]);
+      if (!ok || !addressDone) return flag(0);
+    } else if (steps[step]?.required && !steps[step]?.done) return flag(step);
+    setFlagged((f) => f.filter((x) => x !== step));
+    setStep((s) => Math.min(s + 1, steps.length - 1));
+    scrollUp();
+  };
+  const chosenAddress = savedAddresses.find((a) => a.id === addressId);
+  const typedAddress = [line1, city, state, countryCode].filter((x) => x?.trim()).join(', ');
 
   return (
     <div className={wrap}>
@@ -218,27 +278,71 @@ export function CheckoutView() {
           ← Back to cart
         </Link>
       </div>
-      <nav aria-label="Checkout steps" className="scrollbar-none flex gap-2 overflow-x-auto">
-        {steps.map((s, i) => (
-          <a
-            key={s.id}
-            href={`#${s.id}`}
-            className={cn(
-              'flex flex-[1_0_auto] items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-sm font-bold',
-              s.done ? 'bg-brand-600 text-white hover:text-white' : 'bg-white text-gray-900',
-            )}
-          >
-            <span
+      <nav
+        id="checkout-steps"
+        aria-label="Checkout steps"
+        className="scrollbar-none flex scroll-mt-[calc(var(--header-h)+16px)] gap-2 overflow-x-auto"
+      >
+        {steps.map((st, i) => {
+          const status = st.done
+            ? 'done'
+            : i === step
+              ? 'current'
+              : flagged.includes(i) || (st.required && i < step)
+                ? 'error'
+                : 'todo';
+          return (
+            <button
+              key={st.label}
+              type="button"
+              onClick={() => goTo(i)}
+              aria-current={i === step ? 'step' : undefined}
               className={cn(
-                'flex h-[26px] w-[26px] items-center justify-center rounded-full text-[13px]',
-                s.done ? 'bg-white text-brand-700' : 'bg-gray-100 text-gray-600',
+                'flex flex-[1_0_auto] items-center gap-2.5 rounded-2xl px-3.5 py-2 text-left text-sm font-bold',
+                status === 'done' && 'bg-brand-600 text-white',
+                status === 'current' && 'bg-white text-gray-900 ring-2 ring-inset ring-brand-600',
+                status === 'error' && 'bg-tint-rose text-red-800 ring-1 ring-inset ring-red-200',
+                status === 'todo' && 'bg-white text-gray-500',
+                i === step && status === 'done' && 'ring-2 ring-inset ring-brand-300',
               )}
             >
-              {s.done ? '✓' : i + 1}
-            </span>
-            {s.label}
-          </a>
-        ))}
+              <span
+                className={cn(
+                  'flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full text-[13px]',
+                  status === 'done' && 'bg-white text-brand-700',
+                  status === 'current' && 'bg-brand-600 text-white',
+                  status === 'error' && 'bg-red-500 text-white',
+                  status === 'todo' && 'bg-gray-100 text-gray-500',
+                )}
+              >
+                {status === 'done' ? '✓' : status === 'error' ? '!' : i + 1}
+              </span>
+              <span className="flex flex-col leading-tight">
+                {st.label}
+                <span
+                  className={cn(
+                    'text-[11px] font-semibold',
+                    status === 'done'
+                      ? 'text-brand-100'
+                      : status === 'error'
+                        ? 'text-red-600'
+                        : 'text-gray-400',
+                  )}
+                >
+                  {status === 'done'
+                    ? 'Done'
+                    : status === 'error'
+                      ? 'Needs info'
+                      : !st.required
+                        ? 'Savings & note'
+                        : i === step
+                          ? 'In progress'
+                          : 'To do'}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </nav>
 
       <form
@@ -248,352 +352,444 @@ export function CheckoutView() {
         className="flex flex-wrap items-start gap-5"
       >
         <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-3.5">
-          <Panel
-            id="step-address"
-            title="1. Delivery address"
-            action={
-              savedAddresses.length > 0 && addressId !== '' ? (
-                <button
-                  type="button"
-                  onClick={() => setValue('addressId', '')}
-                  className="text-sm font-bold text-brand-700"
-                >
-                  + New address
-                </button>
-              ) : null
-            }
-          >
-            {signedIn && me.data ? (
-              <p className="text-sm text-gray-600">
-                Signed in as <span className="font-semibold text-gray-900">{me.data.email}</span>
-              </p>
-            ) : (
-              <>
-                <Input
-                  label="Email"
-                  type="email"
-                  autoComplete="email"
-                  hint="Your receipt and order updates go here."
-                  {...register('email')}
-                  error={errors.email?.message}
-                />
-                <p className="text-sm text-gray-600">
-                  Have an account?{' '}
-                  <Link href="/login?next=/checkout" className="font-semibold text-brand-700">
-                    Sign in
-                  </Link>{' '}
-                  to use saved addresses and earn points.
-                </p>
-              </>
-            )}
-            {savedAddresses.length > 0 ? (
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-2.5">
-                {savedAddresses.map((a) => (
-                  <label key={a.id} className={cn(optionCard, 'flex-col gap-1 px-4 py-3.5')}>
-                    <input
-                      type="radio"
-                      value={a.id}
-                      className="sr-only"
-                      {...register('addressId')}
+          {step === 0 ? (
+            <>
+              <Panel
+                id="step-address"
+                title="1. Delivery address"
+                action={
+                  savedAddresses.length > 0 && addressId !== '' ? (
+                    <button
+                      type="button"
+                      onClick={() => setValue('addressId', '')}
+                      className="text-sm font-bold text-brand-700"
+                    >
+                      + New address
+                    </button>
+                  ) : null
+                }
+              >
+                {signedIn && me.data ? (
+                  <p className="text-sm text-gray-600">
+                    Signed in as{' '}
+                    <span className="font-semibold text-gray-900">{me.data.email}</span>
+                  </p>
+                ) : (
+                  <>
+                    <Input
+                      label="Email"
+                      type="email"
+                      autoComplete="email"
+                      hint="Your receipt and order updates go here."
+                      {...register('email')}
+                      error={errors.email?.message}
                     />
-                    <span className="flex justify-between gap-2 font-bold">
-                      <span>
-                        {a.label || a.fullName}
-                        {a.isDefault ? (
-                          <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] text-brand-700">
-                            Default
-                          </span>
-                        ) : null}
-                      </span>
-                      <RadioDot />
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      {a.fullName} · {a.phone}
-                    </span>
-                    <span className="text-sm text-gray-600">{formatAddress(a)}</span>
-                  </label>
-                ))}
-                <label className={cn(optionCard, 'items-center justify-between gap-2 px-4 py-3.5')}>
-                  <input type="radio" value="" className="sr-only" {...register('addressId')} />
-                  <span className="font-bold">Use a new address</span>
-                  <RadioDot />
-                </label>
-              </div>
-            ) : null}
-            {addressId === '' ? (
-              <div className="space-y-4">
-                <AddressInputs
-                  fieldProps={(name) => ({ ...register(name), error: errors[name]?.message })}
-                />
-                {signedIn ? (
-                  <Checkbox label="Save this address to my account" {...register('saveAddress')} />
-                ) : null}
-              </div>
-            ) : null}
-          </Panel>
-
-          <Panel id="step-delivery" title="2. Delivery, per seller">
-            {!q ? (
-              quote.error ? (
-                <Alert tone="error">{quote.error.message}</Alert>
-              ) : (
-                <Spinner />
-              )
-            ) : (
-              q.groups.map((g) => (
-                <div
-                  key={g.vendor.id}
-                  className="flex flex-col gap-2.5 rounded-[18px] bg-gray-50 p-3.5"
-                >
-                  <div className="flex flex-wrap justify-between gap-2 text-sm">
-                    <span>
-                      Sold by <b>{g.vendor.name}</b> · {g.items.length} item
-                      {g.items.length === 1 ? '' : 's'}
-                    </span>
-                    <span className="text-gray-500">
-                      Subtotal {formatMoney(g.subtotal, q.currency)}
-                    </span>
-                  </div>
-                  {g.shippingOptions.length === 0 ? (
-                    <p className="text-sm font-semibold text-red-600">
-                      This seller doesn’t deliver to this address.
+                    <p className="text-sm text-gray-600">
+                      Have an account?{' '}
+                      <Link href="/login?next=/checkout" className="font-semibold text-brand-700">
+                        Sign in
+                      </Link>{' '}
+                      to use saved addresses and earn points.
                     </p>
+                  </>
+                )}
+                {savedAddresses.length > 0 ? (
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-2.5">
+                    {savedAddresses.map((a) => (
+                      <label key={a.id} className={cn(optionCard, 'flex-col gap-1 px-4 py-3.5')}>
+                        <input
+                          type="radio"
+                          value={a.id}
+                          className="sr-only"
+                          {...register('addressId')}
+                        />
+                        <span className="flex justify-between gap-2 font-bold">
+                          <span>
+                            {a.label || a.fullName}
+                            {a.isDefault ? (
+                              <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] text-brand-700">
+                                Default
+                              </span>
+                            ) : null}
+                          </span>
+                          <RadioDot />
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          {a.fullName} · {a.phone}
+                        </span>
+                        <span className="text-sm text-gray-600">{formatAddress(a)}</span>
+                      </label>
+                    ))}
+                    <label
+                      className={cn(optionCard, 'items-center justify-between gap-2 px-4 py-3.5')}
+                    >
+                      <input type="radio" value="" className="sr-only" {...register('addressId')} />
+                      <span className="font-bold">Use a new address</span>
+                      <RadioDot />
+                    </label>
+                  </div>
+                ) : null}
+                {addressId === '' ? (
+                  <div className="space-y-4">
+                    <AddressInputs
+                      fieldProps={(name) => ({ ...register(name), error: errors[name]?.message })}
+                    />
+                    {signedIn ? (
+                      <Checkbox
+                        label="Save this address to my account"
+                        {...register('saveAddress')}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+              </Panel>
+            </>
+          ) : null}
+
+          {step === 1 ? (
+            <>
+              <Panel id="step-delivery" title="2. Delivery, per seller">
+                {!q ? (
+                  quote.error ? (
+                    <Alert tone="error">{quote.error.message}</Alert>
                   ) : (
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-2">
-                      {g.shippingOptions.map((opt) => (
+                    <Spinner />
+                  )
+                ) : (
+                  q.groups.map((g) => (
+                    <div
+                      key={g.vendor.id}
+                      className="flex flex-col gap-2.5 rounded-[18px] bg-gray-50 p-3.5"
+                    >
+                      <div className="flex flex-wrap justify-between gap-2 text-sm">
+                        <span>
+                          Sold by <b>{g.vendor.name}</b> · {g.items.length} item
+                          {g.items.length === 1 ? '' : 's'}
+                        </span>
+                        <span className="text-gray-500">
+                          Subtotal {formatMoney(g.subtotal, q.currency)}
+                        </span>
+                      </div>
+                      {g.shippingOptions.length === 0 ? (
+                        <p className="text-sm font-semibold text-red-600">
+                          This seller doesn’t deliver to this address.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-2">
+                          {g.shippingOptions.map((opt) => (
+                            <label
+                              key={opt.rateId ?? 'default'}
+                              className={cn(
+                                optionCard,
+                                'items-center justify-between gap-2 rounded-[14px] px-3 py-2.5 has-[:checked]:bg-white',
+                              )}
+                            >
+                              <input
+                                type="radio"
+                                name={`ship-${g.vendor.id}`}
+                                className="sr-only"
+                                checked={
+                                  opt.rateId === g.shippingRateId || g.shippingOptions.length === 1
+                                }
+                                onChange={() =>
+                                  opt.rateId &&
+                                  setShippingRateIds((s) => ({ ...s, [g.vendor.id]: opt.rateId! }))
+                                }
+                              />
+                              <span className="flex flex-col">
+                                <b className="text-sm">{opt.name}</b>
+                                {opt.estimatedDays ? (
+                                  <span className="text-xs text-gray-500">{opt.estimatedDays}</span>
+                                ) : null}
+                              </span>
+                              <b className="text-sm">
+                                {opt.price === 0 ? 'Free' : formatMoney(opt.price, q.currency)}
+                              </b>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {q && q.shippingZone === null && q.freeShippingAbove > 0 ? (
+                  <p className="text-xs text-gray-500">
+                    Free delivery on orders over {formatMoney(q.freeShippingAbove, q.currency)} per
+                    seller.
+                  </p>
+                ) : null}
+              </Panel>
+            </>
+          ) : null}
+
+          {step === 2 ? (
+            <>
+              <Panel id="step-payment" title="3. Payment">
+                {q ? (
+                  <div className="flex flex-col gap-2">
+                    {q.paymentOptions.map((option) => {
+                      const look = PAYMENT_LOOK[option.method] ?? {
+                        k: '•',
+                        tint: 'bg-tint-violet',
+                      };
+                      return (
                         <label
-                          key={opt.rateId ?? 'default'}
+                          key={option.method}
                           className={cn(
                             optionCard,
-                            'items-center justify-between gap-2 rounded-[14px] px-3 py-2.5 has-[:checked]:bg-white',
+                            'items-center gap-3.5 px-4 py-3.5',
+                            !option.available && 'cursor-not-allowed opacity-60',
                           )}
                         >
                           <input
                             type="radio"
-                            name={`ship-${g.vendor.id}`}
+                            value={option.method}
                             className="sr-only"
-                            checked={
-                              opt.rateId === g.shippingRateId || g.shippingOptions.length === 1
-                            }
-                            onChange={() =>
-                              opt.rateId &&
-                              setShippingRateIds((s) => ({ ...s, [g.vendor.id]: opt.rateId! }))
-                            }
+                            disabled={!option.available}
+                            {...register('paymentMethod')}
                           />
-                          <span className="flex flex-col">
-                            <b className="text-sm">{opt.name}</b>
-                            {opt.estimatedDays ? (
-                              <span className="text-xs text-gray-500">{opt.estimatedDays}</span>
+                          <span
+                            className={cn(
+                              'flex h-10 w-10 flex-none items-center justify-center rounded-xl font-extrabold',
+                              look.tint,
+                            )}
+                          >
+                            {look.k}
+                          </span>
+                          <span className="flex flex-1 flex-col">
+                            <b>{option.label}</b>
+                            <span className="text-[13px] text-gray-500">
+                              {option.description}
+                              {option.fee > 0
+                                ? ` A ${formatMoney(option.fee, q.currency)} fee applies.`
+                                : ''}
+                            </span>
+                            {option.reason ? (
+                              <span className="text-xs text-amber-700">{option.reason}</span>
                             ) : null}
                           </span>
-                          <b className="text-sm">
-                            {opt.price === 0 ? 'Free' : formatMoney(opt.price, q.currency)}
-                          </b>
+                          <RadioDot size={22} />
                         </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-            {q && q.shippingZone === null && q.freeShippingAbove > 0 ? (
-              <p className="text-xs text-gray-500">
-                Free delivery on orders over {formatMoney(q.freeShippingAbove, q.currency)} per
-                seller.
-              </p>
-            ) : null}
-          </Panel>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Spinner />
+                )}
+                {online ? (
+                  <p className="text-[13px] text-gray-500">
+                    You’ll pay on a secure payment page. Your items are held while you pay.
+                  </p>
+                ) : null}
+              </Panel>
+            </>
+          ) : null}
 
-          <Panel id="step-payment" title="3. Payment">
-            {q ? (
-              <div className="flex flex-col gap-2">
-                {q.paymentOptions.map((option) => {
-                  const look = PAYMENT_LOOK[option.method] ?? { k: '•', tint: 'bg-tint-violet' };
-                  return (
-                    <label
-                      key={option.method}
+          {step === 3 ? (
+            <>
+              <Panel title="4. Review your order">
+                <dl className="divide-y divide-gray-100 text-sm">
+                  {[
+                    {
+                      label: 'Deliver to',
+                      value: chosenAddress
+                        ? `${chosenAddress.fullName} · ${formatAddress(chosenAddress)}`
+                        : typedAddress || '—',
+                      to: 0,
+                    },
+                    {
+                      label: 'Delivery',
+                      value:
+                        q?.groups
+                          .map(
+                            (g) =>
+                              `${g.vendor.name}: ${g.shippingMethod ?? 'Standard'} (${
+                                g.shipping === 0 ? 'Free' : formatMoney(g.shipping, q.currency)
+                              })`,
+                          )
+                          .join(' · ') ?? '—',
+                      to: 1,
+                    },
+                    {
+                      label: 'Payment',
+                      value:
+                        q?.paymentOptions.find((o) => o.method === paymentMethod)?.label ??
+                        paymentMethod,
+                      to: 2,
+                    },
+                  ].map((r) => (
+                    <div key={r.label} className="flex items-start gap-3 py-3">
+                      <dt className="w-24 flex-none text-gray-500">{r.label}</dt>
+                      <dd className="min-w-0 flex-1 font-semibold">{r.value}</dd>
+                      <button
+                        type="button"
+                        onClick={() => goTo(r.to)}
+                        className="text-sm font-bold text-brand-700 hover:text-brand-900"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ))}
+                </dl>
+              </Panel>
+              <Panel id="step-savings" title="Savings (optional)">
+                {q?.loyalty && q.loyalty.balance > 0 ? (
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-brand-100 px-4 py-3.5">
+                    <span className="flex flex-col">
+                      <b>Use my points</b>
+                      <span className="text-[13px] text-gray-600">
+                        {q.loyalty.balance.toLocaleString()} available · up to{' '}
+                        {Math.min(q.loyalty.balance, q.loyalty.maxPoints).toLocaleString()} on this
+                        order
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={redeemPoints}
+                      onChange={(e) => setRedeemPoints(e.target.checked)}
+                    />
+                    <span
+                      aria-hidden
+                      className="relative h-[26px] w-11 flex-none rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[21px]"
+                    />
+                  </label>
+                ) : null}
+
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2">
+                    <input
+                      aria-label="Coupon code"
+                      placeholder="Coupon code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          setCouponCode(couponInput.trim() || null);
+                        }
+                      }}
+                      className={codeInput}
+                    />
+                    {couponCode ? (
+                      <button
+                        type="button"
+                        className={darkButton}
+                        onClick={() => {
+                          setCouponCode(null);
+                          setCouponInput('');
+                        }}
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={darkButton}
+                        disabled={!couponInput.trim()}
+                        onClick={() => setCouponCode(couponInput.trim())}
+                      >
+                        Apply
+                      </button>
+                    )}
+                  </div>
+                  {q?.coupon ? (
+                    <p
                       className={cn(
-                        optionCard,
-                        'items-center gap-3.5 px-4 py-3.5',
-                        !option.available && 'cursor-not-allowed opacity-60',
+                        'rounded-xl px-3 py-2 text-[13px] font-semibold',
+                        q.coupon.applied
+                          ? 'bg-tint-mint text-emerald-800'
+                          : 'bg-tint-rose text-red-700',
                       )}
                     >
-                      <input
-                        type="radio"
-                        value={option.method}
-                        className="sr-only"
-                        disabled={!option.available}
-                        {...register('paymentMethod')}
-                      />
-                      <span
-                        className={cn(
-                          'flex h-10 w-10 flex-none items-center justify-center rounded-xl font-extrabold',
-                          look.tint,
-                        )}
+                      {q.coupon.applied
+                        ? `${q.coupon.code} applied${q.coupon.message ? ` — ${q.coupon.message}` : ''}`
+                        : q.coupon.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2">
+                    <input
+                      aria-label="Gift card code"
+                      placeholder="Gift card code"
+                      value={giftInput}
+                      onChange={(e) => setGiftInput(e.target.value)}
+                      className={codeInput}
+                    />
+                    {giftCardCode ? (
+                      <button
+                        type="button"
+                        className={darkButton}
+                        onClick={() => {
+                          setGiftCardCode(null);
+                          setGiftInput('');
+                        }}
                       >
-                        {look.k}
-                      </span>
-                      <span className="flex flex-1 flex-col">
-                        <b>{option.label}</b>
-                        <span className="text-[13px] text-gray-500">
-                          {option.description}
-                          {option.fee > 0
-                            ? ` A ${formatMoney(option.fee, q.currency)} fee applies.`
-                            : ''}
-                        </span>
-                        {option.reason ? (
-                          <span className="text-xs text-amber-700">{option.reason}</span>
-                        ) : null}
-                      </span>
-                      <RadioDot size={22} />
-                    </label>
-                  );
-                })}
-              </div>
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={darkButton}
+                        disabled={!giftInput.trim()}
+                        onClick={() => setGiftCardCode(giftInput.trim())}
+                      >
+                        Apply
+                      </button>
+                    )}
+                  </div>
+                  {q?.giftCard ? (
+                    <p
+                      className={cn(
+                        'rounded-xl px-3 py-2 text-[13px] font-semibold',
+                        q.giftCard.applied
+                          ? 'bg-tint-mint text-emerald-800'
+                          : 'bg-tint-rose text-red-700',
+                      )}
+                    >
+                      {q.giftCard.applied
+                        ? `${formatMoney(q.giftCard.amount, q.currency)} from ${q.giftCard.code} · ${formatMoney(q.giftCard.remainingBalance, q.currency)} left on the card`
+                        : q.giftCard.message}
+                    </p>
+                  ) : null}
+                </div>
+              </Panel>
+
+              <Panel title="Order note (optional)">
+                <Textarea
+                  aria-label="Order note"
+                  placeholder="Delivery instructions, landmarks…"
+                  rows={3}
+                  {...register('customerNote')}
+                  error={errors.customerNote?.message}
+                />
+              </Panel>
+            </>
+          ) : null}
+          <div className="flex items-center justify-between gap-3">
+            {step > 0 ? (
+              <button
+                type="button"
+                onClick={() => goTo(step - 1)}
+                className="h-12 rounded-2xl bg-white px-5 font-bold text-gray-700 hover:bg-gray-100"
+              >
+                ← Back
+              </button>
             ) : (
-              <Spinner />
+              <span />
             )}
-            {online ? (
-              <p className="text-[13px] text-gray-500">
-                You’ll pay on a secure payment page. Your items are held while you pay.
-              </p>
+            {step < steps.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => void next()}
+                className="h-12 rounded-2xl bg-brand-600 px-6 font-bold text-white hover:bg-brand-700"
+              >
+                Continue to {steps[step + 1]?.label.toLowerCase()} →
+              </button>
             ) : null}
-          </Panel>
-
-          <Panel id="step-savings" title="4. Savings">
-            {q?.loyalty && q.loyalty.balance > 0 ? (
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-brand-100 px-4 py-3.5">
-                <span className="flex flex-col">
-                  <b>Use my points</b>
-                  <span className="text-[13px] text-gray-600">
-                    {q.loyalty.balance.toLocaleString()} available · up to{' '}
-                    {Math.min(q.loyalty.balance, q.loyalty.maxPoints).toLocaleString()} on this
-                    order
-                  </span>
-                </span>
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={redeemPoints}
-                  onChange={(e) => setRedeemPoints(e.target.checked)}
-                />
-                <span
-                  aria-hidden
-                  className="relative h-[26px] w-11 flex-none rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[21px]"
-                />
-              </label>
-            ) : null}
-
-            <div className="flex flex-col gap-1">
-              <div className="flex gap-2">
-                <input
-                  aria-label="Coupon code"
-                  placeholder="Coupon code"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      setCouponCode(couponInput.trim() || null);
-                    }
-                  }}
-                  className={codeInput}
-                />
-                {couponCode ? (
-                  <button
-                    type="button"
-                    className={darkButton}
-                    onClick={() => {
-                      setCouponCode(null);
-                      setCouponInput('');
-                    }}
-                  >
-                    Remove
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={darkButton}
-                    disabled={!couponInput.trim()}
-                    onClick={() => setCouponCode(couponInput.trim())}
-                  >
-                    Apply
-                  </button>
-                )}
-              </div>
-              {q?.coupon ? (
-                <p
-                  className={cn(
-                    'rounded-xl px-3 py-2 text-[13px] font-semibold',
-                    q.coupon.applied
-                      ? 'bg-tint-mint text-emerald-800'
-                      : 'bg-tint-rose text-red-700',
-                  )}
-                >
-                  {q.coupon.applied
-                    ? `${q.coupon.code} applied${q.coupon.message ? ` — ${q.coupon.message}` : ''}`
-                    : q.coupon.message}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <div className="flex gap-2">
-                <input
-                  aria-label="Gift card code"
-                  placeholder="Gift card code"
-                  value={giftInput}
-                  onChange={(e) => setGiftInput(e.target.value)}
-                  className={codeInput}
-                />
-                {giftCardCode ? (
-                  <button
-                    type="button"
-                    className={darkButton}
-                    onClick={() => {
-                      setGiftCardCode(null);
-                      setGiftInput('');
-                    }}
-                  >
-                    Remove
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={darkButton}
-                    disabled={!giftInput.trim()}
-                    onClick={() => setGiftCardCode(giftInput.trim())}
-                  >
-                    Apply
-                  </button>
-                )}
-              </div>
-              {q?.giftCard ? (
-                <p
-                  className={cn(
-                    'rounded-xl px-3 py-2 text-[13px] font-semibold',
-                    q.giftCard.applied
-                      ? 'bg-tint-mint text-emerald-800'
-                      : 'bg-tint-rose text-red-700',
-                  )}
-                >
-                  {q.giftCard.applied
-                    ? `${formatMoney(q.giftCard.amount, q.currency)} from ${q.giftCard.code} · ${formatMoney(q.giftCard.remainingBalance, q.currency)} left on the card`
-                    : q.giftCard.message}
-                </p>
-              ) : null}
-            </div>
-          </Panel>
-
-          <Panel title="Order note (optional)">
-            <Textarea
-              aria-label="Order note"
-              placeholder="Delivery instructions, landmarks…"
-              rows={3}
-              {...register('customerNote')}
-              error={errors.customerNote?.message}
-            />
-          </Panel>
+          </div>
         </div>
 
         <aside className="flex-[1_1_320px] lg:sticky lg:top-[calc(var(--header-h)+16px)]">
@@ -709,10 +905,15 @@ export function CheckoutView() {
               form="checkout-form"
               className="h-[54px] w-full rounded-2xl text-base font-bold"
               loading={place.isPending}
-              disabled={!q?.canPlace}
+              disabled={!q?.canPlace || !ready}
             >
               {online ? 'Continue to payment' : 'Place order'}
             </Button>
+            {!ready ? (
+              <p className="-mt-1 text-center text-xs font-semibold text-red-600">
+                Complete {missing.join(', ').toLowerCase()} to place your order.
+              </p>
+            ) : null}
             <p className="text-center text-xs text-gray-500">
               By placing your order you agree to our terms and returns policy.
               {online ? ' Your items are held for a few minutes while you pay.' : ''}
