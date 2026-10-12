@@ -16,10 +16,10 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className={cn('flex flex-col gap-3.5 rounded-3xl bg-white p-5', className)}>
+    <section id={id} className={cn('flex min-w-0 flex-col gap-3.5 rounded-3xl bg-white p-4 sm:p-5', className)}>
       {title || action ? (
         <div className="flex items-center justify-between gap-2.5">
-          {title ? <h2 className="text-xl font-extrabold">{title}</h2> : <span />}
+          {title ? <h2 className="text-lg font-extrabold sm:text-xl">{title}</h2> : <span />}
           {action}
         </div>
       ) : null}
@@ -51,7 +51,7 @@ export const codeInput =
   'h-[46px] min-w-0 flex-1 rounded-[14px] border-[1.5px] border-gray-200 bg-white px-3.5 uppercase placeholder:normal-case focus:border-brand-500 focus:outline-none';
 
 export const darkButton =
-  'rounded-[14px] bg-gray-900 px-4 font-bold text-white hover:bg-gray-800 disabled:opacity-50';
+  'flex-none rounded-[14px] bg-gray-900 px-4 font-bold text-white hover:bg-gray-800 disabled:opacity-50';
 
 export function SummaryRow({
   label,
@@ -64,8 +64,8 @@ export function SummaryRow({
 }) {
   return (
     <div className={cn('flex justify-between gap-3', tone === 'saving' && 'text-emerald-700')}>
-      <dt className={tone === 'saving' ? undefined : 'text-gray-600'}>{label}</dt>
-      <dd className="font-bold">{value}</dd>
+      <dt className={cn('min-w-0', tone !== 'saving' && 'text-gray-600')}>{label}</dt>
+      <dd className="flex-none text-right font-bold">{value}</dd>
     </div>
   );
 }

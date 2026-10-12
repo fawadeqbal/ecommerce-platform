@@ -80,3 +80,9 @@ html {
     display: none;
   }
 }
+
+/* safety net: nothing may widen the page sideways on phones */
+html,
+body {
+  overflow-x: clip;
+}

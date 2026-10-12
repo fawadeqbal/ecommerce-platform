@@ -293,7 +293,7 @@ export function CheckoutView() {
       <nav
         id="checkout-steps"
         aria-label="Checkout steps"
-        className="scrollbar-none flex scroll-mt-[calc(var(--header-h)+16px)] gap-2 overflow-x-auto"
+        className="scrollbar-none -mx-4 flex scroll-mt-[calc(var(--header-h)+16px)] gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0"
       >
         {steps.map((st, i) => {
           const confirmed = i < reached;
@@ -314,7 +314,7 @@ export function CheckoutView() {
               onClick={() => goTo(i)}
               aria-current={i === step ? 'step' : undefined}
               className={cn(
-                'flex flex-[1_0_auto] items-center gap-2.5 rounded-2xl px-3.5 py-2 text-left text-sm font-bold',
+                'flex flex-[1_0_auto] items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm font-bold sm:gap-2.5 sm:px-3.5',
                 status === 'done' && 'bg-brand-600 text-white',
                 status === 'current' && 'bg-white text-gray-900 ring-2 ring-inset ring-brand-600',
                 status === 'error' && 'bg-tint-rose text-red-800 ring-1 ring-inset ring-red-200',
@@ -365,7 +365,7 @@ export function CheckoutView() {
         id="checkout-form"
         onSubmit={onSubmit}
         noValidate
-        className="flex flex-wrap items-start gap-5"
+        className="flex min-w-0 flex-wrap items-start gap-5"
       >
         <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-3.5">
           {step === 0 ? (
@@ -388,7 +388,7 @@ export function CheckoutView() {
                 {signedIn && me.data ? (
                   <p className="text-sm text-gray-600">
                     Signed in as{' '}
-                    <span className="font-semibold text-gray-900">{me.data.email}</span>
+                    <span className="break-all font-semibold text-gray-900">{me.data.email}</span>
                   </p>
                 ) : (
                   <>
@@ -419,7 +419,7 @@ export function CheckoutView() {
                           className="sr-only"
                           {...register('addressId')}
                         />
-                        <span className="flex justify-between gap-2 font-bold">
+                        <span className="flex min-w-0 justify-between gap-2 break-words font-bold">
                           <span>
                             {a.label || a.fullName}
                             {a.isDefault ? (
@@ -433,7 +433,7 @@ export function CheckoutView() {
                         <span className="text-sm text-gray-600">
                           {a.fullName} · {a.phone}
                         </span>
-                        <span className="text-sm text-gray-600">{formatAddress(a)}</span>
+                        <span className="break-words text-sm text-gray-600">{formatAddress(a)}</span>
                       </label>
                     ))}
                     <label
@@ -478,7 +478,7 @@ export function CheckoutView() {
                       className="flex flex-col gap-2.5 rounded-[18px] bg-gray-50 p-3.5"
                     >
                       <div className="flex flex-wrap justify-between gap-2 text-sm">
-                        <span>
+                        <span className="min-w-0 break-words">
                           Sold by <b>{g.vendor.name}</b> · {g.items.length} item
                           {g.items.length === 1 ? '' : 's'}
                         </span>
@@ -512,13 +512,13 @@ export function CheckoutView() {
                                   setShippingRateIds((s) => ({ ...s, [g.vendor.id]: opt.rateId! }))
                                 }
                               />
-                              <span className="flex flex-col">
+                              <span className="flex min-w-0 flex-col">
                                 <b className="text-sm">{opt.name}</b>
                                 {opt.estimatedDays ? (
                                   <span className="text-xs text-gray-500">{opt.estimatedDays}</span>
                                 ) : null}
                               </span>
-                              <b className="text-sm">
+                              <b className="flex-none whitespace-nowrap text-sm">
                                 {opt.price === 0 ? 'Free' : formatMoney(opt.price, q.currency)}
                               </b>
                             </label>
@@ -572,7 +572,7 @@ export function CheckoutView() {
                           >
                             {look.k}
                           </span>
-                          <span className="flex flex-1 flex-col">
+                          <span className="flex min-w-0 flex-1 flex-col">
                             <b>{option.label}</b>
                             <span className="text-[13px] text-gray-500">
                               {option.description}
@@ -635,12 +635,12 @@ export function CheckoutView() {
                     },
                   ].map((r) => (
                     <div key={r.label} className="flex items-start gap-3 py-3">
-                      <dt className="w-24 flex-none text-gray-500">{r.label}</dt>
-                      <dd className="min-w-0 flex-1 font-semibold">{r.value}</dd>
+                      <dt className="w-20 flex-none text-gray-500 sm:w-24">{r.label}</dt>
+                      <dd className="min-w-0 flex-1 font-semibold [overflow-wrap:anywhere]">{r.value}</dd>
                       <button
                         type="button"
                         onClick={() => goTo(r.to)}
-                        className="text-sm font-bold text-brand-700 hover:text-brand-900"
+                        className="flex-none text-sm font-bold text-brand-700 hover:text-brand-900"
                       >
                         Change
                       </button>
@@ -651,7 +651,7 @@ export function CheckoutView() {
               <Panel id="step-savings" title="Savings (optional)">
                 {q?.loyalty && q.loyalty.balance > 0 ? (
                   <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-brand-100 px-4 py-3.5">
-                    <span className="flex flex-col">
+                    <span className="flex min-w-0 flex-col">
                       <b>Use my points</b>
                       <span className="text-[13px] text-gray-600">
                         {q.loyalty.balance.toLocaleString()} available · up to{' '}
@@ -789,7 +789,7 @@ export function CheckoutView() {
               <button
                 type="button"
                 onClick={() => goTo(step - 1)}
-                className="h-12 rounded-2xl bg-white px-5 font-bold text-gray-700 hover:bg-gray-100"
+                className="h-12 flex-none rounded-2xl bg-white px-4 font-bold text-gray-700 hover:bg-gray-100 sm:px-5"
               >
                 ← Back
               </button>
@@ -800,15 +800,18 @@ export function CheckoutView() {
               <button
                 type="button"
                 onClick={() => void next()}
-                className="h-12 rounded-2xl bg-brand-600 px-6 font-bold text-white hover:bg-brand-700"
+                className="h-12 min-w-0 flex-1 rounded-2xl bg-brand-600 px-4 font-bold text-white hover:bg-brand-700 sm:flex-none sm:px-6"
               >
-                Continue to {steps[step + 1]?.label.toLowerCase()} →
+                <span className="sm:hidden">Continue →</span>
+                <span className="hidden sm:inline">
+                  Continue to {steps[step + 1]?.label.toLowerCase()} →
+                </span>
               </button>
             ) : null}
           </div>
         </div>
 
-        <aside className="flex-[1_1_320px] lg:sticky lg:top-[calc(var(--header-h)+16px)]">
+        <aside className="min-w-0 flex-[1_1_320px] lg:sticky lg:top-[calc(var(--header-h)+16px)]">
           <Panel title="Order review">
             {quote.isPending ? <Spinner /> : null}
             {q ? (

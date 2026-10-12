@@ -299,7 +299,7 @@ export function CartView() {
             ) : null}
           </div>
 
-          <aside className="flex-[1_1_320px] lg:sticky lg:top-[calc(var(--header-h)+16px)]">
+          <aside className="min-w-0 flex-[1_1_320px] lg:sticky lg:top-[calc(var(--header-h)+16px)]">
             <Panel title="Order summary">
               <form
                 className="flex gap-2"

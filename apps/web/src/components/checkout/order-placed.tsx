@@ -75,11 +75,11 @@ export function OrderPlaced() {
           {order ? (
             <>
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                <div className="rounded-2xl bg-gray-50 p-3.5">
+                <div className="min-w-0 rounded-2xl bg-gray-50 p-3.5">
                   <p className="text-xs text-gray-500">Total</p>
-                  <p className="text-lg font-extrabold">{money(order.grandTotal)}</p>
+                  <p className="break-words text-lg font-extrabold">{money(order.grandTotal)}</p>
                 </div>
-                <div className="rounded-2xl bg-gray-50 p-3.5">
+                <div className="min-w-0 rounded-2xl bg-gray-50 p-3.5">
                   <p className="text-xs text-gray-500">Payment</p>
                   <p className="font-bold">{PAYMENT_METHOD_LABELS[order.paymentMethod]}</p>
                 </div>
@@ -121,14 +121,14 @@ export function OrderPlaced() {
               </ul>
 
               <div className="grid gap-2.5 text-sm sm:grid-cols-2">
-                <div className="rounded-2xl border border-gray-100 p-3.5">
+                <div className="min-w-0 break-words rounded-2xl border border-gray-100 p-3.5">
                   <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">
                     Delivering to
                   </p>
                   <p className="font-semibold">{order.shippingAddress.fullName}</p>
                   <p className="text-gray-600">{formatAddress(order.shippingAddress)}</p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 p-3.5">
+                <div className="min-w-0 break-words rounded-2xl border border-gray-100 p-3.5">
                   <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">
                     What happens next
                   </p>
