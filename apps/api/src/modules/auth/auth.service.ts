@@ -24,6 +24,7 @@ import {
   type EmailJobPayload,
   type JwtPayload,
 } from '@ecommerce/types';
+import { markSessionsRevoked } from '../../common/guards/jwt-auth.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -174,6 +175,7 @@ export class AuthService {
     });
     if (sessions.length === 0) return;
     const ids = sessions.map((x) => x.id);
+    markSessionsRevoked(ids);
     await this.prisma.$transaction([
       this.prisma.session.updateMany({ where: { id: { in: ids } }, data: { revokedAt: now } }),
       this.prisma.refreshToken.updateMany({
@@ -271,6 +273,11 @@ export class AuthService {
         data: { revokedAt: now },
       }),
     ]);
+    markSessionsRevoked(
+      (await this.prisma.session.findMany({ where: { userId: user.id }, select: { id: true } })).map(
+        (x) => x.id,
+      ),
+    );
     await this.passwordChangedEmail(user);
   }
 
