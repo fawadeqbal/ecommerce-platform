@@ -5,7 +5,8 @@ import { cn } from '@ecommerce/ui';
 
 /**
  * Filter sidebar. The form is a plain GET form (works without JavaScript); with JavaScript it
- * re-submits on every change. On phones it opens from the "Filters" button.
+ * re-submits on every change. Desktop: sticky column that scrolls on its own.
+ * Phones: a "Filters" button opens it as a bottom sheet.
  */
 export function FilterPanel({
   activeCount,
@@ -27,46 +28,94 @@ export function FilterPanel({
     form.addEventListener('change', submit);
     return () => form.removeEventListener('change', submit);
   }, []);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(true)}
         aria-expanded={open}
-        className="self-start rounded-xl bg-gray-900 px-3.5 py-[9px] text-sm font-bold text-white lg:hidden"
+        className="flex items-center gap-2 self-start rounded-xl bg-gray-900 px-3.5 py-[9px] text-sm font-bold text-white lg:hidden"
       >
-        Filters · {activeCount}
+        Filters
+        {activeCount > 0 ? (
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] text-gray-900">
+            {activeCount}
+          </span>
+        ) : null}
       </button>
+      {open ? (
+        <button
+          type="button"
+          aria-label="Close filters"
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-40 bg-gray-900/40 lg:hidden"
+        />
+      ) : null}
       <aside
+        aria-label="Filters"
         className={cn(
-          'flex-col gap-[22px] rounded-3xl bg-white p-5 lg:sticky lg:top-24 lg:flex',
-          open ? 'flex' : 'hidden',
+          'flex-col rounded-3xl bg-white',
+          // desktop: sticky column with its own scroll
+          'lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-7.5rem)]',
+          // phones: bottom sheet
+          open
+            ? 'fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-b-none shadow-card'
+            : 'hidden',
         )}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-5 py-4">
           <span className="text-lg font-extrabold">Filters</span>
-          <a href={resetHref} className="text-sm font-semibold text-brand-700 hover:text-brand-900">
-            Reset
-          </a>
+          <div className="flex items-center gap-3">
+            {activeCount > 0 ? (
+              <a href={resetHref} className="text-sm font-semibold text-brand-700">
+                Clear all
+              </a>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Close filters"
+              className="text-xl text-gray-500 lg:hidden"
+            >
+              ×
+            </button>
+          </div>
         </div>
-        <form ref={formRef} method="get" className="flex flex-col gap-[22px]">
+        <form
+          ref={formRef}
+          method="get"
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-5 py-2 [scrollbar-width:thin]"
+        >
           {children}
           <noscript>
             <button
               type="submit"
-              className="h-12 w-full rounded-2xl bg-brand-600 font-bold text-white"
+              className="mt-2 h-11 w-full rounded-2xl bg-brand-600 font-bold text-white"
             >
               Apply
             </button>
           </noscript>
         </form>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="h-12 rounded-2xl bg-brand-600 font-bold text-white lg:hidden"
-        >
-          Show {total.toLocaleString()} results
-        </button>
+        <div className="border-t border-gray-100 p-4 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="h-12 w-full rounded-2xl bg-brand-600 font-bold text-white"
+          >
+            Show {total.toLocaleString()} results
+          </button>
+        </div>
       </aside>
     </>
   );

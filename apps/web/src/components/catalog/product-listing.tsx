@@ -19,6 +19,7 @@ import {
   storefrontApi,
 } from '@/lib/api-client';
 import { FilterPanel } from './filter-panel';
+import { FilterSection, ShowMore } from './filter-parts';
 import { ProductCard } from './product-card';
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -39,7 +40,6 @@ const SORT_SHORT: Record<StorefrontSort, string> = {
   rating: 'Top rated',
 };
 
-const groupTitle = 'text-sm font-bold';
 const rowLabel =
   'flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-sm text-gray-900 hover:bg-gray-50 has-[:checked]:bg-brand-100 has-[:checked]:font-bold has-[:checked]:text-brand-700';
 const checkRow = 'flex cursor-pointer items-center gap-2.5 py-0.5 text-sm text-gray-900';
@@ -110,6 +110,40 @@ export async function ProductListing({
 
   const topLevel: CategoryTreeNode[] = tree.status === 'fulfilled' ? tree.value : [];
   const categories = flattenCategoryTree(topLevel);
+  /** Slugs from the root to the selected category. */
+  const openPath = (() => {
+    const find = (nodes: CategoryTreeNode[], trail: string[]): string[] | null => {
+      for (const n of nodes) {
+        const next = [...trail, n.slug];
+        if (n.slug === query.category) return next;
+        const hit = find(n.children, next);
+        if (hit) return hit;
+      }
+      return null;
+    };
+    return query.category ? (find(topLevel, []) ?? []) : [];
+  })();
+  /** Top-level categories, with sub-categories shown only along the selected branch. */
+  const categoryRows: {
+    id: string;
+    slug: string;
+    name: string;
+    depth: number;
+    childCount: number;
+  }[] = [];
+  const walk = (nodes: CategoryTreeNode[], depth: number) => {
+    for (const n of nodes) {
+      categoryRows.push({
+        id: n.id,
+        slug: n.slug,
+        name: n.name,
+        depth,
+        childCount: n.children.length,
+      });
+      if (openPath.includes(n.slug)) walk(n.children, depth + 1);
+    }
+  };
+  walk(topLevel, 0);
   const brandList = brands.status === 'fulfilled' ? brands.value : [];
   const attributeList: AttributeDto[] =
     attributes.status === 'fulfilled' ? attributes.value.filter((a) => a.values.length > 0) : [];
@@ -223,25 +257,29 @@ export async function ProductListing({
             {query.featured ? <input type="hidden" name="featured" value="true" /> : null}
             {query.sort ? <input type="hidden" name="sort" value={query.sort} /> : null}
 
-            {!fixedCategory && categories.length > 0 ? (
-              <fieldset className="flex flex-col gap-2.5">
-                <legend className={cn(groupTitle, 'mb-2.5')}>Category</legend>
-                <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-                  <label className={rowLabel}>
-                    <input
-                      type="radio"
-                      name="category"
-                      value=""
-                      defaultChecked={!query.category}
-                      className="sr-only"
-                    />
-                    All
-                  </label>
-                  {categories.map((c) => (
+            {!fixedCategory && topLevel.length > 0 ? (
+              <FilterSection title="Category" active={query.category ? 1 : 0} open>
+                <label className={rowLabel}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value=""
+                    defaultChecked={!query.category}
+                    className="sr-only"
+                  />
+                  All categories
+                </label>
+                <ShowMore
+                  visible={8}
+                  keepOpen={
+                    Boolean(query.category) &&
+                    !categoryRows.slice(0, 8).some((c) => c.slug === query.category)
+                  }
+                  items={categoryRows.map((c) => (
                     <label
                       key={c.id}
                       className={rowLabel}
-                      style={{ paddingLeft: 10 + c.depth * 12 }}
+                      style={{ paddingLeft: 10 + c.depth * 14 }}
                     >
                       <input
                         type="radio"
@@ -250,42 +288,52 @@ export async function ProductListing({
                         defaultChecked={query.category === c.slug}
                         className="sr-only"
                       />
-                      {c.name}
+                      <span className="truncate">{c.name}</span>
+                      {c.childCount > 0 && c.depth === 0 && !openPath.includes(c.slug) ? (
+                        <span aria-hidden className="text-xs text-gray-400">
+                          ›
+                        </span>
+                      ) : null}
                     </label>
                   ))}
-                </div>
-              </fieldset>
+                />
+              </FilterSection>
             ) : null}
 
-            <fieldset className="flex flex-col gap-2.5">
-              <legend className={cn(groupTitle, 'mb-2.5')}>Price</legend>
-              <div className="flex gap-2">
+            <FilterSection title="Price" active={query.minPrice || query.maxPrice ? 1 : 0} open>
+              <div className="flex items-center gap-2">
                 <input
                   name="minPrice"
                   type="number"
                   min={0}
+                  inputMode="numeric"
                   placeholder="Min"
                   aria-label="Minimum price"
                   defaultValue={query.minPrice ?? ''}
                   className={priceInput}
                 />
+                <span className="text-gray-400">–</span>
                 <input
                   name="maxPrice"
                   type="number"
                   min={0}
+                  inputMode="numeric"
                   placeholder="Max"
                   aria-label="Maximum price"
                   defaultValue={query.maxPrice ?? ''}
                   className={priceInput}
                 />
               </div>
-            </fieldset>
+            </FilterSection>
 
             {!fixedBrand && brandList.length > 0 ? (
-              <fieldset className="flex flex-col gap-2.5">
-                <legend className={cn(groupTitle, 'mb-2.5')}>Brand</legend>
-                <div className="flex max-h-56 flex-col gap-2 overflow-y-auto">
-                  {[{ id: '', slug: '', name: 'All brands' }, ...brandList].map((b) => (
+              <FilterSection title="Brand" active={query.brand ? 1 : 0}>
+                <ShowMore
+                  keepOpen={
+                    Boolean(query.brand) &&
+                    !brandList.slice(0, 6).some((b) => b.slug === query.brand)
+                  }
+                  items={[{ id: '', slug: '', name: 'All brands' }, ...brandList].map((b) => (
                     <label key={b.id || 'all'} className={checkRow}>
                       <input
                         type="radio"
@@ -297,18 +345,18 @@ export async function ProductListing({
                       <span aria-hidden className={box}>
                         ✓
                       </span>
-                      {b.name}
+                      <span className="truncate">{b.name}</span>
                     </label>
                   ))}
-                </div>
-              </fieldset>
+                />
+              </FilterSection>
             ) : null}
 
             {attributeList.map((a) => {
               const swatches = a.values.every((v) => v.swatch);
+              const picked = a.values.filter((v) => values.includes(v.id)).length;
               return (
-                <fieldset key={a.id} className="flex flex-col gap-2.5">
-                  <legend className={cn(groupTitle, 'mb-2.5')}>{a.name}</legend>
+                <FilterSection key={a.id} title={a.name} active={picked}>
                   {swatches ? (
                     <div className="flex flex-wrap gap-2">
                       {a.values.map((v) => (
@@ -330,8 +378,9 @@ export async function ProductListing({
                       ))}
                     </div>
                   ) : (
-                    <div className="flex max-h-48 flex-col gap-2 overflow-y-auto">
-                      {a.values.map((v) => (
+                    <ShowMore
+                      keepOpen={a.values.slice(6).some((v) => values.includes(v.id))}
+                      items={a.values.map((v) => (
                         <label key={v.id} className={checkRow}>
                           <input
                             type="checkbox"
@@ -343,26 +392,25 @@ export async function ProductListing({
                           <span aria-hidden className={box}>
                             ✓
                           </span>
-                          {v.label ?? v.value}
+                          <span className="truncate">{v.label ?? v.value}</span>
                         </label>
                       ))}
-                    </div>
+                    />
                   )}
-                </fieldset>
+                </FilterSection>
               );
             })}
 
-            <fieldset className="flex flex-col gap-2.5">
-              <legend className={cn(groupTitle, 'mb-2.5')}>Rating</legend>
+            <FilterSection title="Rating" active={query.minRating ? 1 : 0}>
               <div className="flex gap-2">
                 {[
                   ['', 'Any'],
-                  ['4', '4★ & up'],
-                  ['3', '3★ & up'],
+                  ['4', '4★ +'],
+                  ['3', '3★ +'],
                 ].map(([value, label]) => (
                   <label
                     key={value || 'any'}
-                    className="flex-1 cursor-pointer rounded-xl bg-gray-50 p-[9px] text-center text-sm font-semibold has-[:checked]:bg-brand-600 has-[:checked]:text-white"
+                    className="flex-1 cursor-pointer rounded-xl bg-gray-50 p-2 text-center text-sm font-semibold has-[:checked]:bg-brand-600 has-[:checked]:text-white"
                   >
                     <input
                       type="radio"
@@ -375,9 +423,9 @@ export async function ProductListing({
                   </label>
                 ))}
               </div>
-            </fieldset>
+            </FilterSection>
 
-            <label className="flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-3.5 py-3 text-sm font-semibold">
+            <label className="my-2 flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-3.5 py-3 text-sm font-semibold">
               In stock only
               <input
                 type="checkbox"
