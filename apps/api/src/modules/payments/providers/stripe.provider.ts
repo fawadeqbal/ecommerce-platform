@@ -112,6 +112,25 @@ export class StripePaymentProvider implements PaymentProvider {
     };
   }
 
+  /** Reads the Checkout Session directly — confirms payments even when no webhook arrives. */
+  async fetchOutcome(providerRef: string): Promise<ParsedWebhook | null> {
+    if (!this.stripe || !providerRef.startsWith('cs_')) return null;
+    const s = await this.stripe.checkout.sessions.retrieve(providerRef);
+    let outcome: WebhookOutcome | null = null;
+    if (s.status === 'complete' && s.payment_status === 'paid') outcome = 'PAID';
+    else if (s.status === 'expired') outcome = 'CANCELLED';
+    if (!outcome) return null;
+    const eventId = `sync_${s.id}`;
+    return {
+      eventId,
+      type: 'checkout.session.sync',
+      providerRef: s.id,
+      outcome,
+      amount: s.amount_total === null ? null : fromMinor(s.amount_total, s.currency ?? 'usd'),
+      payload: { id: eventId, type: 'checkout.session.sync', livemode: s.livemode, object: s.id },
+    };
+  }
+
   async refund(input: RefundInput): Promise<RefundResult> {
     const session = await this.client().checkout.sessions.retrieve(input.providerRef);
     const intent =

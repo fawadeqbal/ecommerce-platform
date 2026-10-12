@@ -18,6 +18,11 @@ export interface PaymentProvider {
   parseWebhook(headers: WebhookHeaders, rawBody: Buffer): ParsedWebhook;
   /** Refunds (part of) a captured payment. */
   refund(input: RefundInput): Promise<RefundResult>;
+  /**
+   * Optional: ask the gateway for the attempt's final outcome (null = still open).
+   * Used when the webhook is late or can't reach us (e.g. a local API Stripe can't call).
+   */
+  fetchOutcome?(providerRef: string): Promise<ParsedWebhook | null>;
 }
 
 export const PAYMENT_PROVIDER = Symbol('PAYMENT_PROVIDER');

@@ -131,11 +131,12 @@ export class PaymentsService {
   }
 
   async status(paymentId: string): Promise<PaymentStatusDto> {
-    const p = await this.prisma.payment.findUnique({
-      where: { id: paymentId },
-      include: { order: true },
-    });
+    const find = () =>
+      this.prisma.payment.findUnique({ where: { id: paymentId }, include: { order: true } });
+    let p = await find();
     if (!p) throw new NotFoundException('Payment not found');
+    // Webhook not here yet (or can't reach us): ask the gateway directly, then re-read.
+    if (p.status === 'PENDING' && (await this.syncWithGateway(p))) p = (await find()) ?? p;
     const expiresAt =
       p.order.status === 'PENDING_PAYMENT'
         ? paymentDeadline(p.order.placedAt, await this.holdMinutes())
@@ -153,6 +154,25 @@ export class PaymentsService {
       canRetry: expiresAt !== null && expiresAt > new Date(),
       expiresAt: expiresAt?.toISOString() ?? null,
     };
+  }
+
+  /**
+   * Applies the gateway's final outcome for a still-PENDING attempt, as a webhook would.
+   * Safe to repeat: applyEvent only moves PENDING attempts / PENDING_PAYMENT orders.
+   */
+  private async syncWithGateway(payment: PaymentWithOrder): Promise<boolean> {
+    if (!payment.providerRef) return false;
+    try {
+      const provider = await this.gateways.byName(payment.provider);
+      if (!provider?.fetchOutcome) return false;
+      const event = await provider.fetchOutcome(payment.providerRef);
+      if (!event) return false;
+      await this.applyEvent(provider.name, event);
+      return true;
+    } catch (error) {
+      this.logger.warn(`Payment ${payment.id}: gateway status check failed: ${String(error)}`);
+      return false;
+    }
   }
 
   private async newAttempt(order: Order): Promise<PaymentSessionDto> {
