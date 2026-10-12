@@ -146,6 +146,13 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
    says you pay in the store currency. Activate Urdu to see the language switcher (text falls back to English until
    translated in `apps/web/src/lib/i18n/messages.ts`).
 
+**Payment settings & logs**
+
+1. Admin → Settings → Payments → Gateways: the test gateway is active (card, wallet). Untick Wallet and save:
+   checkout offers card + COD only. Disable it: checkout is COD only.
+2. Enter a webhook secret: it is saved encrypted and shown as `••••` + last 4 characters.
+3. Pay an order online (mock page), then open Payment log (attempt, transactions, refunds) and Webhooks (event payload).
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

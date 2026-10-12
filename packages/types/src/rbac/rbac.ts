@@ -369,11 +369,11 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     min: 0,
   },
   {
-    key: 'payments.onlineMethods',
+    key: 'payments.codEnabled',
     group: 'payments',
-    label: 'Online methods',
-    type: 'string',
-    hint: 'Comma-separated: CARD, WALLET, BANK_TRANSFER',
+    label: 'Cash on delivery',
+    type: 'boolean',
+    hint: 'Per delivery option: Settings → Shipping. Online gateways: Settings → Payments.',
   },
   {
     key: 'marketplace.productApprovalRequired',

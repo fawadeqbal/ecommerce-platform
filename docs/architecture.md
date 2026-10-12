@@ -284,6 +284,17 @@ for 60 s, and falls back to built-in links/hero when the CMS is empty or unreach
   English fallback); the switcher appears once more than one language is active; `<html lang dir>` follows the choice.
   Urdu is seeded inactive until its text is added.
 
+### Payment gateways & logs
+
+- Gateways are defined in code (`PAYMENT_GATEWAYS` in `@ecommerce/types` + a provider class); their settings live in
+  `PaymentGateway` (Admin → Settings → Payments): enabled, test mode, methods offered, priority, credentials.
+- Credentials are encrypted (AES-256-GCM, key from `PAYMENT_ENCRYPTION_KEY`, required in production), never returned
+  (only `••••1234`) and never written to the audit log.
+- Checkout uses the first enabled, usable gateway by priority (its chosen methods). Webhooks and refunds go to the
+  gateway recorded on the payment, even if it was turned off later. The test gateway is refused in production.
+- `payments.codEnabled` turns cash on delivery off; COD per zone / delivery option stays in Shipping.
+- Logs: payment attempts (with transactions and refunds) and webhook events (processed / failed / pending + payload).
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

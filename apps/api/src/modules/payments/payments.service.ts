@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Order, Prisma } from '@ecommerce/database';
 import {
@@ -27,13 +27,12 @@ import {
   type OrderEmailDeps,
 } from '../orders/order-emails';
 import { HOLD_DAYS, releaseStock } from '../orders/order-stock';
+import { PaymentGatewaysService } from './gateways.service';
 import { paymentInclude, refundedTotal, sessionMeta } from './payment.mapper';
 import { amountsMatch, paymentDeadline, refundStatusFor, refundableAmount } from './payment-rules';
 import {
   MockPaymentProvider,
-  PAYMENT_PROVIDER,
   type ParsedWebhook,
-  type PaymentProvider,
   type RefundResult,
   type WebhookHeaders,
 } from './providers';
@@ -63,20 +62,18 @@ export class PaymentsService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
-    @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    private readonly gateways: PaymentGatewaysService,
     private readonly loyalty: LoyaltyService,
   ) {}
 
-  get providerName(): string {
-    return this.provider.name;
+  /** Gateway new online payments go to ('' when none is usable). */
+  async activeProviderName(): Promise<string> {
+    return (await this.gateways.active())?.provider.name ?? '';
   }
 
   /** Online methods offered at checkout: the gateway's methods ∩ setting `payments.onlineMethods`. */
   async onlineMethods(): Promise<PaymentMethod[]> {
-    if (!this.provider.enabled) return [];
-    const setting = await readSetting(this.prisma, 'payments.onlineMethods', 'CARD,WALLET');
-    const allowed = setting.split(',').map((s) => s.trim().toUpperCase());
-    return this.provider.methods.filter((m) => allowed.includes(m));
+    return (await this.gateways.active())?.methods ?? [];
   }
 
   /** Minutes an unpaid online order holds its stock. */
@@ -168,6 +165,8 @@ export class PaymentsService {
         'The time to pay for this order has run out, so it was cancelled. Please order again.',
       );
     }
+    const gateway = await this.gateways.active();
+    if (!gateway) throw new BadRequestException('Online payment is not available right now');
     const attempt = await this.prisma.$transaction(async (tx) => {
       await tx.payment.updateMany({
         where: { orderId: order.id, status: 'PENDING' },
@@ -177,7 +176,7 @@ export class PaymentsService {
         data: {
           orderId: order.id,
           method: order.paymentMethod,
-          provider: this.provider.name,
+          provider: gateway.provider.name,
           status: 'PENDING',
           amount: order.grandTotal,
           currency: order.currency,
@@ -193,7 +192,9 @@ export class PaymentsService {
       include: { order: true },
     });
     const expiresAt = paymentDeadline(payment.order.placedAt, await this.holdMinutes());
-    const session = await this.provider.createSession({
+    const provider = await this.gateways.byName(payment.provider);
+    if (!provider?.enabled) throw new BadRequestException('Online payment is not available right now');
+    const session = await provider.createSession({
       paymentId,
       orderNumber: payment.order.orderNumber,
       amount: Number(payment.amount),
@@ -213,7 +214,7 @@ export class PaymentsService {
     return {
       paymentId,
       orderNumber: payment.order.orderNumber,
-      provider: this.provider.name,
+      provider: provider.name,
       redirectUrl: session.redirectUrl,
       expiresAt: expiresAt.toISOString(),
     };
@@ -227,11 +228,11 @@ export class PaymentsService {
     headers: WebhookHeaders,
     rawBody: Buffer | undefined,
   ): Promise<{ received: true; duplicate?: boolean }> {
-    if (providerName !== this.provider.name)
-      throw new NotFoundException('Unknown payment provider');
+    const provider = await this.gateways.byName(providerName);
+    if (!provider) throw new NotFoundException('Unknown payment provider');
     if (!rawBody?.length) throw new BadRequestException('Empty webhook body');
-    const event = this.provider.parseWebhook(headers, rawBody);
-    const key = { provider_eventId: { provider: this.provider.name, eventId: event.eventId } };
+    const event = provider.parseWebhook(headers, rawBody);
+    const key = { provider_eventId: { provider: provider.name, eventId: event.eventId } };
 
     const seen = await this.prisma.webhookEvent.findUnique({ where: key });
     if (seen?.processedAt) return { received: true, duplicate: true };
@@ -239,7 +240,7 @@ export class PaymentsService {
       try {
         await this.prisma.webhookEvent.create({
           data: {
-            provider: this.provider.name,
+            provider: provider.name,
             eventId: event.eventId,
             type: event.type,
             payload: event.payload as Prisma.InputJsonValue,
@@ -252,7 +253,7 @@ export class PaymentsService {
       }
     }
     try {
-      await this.applyEvent(event);
+      await this.applyEvent(provider.name, event);
       await this.prisma.webhookEvent.update({
         where: key,
         data: { processedAt: new Date(), error: null },
@@ -265,10 +266,10 @@ export class PaymentsService {
     return { received: true };
   }
 
-  private async applyEvent(event: ParsedWebhook): Promise<void> {
+  private async applyEvent(providerName: string, event: ParsedWebhook): Promise<void> {
     if (!event.outcome) return;
     const payment = await this.prisma.payment.findFirst({
-      where: { provider: this.provider.name, providerRef: event.providerRef },
+      where: { provider: providerName, providerRef: event.providerRef },
       include: { order: true },
     });
     if (!payment) {
@@ -446,7 +447,9 @@ export class PaymentsService {
       result = { providerRef: opts.manualReference || 'manual', succeeded: true };
     } else
       try {
-        result = await this.provider.refund({
+        const provider = await this.gateways.byName(payment.provider);
+        if (!provider) throw new Error(`Gateway "${payment.provider}" is not available`);
+        result = await provider.refund({
           providerRef: payment.providerRef ?? '',
           amount: value,
           currency: payment.currency,
@@ -598,7 +601,7 @@ export class PaymentsService {
   // ================================================================ mock gateway
 
   async mockCheckout(paymentId: string): Promise<MockCheckoutDto> {
-    this.mock();
+    await this.mock();
     const p = await this.prisma.payment.findUnique({
       where: { id: paymentId },
       include: { order: true },
@@ -622,7 +625,7 @@ export class PaymentsService {
     paymentId: string,
     outcome: MockPaymentOutcome,
   ): Promise<MockPaymentCompleteResult> {
-    const mock = this.mock();
+    const mock = await this.mock();
     const p = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     if (!p?.providerRef) throw new NotFoundException('Payment not found');
     if (p.status === 'PENDING') {
@@ -632,11 +635,12 @@ export class PaymentsService {
     return { returnUrl: this.returnUrl(p.id) };
   }
 
-  private mock(): MockPaymentProvider {
-    if (!(this.provider instanceof MockPaymentProvider) || !this.provider.enabled) {
+  private async mock(): Promise<MockPaymentProvider> {
+    const provider = await this.gateways.byName('mock');
+    if (!(provider instanceof MockPaymentProvider) || !provider.enabled) {
       throw new NotFoundException('The mock payment gateway is not enabled');
     }
-    return this.provider;
+    return provider;
   }
 
   // ================================================================ helpers

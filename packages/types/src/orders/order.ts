@@ -57,6 +57,16 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   CANCELLED: 'Cancelled',
 };
 
+export const PAYMENT_STATUS_TONES: Record<PaymentStatus, BadgeTone> = {
+  PENDING: 'yellow',
+  AUTHORIZED: 'blue',
+  PAID: 'green',
+  FAILED: 'red',
+  REFUNDED: 'gray',
+  PARTIALLY_REFUNDED: 'blue',
+  CANCELLED: 'gray',
+};
+
 /** What a vendor can move its sub-order to from each status. */
 export const VENDOR_ORDER_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
   PAID: ['PROCESSING', 'CANCELLED'],

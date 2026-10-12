@@ -54,7 +54,7 @@ apps/api/src/
   common/guards/        JwtAuthGuard (@Public routes still get the user if a valid token is sent), RolesGuard
   common/utils/         unique-slug.ts, stock-availability.ts (availableByVariant), settings.ts (readSetting), money.ts (toCents/fromCents)
   modules/<domain>/     one Nest module per domain; implemented: auth, users, vendors, catalog/*, media,
-                        inventory, cart, checkout, orders, payments, shipping, returns, reviews, wishlist, promotions, loyalty, payouts, notifications, audit
+                        inventory, cart, checkout, orders, payments (gateways, logs), shipping, returns, reviews, wishlist, promotions, loyalty, payouts, notifications, audit
 apps/admin/src/  apps/vendor/src/
   app/(dashboard)/…     thin pages          features/<entity>/…   list / detail / form components
   config/navigation.ts  sidebar             components/sidebar-shell.tsx  auth gate

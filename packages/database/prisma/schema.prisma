@@ -922,6 +922,20 @@ model Refund {
   returnRequest   ReturnRequest? @relation(fields: [returnRequestId], references: [id])
 }
 
+/// Online payment gateways (definitions live in code: PAYMENT_GATEWAYS in @ecommerce/types).
+model PaymentGateway {
+  code        String   @id
+  isEnabled   Boolean  @default(false)
+  isTestMode  Boolean  @default(true)
+  /// Methods offered at checkout through this gateway (subset of the gateway's own methods).
+  methods     String[]
+  /// Lower = preferred. Checkout uses the first enabled gateway.
+  position    Int      @default(0)
+  /// AES-256-GCM encrypted JSON (key: PAYMENT_ENCRYPTION_KEY). Never returned by the API.
+  credentials String?
+  updatedAt   DateTime @updatedAt
+}
+
 model WebhookEvent {
   id          String    @id @default(cuid())
   provider    String
@@ -933,6 +947,7 @@ model WebhookEvent {
   createdAt   DateTime  @default(now())
 
   @@unique([provider, eventId])
+  @@index([createdAt])
 }
 
 // ============================== SHIPPING ==============================

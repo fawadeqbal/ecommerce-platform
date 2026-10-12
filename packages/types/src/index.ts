@@ -26,6 +26,7 @@ export * from './loyalty/loyalty';
 export * from './loyalty/activity';
 export * from './payouts/payout';
 export * from './localization/localization';
+export * from './payments/gateway';
 export * from './schemas/common';
 export * from './schemas/auth.schema';
 export * from './schemas/category.schema';

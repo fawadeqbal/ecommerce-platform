@@ -5,7 +5,7 @@ import type { PaymentProvider } from './payment-provider';
 export * from './payment-provider';
 export { MockPaymentProvider } from './mock.provider';
 
-const DEV_WEBHOOK_SECRET = 'mock-webhook-secret-change-me';
+export const DEV_WEBHOOK_SECRET = 'mock-webhook-secret-change-me';
 
 /**
  * Picks the gateway from PAYMENT_PROVIDER. To add a real one: implement PaymentProvider in

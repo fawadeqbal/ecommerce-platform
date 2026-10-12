@@ -6,6 +6,14 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
   wishlist: ['wishlist'] as const,
+  paymentAdmin: {
+    all: ['payment-admin'] as const,
+    gateways: ['payment-admin', 'gateways'] as const,
+    payments: (params: object) => ['payment-admin', 'payments', params] as const,
+    payment: (id: string) => ['payment-admin', 'payment', id] as const,
+    webhooks: (params: object) => ['payment-admin', 'webhooks', params] as const,
+    webhook: (id: string) => ['payment-admin', 'webhook', id] as const,
+  },
   localization: {
     all: ['localization'] as const,
     public: ['localization', 'public'] as const,

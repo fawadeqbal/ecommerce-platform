@@ -185,7 +185,19 @@ async function seedLocalization() {
       data: { name: 'GST', taxClass: 'standard', countryCode: 'PK', rate: 0.18, isInclusive: true },
     });
   }
-  console.log('  ✓ currencies & languages');
+  // Test gateway on by default (credentials fall back to PAYMENT_WEBHOOK_SECRET in .env).
+  await prisma.paymentGateway.upsert({
+    where: { code: 'mock' },
+    update: {},
+    create: {
+      code: 'mock',
+      isEnabled: true,
+      isTestMode: true,
+      methods: ['CARD', 'WALLET'],
+      position: 0,
+    },
+  });
+  console.log('  ✓ currencies & languages, payment gateway');
 }
 
 async function seedSettings() {
@@ -220,6 +232,7 @@ async function seedSettings() {
     { key: 'checkout.codFee', group: 'checkout', value: 0 },
     { key: 'checkout.codMaxOrderTotal', group: 'checkout', value: 5000 },
     { key: 'payments.onlineMethods', group: 'payments', value: 'CARD,WALLET' },
+    { key: 'payments.codEnabled', group: 'payments', value: true },
     { key: 'returns.windowDays', group: 'returns', value: 7 },
     { key: 'reviews.requireApproval', group: 'reviews', value: false },
     { key: 'questions.requireApproval', group: 'reviews', value: true },

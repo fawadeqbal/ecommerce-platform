@@ -53,7 +53,10 @@ function setup(orderStatus = 'PENDING_PAYMENT') {
     { log: jest.fn() } as unknown as AuditService,
     { sendEmail: jest.fn() } as unknown as NotificationsService,
     { get: jest.fn((_k: string, f?: unknown) => f) } as unknown as ConfigService,
-    provider,
+    {
+      byName: jest.fn(async (code: string) => (code === provider.name ? provider : null)),
+      active: jest.fn(async () => ({ provider, methods: provider.methods })),
+    } as never,
     { restoreForCancellation: jest.fn() } as never,
   );
   return { prisma, tx, service };

@@ -67,7 +67,8 @@ export class CheckoutService {
   async quote(ctx: CartContext, input: CheckoutQuoteInput = {}): Promise<CheckoutQuoteDto> {
     const requested = input.paymentMethod;
     const cart = await this.cart.getCart(ctx);
-    const [codFeeSetting, codMax, online] = await Promise.all([
+    const [codEnabled, codFeeSetting, codMax, online] = await Promise.all([
+      readSetting(this.prisma, 'payments.codEnabled', true),
       readSetting(this.prisma, 'checkout.codFee', 0),
       readSetting(this.prisma, 'checkout.codMaxOrderTotal', 5000),
       this.payments.onlineMethods(),
@@ -235,6 +236,7 @@ export class CheckoutService {
             : `Available for orders up to ${formatMoney(codMax, cart.currency)}`,
       ),
     ];
+    if (!codEnabled) paymentOptions = paymentOptions.filter((o) => o.method !== 'COD');
     // Nothing left to pay: no payment method needed.
     if (cart.itemCount > 0 && toCents(beforeFees) === 0)
       paymentOptions = [option('GIFT_CARD', 0, null)];
@@ -489,6 +491,7 @@ export class CheckoutService {
         ? ('PAID' as const)
         : ('COD_CONFIRMED' as const);
 
+    const gatewayName = online ? await this.payments.activeProviderName() : '';
     for (let attempt = 0; attempt < 3; attempt++) {
       const orderNumber = generateOrderNumber();
       try {
@@ -610,7 +613,7 @@ export class CheckoutService {
               data: {
                 orderId: order.id,
                 method: dto.paymentMethod,
-                provider: online ? this.payments.providerName : prepaid ? 'internal' : 'cod',
+                provider: online ? gatewayName : prepaid ? 'internal' : 'cod',
                 status: prepaid ? 'PAID' : 'PENDING',
                 amount: quote.grandTotal,
                 currency: quote.currency,
