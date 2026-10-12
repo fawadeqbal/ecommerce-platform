@@ -102,6 +102,21 @@ export function SearchBox() {
     staleTime: 10 * 60_000,
   });
   const [scope, setScope] = useState('');
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const scopeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!scopeOpen) return;
+    const close = (e: MouseEvent) => {
+      if (!scopeRef.current?.contains(e.target as Node)) setScopeOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setScopeOpen(false);
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [scopeOpen]);
   const scopeLabel = tree.data?.find((c) => c.slug === scope)?.name ?? 'All';
 
   const go = (term: string) => {
@@ -136,26 +151,58 @@ export function SearchBox() {
         action="/search"
         onSubmit={submit}
         role="search"
-        className="flex h-[50px] items-center gap-2 rounded-2xl bg-white p-[5px] shadow-[0_10px_24px_-10px_rgba(20,8,70,.5)] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(255,209,46,.7),0_10px_24px_-10px_rgba(20,8,70,.5)]"
+        className="flex h-[50px] items-center gap-2 rounded-2xl bg-white p-[5px] shadow-[0_10px_24px_-10px_rgba(20,8,70,.5)] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(255,255,255,.28),0_10px_24px_-10px_rgba(20,8,70,.5)]"
       >
-        <label className="relative flex h-10 flex-none cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[11px] bg-[#f3f0fd] pl-3.5 pr-3 text-sm font-semibold text-[#3b2390] transition-colors hover:bg-[#e9e3fc]">
-          <GridIcon size={16} />
-          <span className="hidden max-w-[110px] truncate xl:inline">{scopeLabel}</span>
-          <ChevronDownIcon size={14} />
-          <select
-            aria-label="Search in"
-            value={scope}
-            onChange={(e) => setScope(e.target.value)}
-            className="absolute inset-0 cursor-pointer opacity-0"
+        <div className="relative flex-none" ref={scopeRef}>
+          <button
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={scopeOpen}
+            onClick={() => setScopeOpen((o) => !o)}
+            className="flex h-10 items-center gap-[7px] whitespace-nowrap rounded-[11px] bg-[#f3f0fd] pl-3.5 pr-3 text-sm font-semibold text-[#3b2390] transition-colors hover:bg-[#e9e3fc]"
           >
-            <option value="">All categories</option>
-            {(tree.data ?? []).map((c) => (
-              <option key={c.id} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            <GridIcon size={16} />
+            <span className="hidden max-w-[110px] truncate xl:inline">{scopeLabel}</span>
+            <ChevronDownIcon
+              size={14}
+              className={cn('transition-transform duration-200', scopeOpen && 'rotate-180')}
+            />
+          </button>
+          {scopeOpen ? (
+            <ul
+              role="listbox"
+              aria-label="Search in"
+              className="absolute left-0 top-[calc(100%+10px)] z-50 max-h-80 w-60 animate-pop-in overflow-y-auto rounded-2xl bg-white p-1.5 text-gray-900 shadow-[0_0_0_1px_rgba(30,26,51,.05),0_20px_50px_-12px_rgba(30,26,51,.35)]"
+            >
+              {[{ id: '', slug: '', name: 'All categories' }, ...(tree.data ?? [])].map((c) => {
+                const on = c.slug === scope;
+                return (
+                  <li key={c.id || 'all'}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      onClick={() => {
+                        setScope(c.slug);
+                        setScopeOpen(false);
+                        inputRef.current?.focus();
+                      }}
+                      className={cn(
+                        'flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
+                        on
+                          ? 'bg-brand-50 font-semibold text-brand-700'
+                          : 'font-medium text-[#3d3955] hover:bg-gray-50 hover:text-brand-600',
+                      )}
+                    >
+                      <span className="truncate">{c.name}</span>
+                      {on ? <span aria-hidden>✓</span> : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </div>
         <SearchIcon size={20} className="ml-1.5 flex-none text-[#9894ae]" />
         <input
           ref={inputRef}
