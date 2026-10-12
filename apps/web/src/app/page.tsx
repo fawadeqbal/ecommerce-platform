@@ -17,9 +17,10 @@ const REVALIDATE = { cache: 'no-store' as const };
 
 async function products(
   params: Parameters<typeof storefrontApi.products>[0],
+  options: Parameters<typeof storefrontApi.products>[1] = REVALIDATE,
 ): Promise<StorefrontProductCard[]> {
   try {
-    return (await storefrontApi.products(params, REVALIDATE)).items;
+    return (await storefrontApi.products(params, options)).items;
   } catch {
     return [];
   }
@@ -76,14 +77,14 @@ function categoryTiles(tree: CategoryTreeNode[]): CategoryTreeNode[] {
   const out: CategoryTreeNode[] = [];
   const add = (c: CategoryTreeNode) => {
     const key = c.name.trim().toLowerCase();
-    if (seen.has(c.slug) || seen.has(key) || out.length >= 12) return;
+    if (seen.has(c.slug) || seen.has(key) || out.length >= 24) return;
     seen.add(c.slug);
     seen.add(key);
     out.push(c);
   };
   tree.forEach(add);
   tree.forEach((c) => c.children.forEach(add)); // few top-level ones: fill with sub-categories
-  return out.length > 6 && out.length < 12 ? out.slice(0, 6) : out;
+  return out;
 }
 
 /** Fallback picture for a category without an image: a product photo, else an icon. */
@@ -114,7 +115,11 @@ async function categoryImages(cats: CategoryTreeNode[]): Promise<Record<string, 
   const pairs = await Promise.all(
     cats.map(async (c) => {
       if (c.imageUrl) return [c.id, c.imageUrl] as const;
-      const [first] = await products({ category: c.slug, sort: 'popular', limit: 1 });
+      // Fallback photo only: cached for 10 minutes so the live home page stays light.
+      const [first] = await products(
+        { category: c.slug, sort: 'popular', limit: 1 },
+        { next: { revalidate: 600 } },
+      );
       return [c.id, first?.imageUrl ?? null] as const;
     }),
   );
@@ -179,41 +184,72 @@ export default async function HomePage() {
       </section>
 
       {cats.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <SectionHead title="Shop by category" href="/products" />
-          <div className="scrollbar-none grid auto-cols-[42%] grid-flow-col grid-rows-2 gap-2.5 overflow-x-auto sm:auto-cols-[28%] md:grid-flow-row md:grid-cols-4 md:grid-rows-none md:overflow-visible lg:grid-cols-6">
+        <section className="relative overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] shadow-card">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-accent/25 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-brand-200/50 blur-3xl"
+          />
+          <div className="relative mb-4 flex items-end justify-between gap-3 sm:mb-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-600">
+                Explore
+              </p>
+              <h2 className="text-[clamp(22px,2.6vw,32px)] font-extrabold leading-tight tracking-heading">
+                Shop by category
+              </h2>
+            </div>
+            <Link
+              href="/products"
+              className="flex-none rounded-full bg-gray-900 px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
+            >
+              View all
+            </Link>
+          </div>
+          {/* Phone: one swipeable row with every category. Desktop: a full grid. */}
+          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] md:gap-4 md:overflow-visible md:px-0">
             {cats.map((c, i) => {
               const img = catImages[c.id];
               return (
                 <Link
                   key={c.id}
                   href={`/categories/${c.slug}`}
-                  className={cn(
-                    'group flex flex-col gap-2 rounded-[22px] p-3 pb-3.5 text-sm font-semibold transition-transform duration-200 hover:-translate-y-[3px] hover:text-gray-900',
-                    TINTS[i % TINTS.length],
-                  )}
+                  className="group flex w-[92px] flex-none snap-start flex-col items-center gap-2 text-center sm:w-[110px] md:w-auto"
                 >
-                  <span className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-white">
+                  <span
+                    className={cn(
+                      'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[26px] ring-1 ring-black/5 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-card group-hover:ring-2 group-hover:ring-brand-500',
+                      TINTS[i % TINTS.length],
+                    )}
+                  >
                     {img ? (
                       <img
                         src={img}
                         alt=""
                         loading="lazy"
                         className={cn(
-                          'h-full w-full transition-transform duration-300 group-hover:scale-105',
-                          c.imageUrl ? 'object-cover' : 'object-contain p-3',
+                          'h-full w-full transition-transform duration-500 group-hover:scale-110',
+                          c.imageUrl ? 'object-cover' : 'object-contain p-3 mix-blend-multiply',
                         )}
                       />
                     ) : (
                       <span
                         aria-hidden
-                        className="text-5xl transition-transform duration-300 group-hover:scale-110"
+                        className="text-[40px] transition-transform duration-300 group-hover:scale-110 md:text-5xl"
                       >
                         {iconFor(c.name)}
                       </span>
                     )}
+                    <span className="absolute inset-x-0 bottom-0 hidden translate-y-full bg-gradient-to-t from-brand-700/90 to-transparent pb-2 pt-6 text-xs font-bold text-white transition-transform duration-300 group-hover:translate-y-0 md:block">
+                      Shop now →
+                    </span>
                   </span>
-                  <span className="truncate">{c.name}</span>
+                  <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-gray-800 group-hover:text-brand-700 md:text-sm">
+                    {c.name}
+                  </span>
                 </Link>
               );
             })}
