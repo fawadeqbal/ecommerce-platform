@@ -4,6 +4,7 @@ import type { BrandDto, CategoryTreeNode, StorefrontProductCard } from '@ecommer
 import { cn } from '@ecommerce/ui';
 import { ProductCard } from '@/components/catalog/product-card';
 import { BannerStrip } from '@/components/cms/banner-strip';
+import { BrandMarquee } from '@/components/home/brand-marquee';
 import { DealsCountdown } from '@/components/home/deals-countdown';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { SectionHead, productGrid } from '@/components/home/section-head';
@@ -375,31 +376,15 @@ export default async function HomePage() {
       ) : null}
 
       {brands.length > 0 ? (
-        <section className="relative flex flex-col gap-4 overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] shadow-card">
+        <section className="relative flex flex-col gap-5 overflow-hidden rounded-4xl bg-white py-[clamp(16px,2.6vw,32px)] shadow-card">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-brand-200/50 blur-3xl"
           />
-          <div className="relative">
+          <div className="relative px-[clamp(16px,2.6vw,32px)]">
             <SectionHead eyebrow="Shop the brands" title="Official brand stores" />
           </div>
-          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex gap-2.5 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1">
-            {brands.slice(0, 16).map((b) => (
-              <Link
-                key={b.id}
-                href={`/brands/${b.slug}`}
-                className="group flex h-14 flex-none items-center gap-2.5 rounded-full bg-gray-50 pl-2 pr-6 text-[16px] font-extrabold tracking-[-0.02em] text-gray-700 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:text-white"
-              >
-                <span
-                  aria-hidden
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm text-brand-700 shadow-sm transition-colors group-hover:text-brand-700"
-                >
-                  {b.name.charAt(0).toUpperCase()}
-                </span>
-                {b.name}
-              </Link>
-            ))}
-          </div>
+          <BrandMarquee brands={brands.slice(0, 24)} />
         </section>
       ) : null}
 
