@@ -48,7 +48,12 @@ const PAGE = { w: 595.28, h: 841.89, x: 40, right: 555.28 };
 const WIDTH = PAGE.right - PAGE.x;
 
 const date = (d: Date) =>
-  d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  d.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 
 function toBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -89,15 +94,23 @@ function put(
 /** Violet band: store name with the yellow dot, document title and meta on the right. */
 function band(doc: PDFKit.PDFDocument, store: string, title: string, meta: [string, string][]) {
   doc.rect(0, 0, PAGE.w, 132).fill(C.brand);
-  // soft decorative circles
-  doc.circle(PAGE.w - 40, -20, 90).fillOpacity(0.08).fill(C.white).fillOpacity(1);
-  doc.circle(PAGE.w - 130, 135, 28).fillOpacity(0.9).fill(C.accent).fillOpacity(1);
+  // soft decorative circle
+  doc
+    .circle(PAGE.w - 40, -20, 90)
+    .fillOpacity(0.08)
+    .fill(C.white)
+    .fillOpacity(1);
 
   doc.font('Helvetica-Bold').fontSize(22);
   const nameW = doc.widthOfString(store);
   put(doc, store, PAGE.x, 38, { size: 22, bold: true, color: C.white });
   doc.circle(PAGE.x + nameW + 7, 52, 4).fill(C.accent);
-  put(doc, title.toUpperCase(), PAGE.x, 72, { size: 30, bold: true, color: C.white, characterSpacing: 1 });
+  put(doc, title.toUpperCase(), PAGE.x, 72, {
+    size: 30,
+    bold: true,
+    color: C.white,
+    characterSpacing: 1,
+  });
 
   // meta pairs, right aligned
   let y = 38;
@@ -108,13 +121,39 @@ function band(doc: PDFKit.PDFDocument, store: string, title: string, meta: [stri
   }
 }
 
+/** Height a card needs for its lines (label, bold first line, then the rest). */
+function cardHeight(lines: string[]): number {
+  const n = lines.filter(Boolean).length;
+  return 27 + (n > 0 ? 15 : 0) + Math.max(0, n - 1) * 12.5 + 14;
+}
+
 /** Rounded light card with a label and lines. */
-function card(doc: PDFKit.PDFDocument, x: number, y: number, w: number, h: number, label: string, lines: string[]) {
+function card(
+  doc: PDFKit.PDFDocument,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  label: string,
+  lines: string[],
+) {
   doc.roundedRect(x, y, w, h, 12).fill(C.canvas);
-  put(doc, label.toUpperCase(), x + 14, y + 12, { size: 7.5, bold: true, color: C.muted, characterSpacing: 0.6 });
+  put(doc, label.toUpperCase(), x + 14, y + 12, {
+    size: 7.5,
+    bold: true,
+    color: C.muted,
+    characterSpacing: 0.6,
+  });
   let ly = y + 27;
   lines.filter(Boolean).forEach((l, i) => {
-    put(doc, l, x + 14, ly, { size: i === 0 ? 10.5 : 9, bold: i === 0, color: i === 0 ? C.ink : C.muted, width: w - 28, height: 13, ellipsis: true });
+    put(doc, l, x + 14, ly, {
+      size: i === 0 ? 10.5 : 9,
+      bold: i === 0,
+      color: i === 0 ? C.ink : C.muted,
+      width: w - 28,
+      height: 13,
+      ellipsis: true,
+    });
     ly += i === 0 ? 15 : 12.5;
   });
 }
@@ -131,7 +170,13 @@ function footer(doc: PDFKit.PDFDocument, lines: string[], page: string) {
   const y = PAGE.h - 58;
   doc.moveTo(PAGE.x, y).lineTo(PAGE.right, y).lineWidth(1).strokeColor(C.line).stroke();
   lines.slice(0, 2).forEach((l, i) =>
-    put(doc, l, PAGE.x, y + 12 + i * 11, { size: 7.5, color: C.muted, width: WIDTH - 60, height: 11, ellipsis: true }),
+    put(doc, l, PAGE.x, y + 12 + i * 11, {
+      size: 7.5,
+      color: C.muted,
+      width: WIDTH - 60,
+      height: 11,
+      ellipsis: true,
+    }),
   );
   put(doc, page, PAGE.right - 60, y + 12, { size: 7.5, color: C.muted, width: 60, align: 'right' });
 }
@@ -155,15 +200,18 @@ export function renderInvoices(
     const top = 152;
     const gap = 12;
     const cw = (WIDTH - gap * 2) / 3;
-    card(doc, PAGE.x, top, cw, 92, 'Sold by', [
+    const sold = [
       inv.seller.name,
       inv.seller.email,
       inv.seller.phone ?? '',
       `via ${inv.store.name}`,
-    ]);
-    card(doc, PAGE.x + cw + gap, top, cw, 92, 'Bill / ship to', inv.billTo);
+    ];
+    // All three cards share the tallest one's height, so nothing spills out.
+    const cardH = Math.max(92, cardHeight(sold), cardHeight(inv.billTo));
+    card(doc, PAGE.x, top, cw, cardH, 'Sold by', sold);
+    card(doc, PAGE.x + cw + gap, top, cw, cardH, 'Bill / ship to', inv.billTo);
     const [method, status] = inv.payment.split(' · ');
-    card(doc, PAGE.x + (cw + gap) * 2, top, cw, 92, 'Payment', [method ?? inv.payment]);
+    card(doc, PAGE.x + (cw + gap) * 2, top, cw, cardH, 'Payment', [method ?? inv.payment]);
     if (status) {
       const paid = /paid/i.test(status) && !/unpaid|pending/i.test(status);
       pill(
@@ -177,11 +225,17 @@ export function renderInvoices(
     }
 
     // Items table
-    let y = top + 92 + 24;
+    let y = top + cardH + 24;
     const col = { name: PAGE.x + 14, qty: 330, unit: 370, tax: 440, total: 495 };
     doc.roundedRect(PAGE.x, y, WIDTH, 26, 8).fill(C.brandSoft);
     const head = (s: string, x: number, w?: number) =>
-      put(doc, s, x, y + 9, { size: 7.5, bold: true, color: C.brandDark, characterSpacing: 0.6, ...(w ? { width: w, align: 'right' as const } : {}) });
+      put(doc, s, x, y + 9, {
+        size: 7.5,
+        bold: true,
+        color: C.brandDark,
+        characterSpacing: 0.6,
+        ...(w ? { width: w, align: 'right' as const } : {}),
+      });
     head('ITEM', col.name);
     head('QTY', col.qty, 30);
     head('PRICE', col.unit, 62);
@@ -201,14 +255,30 @@ export function renderInvoices(
         y = 50;
       }
       if (i % 2 === 1) doc.roundedRect(PAGE.x, y - 4, WIDTH, rowH, 6).fill('#faf9fd');
-      put(doc, l.name, col.name, y, { size: 9.5, bold: true, width: 260, height: 24, ellipsis: true });
+      put(doc, l.name, col.name, y, {
+        size: 9.5,
+        bold: true,
+        width: 260,
+        height: 24,
+        ellipsis: true,
+      });
       put(doc, l.sku, col.name, y + nameH + 1, { size: 7.5, color: C.muted });
       put(doc, String(l.qty), col.qty, y, { size: 9.5, width: 30, align: 'right' });
       put(doc, l.unit, col.unit, y, { size: 9.5, width: 62, align: 'right' });
       put(doc, l.tax ?? '—', col.tax, y, { size: 8.5, color: C.muted, width: 48, align: 'right' });
-      put(doc, l.total, col.total, y, { size: 9.5, bold: true, width: PAGE.right - 14 - col.total, align: 'right' });
+      put(doc, l.total, col.total, y, {
+        size: 9.5,
+        bold: true,
+        width: PAGE.right - 14 - col.total,
+        align: 'right',
+      });
       y += rowH;
-      doc.moveTo(PAGE.x, y - 4).lineTo(PAGE.right, y - 4).lineWidth(0.5).strokeColor(C.line).stroke();
+      doc
+        .moveTo(PAGE.x, y - 4)
+        .lineTo(PAGE.right, y - 4)
+        .lineWidth(0.5)
+        .strokeColor(C.line)
+        .stroke();
     });
 
     // Totals
@@ -226,13 +296,19 @@ export function renderInvoices(
       y += 4;
       doc.roundedRect(tx, y, tw, 38, 10).fill(C.brand);
       put(doc, t.label, tx + 14, y + 13, { size: 11, bold: true, color: C.white });
-      put(doc, t.value, tx, y + 11, { size: 15, bold: true, color: C.white, width: tw - 14, align: 'right' });
+      put(doc, t.value, tx, y + 11, {
+        size: 15,
+        bold: true,
+        color: C.white,
+        width: tw - 14,
+        align: 'right',
+      });
       y += 44;
     });
 
     // Thank-you note on the left of the totals
     const noteTop = y - 18 * plain.length - 44 * strong.length - 4;
-    put(doc, 'Thank you for your order!', PAGE.x, Math.max(noteTop, top + 92 + 60), {
+    put(doc, 'Thank you for your order!', PAGE.x, Math.max(noteTop, top + cardH + 60), {
       size: 13,
       bold: true,
       color: C.ink,
@@ -241,7 +317,7 @@ export function renderInvoices(
       doc,
       'Questions about this invoice? Reply to your order email or contact us below.',
       PAGE.x,
-      Math.max(noteTop, top + 92 + 60) + 18,
+      Math.max(noteTop, top + cardH + 60) + 18,
       { size: 8.5, color: C.muted, width: 250 },
     );
 
@@ -249,7 +325,9 @@ export function renderInvoices(
       doc,
       [
         inv.notes.join(' '),
-        [inv.store.name, inv.store.address, inv.store.email, inv.store.phone].filter(Boolean).join('  ·  '),
+        [inv.store.name, inv.store.address, inv.store.email, inv.store.phone]
+          .filter(Boolean)
+          .join('  ·  '),
       ].filter(Boolean),
       invoices.length > 1 ? `${index + 1} / ${invoices.length}` : '',
     );
@@ -276,31 +354,69 @@ export function renderPackingSlips(
       ['Items', String(s.lines.reduce((n, l) => n + l.qty, 0))],
     ]);
     const top = 152;
-    card(doc, PAGE.x, top, WIDTH / 2 - 6, 92, 'Ship to', s.shipTo);
+    const cardH = Math.max(92, cardHeight(s.shipTo));
+    card(doc, PAGE.x, top, WIDTH / 2 - 6, cardH, 'Ship to', s.shipTo);
     if (s.customerNote) {
-      doc.roundedRect(PAGE.x + WIDTH / 2 + 6, top, WIDTH / 2 - 6, 92, 12).fill('#fff7d6');
-      put(doc, 'CUSTOMER NOTE', PAGE.x + WIDTH / 2 + 20, top + 12, { size: 7.5, bold: true, color: '#92400e', characterSpacing: 0.6 });
-      put(doc, s.customerNote, PAGE.x + WIDTH / 2 + 20, top + 27, { size: 9.5, color: C.ink, width: WIDTH / 2 - 34, height: 56, ellipsis: true });
+      doc.roundedRect(PAGE.x + WIDTH / 2 + 6, top, WIDTH / 2 - 6, cardH, 12).fill('#fff7d6');
+      put(doc, 'CUSTOMER NOTE', PAGE.x + WIDTH / 2 + 20, top + 12, {
+        size: 7.5,
+        bold: true,
+        color: '#92400e',
+        characterSpacing: 0.6,
+      });
+      put(doc, s.customerNote, PAGE.x + WIDTH / 2 + 20, top + 27, {
+        size: 9.5,
+        color: C.ink,
+        width: WIDTH / 2 - 34,
+        height: 56,
+        ellipsis: true,
+      });
     }
-    let y = top + 92 + 24;
+    let y = top + cardH + 24;
     doc.roundedRect(PAGE.x, y, WIDTH, 26, 8).fill(C.brandSoft);
     put(doc, 'PACKED', PAGE.x + 14, y + 9, { size: 7.5, bold: true, color: C.brandDark });
     put(doc, 'ITEM', PAGE.x + 64, y + 9, { size: 7.5, bold: true, color: C.brandDark });
     put(doc, 'SKU', 370, y + 9, { size: 7.5, bold: true, color: C.brandDark });
-    put(doc, 'QTY', PAGE.right - 64, y + 9, { size: 7.5, bold: true, color: C.brandDark, width: 50, align: 'right' });
+    put(doc, 'QTY', PAGE.right - 64, y + 9, {
+      size: 7.5,
+      bold: true,
+      color: C.brandDark,
+      width: 50,
+      align: 'right',
+    });
     y += 36;
     for (const l of s.lines) {
       if (y > PAGE.h - 90) {
         doc.addPage();
         y = 50;
       }
-      doc.roundedRect(PAGE.x + 16, y - 2, 14, 14, 3).lineWidth(1.2).strokeColor(C.brand).stroke();
-      put(doc, l.name, PAGE.x + 64, y, { size: 10.5, bold: true, width: 290, height: 26, ellipsis: true });
+      doc
+        .roundedRect(PAGE.x + 16, y - 2, 14, 14, 3)
+        .lineWidth(1.2)
+        .strokeColor(C.brand)
+        .stroke();
+      put(doc, l.name, PAGE.x + 64, y, {
+        size: 10.5,
+        bold: true,
+        width: 290,
+        height: 26,
+        ellipsis: true,
+      });
       put(doc, l.sku, 370, y + 1, { size: 9, color: C.muted, width: 110 });
       doc.roundedRect(PAGE.right - 50, y - 4, 36, 20, 6).fill(C.canvas);
-      put(doc, String(l.qty), PAGE.right - 50, y + 1, { size: 11, bold: true, width: 36, align: 'center' });
+      put(doc, String(l.qty), PAGE.right - 50, y + 1, {
+        size: 11,
+        bold: true,
+        width: 36,
+        align: 'center',
+      });
       y += 30;
-      doc.moveTo(PAGE.x, y - 6).lineTo(PAGE.right, y - 6).lineWidth(0.5).strokeColor(C.line).stroke();
+      doc
+        .moveTo(PAGE.x, y - 6)
+        .lineTo(PAGE.right, y - 6)
+        .lineWidth(0.5)
+        .strokeColor(C.line)
+        .stroke();
     }
     footer(doc, ['Tick each item as you pack it. No prices are shown on this slip.'], '');
   });
