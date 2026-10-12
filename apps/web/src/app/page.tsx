@@ -68,11 +68,55 @@ const TINTS = [
   'bg-tint-pink',
 ];
 
+/** Up to 12 distinct categories (top level first), trimmed to full rows of 6 on desktop. */
 function categoryTiles(tree: CategoryTreeNode[]): CategoryTreeNode[] {
-  const top = tree.slice(0, 12);
-  if (top.length >= 8) return top;
-  // Few top-level categories: fill with their children.
-  return [...top, ...tree.flatMap((c) => c.children)].slice(0, 12);
+  const seen = new Set<string>();
+  const out: CategoryTreeNode[] = [];
+  const add = (c: CategoryTreeNode) => {
+    const key = c.name.trim().toLowerCase();
+    if (seen.has(c.slug) || seen.has(key) || out.length >= 12) return;
+    seen.add(c.slug);
+    seen.add(key);
+    out.push(c);
+  };
+  tree.forEach(add);
+  tree.forEach((c) => c.children.forEach(add)); // few top-level ones: fill with sub-categories
+  return out.length > 6 && out.length < 12 ? out.slice(0, 6) : out;
+}
+
+/** Fallback picture for a category without an image: a product photo, else an icon. */
+const ICONS: [RegExp, string][] = [
+  [/phone|mobile/i, '📱'],
+  [/laptop|computer|pc/i, '💻'],
+  [/head|audio|ear|speaker/i, '🎧'],
+  [/watch/i, '⌚'],
+  [/camera/i, '📷'],
+  [/game|console/i, '🎮'],
+  [/tv|television/i, '📺'],
+  [/electronic|gadget/i, '🔌'],
+  [/women|dress|lawn/i, '👗'],
+  [/men|shirt/i, '👔'],
+  [/fashion|cloth|apparel/i, '👕'],
+  [/shoe|sneaker|foot/i, '👟'],
+  [/bag|luggage/i, '👜'],
+  [/beauty|health|cosmetic|skin/i, '💄'],
+  [/home|kitchen|furniture|living/i, '🏠'],
+  [/sport|fitness|outdoor/i, '⚽'],
+  [/toy|kid|baby/i, '🧸'],
+  [/book|station/i, '📚'],
+  [/grocery|food/i, '🛒'],
+];
+const iconFor = (name: string) => ICONS.find(([re]) => re.test(name))?.[1] ?? '🛍️';
+
+async function categoryImages(cats: CategoryTreeNode[]): Promise<Record<string, string | null>> {
+  const pairs = await Promise.all(
+    cats.map(async (c) => {
+      if (c.imageUrl) return [c.id, c.imageUrl] as const;
+      const [first] = await products({ category: c.slug, sort: 'popular', limit: 1 });
+      return [c.id, first?.imageUrl ?? null] as const;
+    }),
+  );
+  return Object.fromEntries(pairs);
 }
 
 function uniqueStores(lists: StorefrontProductCard[][]) {
@@ -100,6 +144,7 @@ export default async function HomePage() {
     .slice(0, 6);
   const best = popular.slice(0, 5);
   const cats = categoryTiles(tree);
+  const catImages = await categoryImages(cats);
   const stores = uniqueStores([featured, popular, latest]);
   const empty = featured.length + popular.length + latest.length === 0;
 
@@ -135,33 +180,42 @@ export default async function HomePage() {
       {cats.length > 0 ? (
         <section className="flex flex-col gap-4">
           <SectionHead title="Shop by category" href="/products" />
-          <div className="scrollbar-none grid auto-cols-[clamp(100px,13vw,170px)] grid-flow-col grid-rows-[repeat(2,auto)] gap-2.5 overflow-x-auto">
-            {cats.map((c, i) => (
-              <Link
-                key={c.id}
-                href={`/categories/${c.slug}`}
-                className={cn(
-                  'flex flex-col gap-2 rounded-[22px] p-3 pb-3.5 text-sm font-semibold transition-transform hover:-translate-y-[3px] hover:text-gray-900',
-                  TINTS[i % TINTS.length],
-                )}
-              >
-                <span className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-white/50">
-                  {c.imageUrl ? (
-                    <img
-                      src={c.imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <span className="text-4xl font-extrabold text-gray-900/30">
-                      {c.name.charAt(0)}
-                    </span>
+          <div className="scrollbar-none grid auto-cols-[42%] grid-flow-col grid-rows-2 gap-2.5 overflow-x-auto sm:auto-cols-[28%] md:grid-flow-row md:grid-cols-4 md:grid-rows-none md:overflow-visible lg:grid-cols-6">
+            {cats.map((c, i) => {
+              const img = catImages[c.id];
+              return (
+                <Link
+                  key={c.id}
+                  href={`/categories/${c.slug}`}
+                  className={cn(
+                    'group flex flex-col gap-2 rounded-[22px] p-3 pb-3.5 text-sm font-semibold transition-transform duration-200 hover:-translate-y-[3px] hover:text-gray-900',
+                    TINTS[i % TINTS.length],
                   )}
-                </span>
-                {c.name}
-              </Link>
-            ))}
+                >
+                  <span className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-white">
+                    {img ? (
+                      <img
+                        src={img}
+                        alt=""
+                        loading="lazy"
+                        className={cn(
+                          'h-full w-full transition-transform duration-300 group-hover:scale-105',
+                          c.imageUrl ? 'object-cover' : 'object-contain p-3',
+                        )}
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="text-5xl transition-transform duration-300 group-hover:scale-110"
+                      >
+                        {iconFor(c.name)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="truncate">{c.name}</span>
+                </Link>
+              );
+            })}
           </div>
         </section>
       ) : null}
