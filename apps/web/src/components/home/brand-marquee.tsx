@@ -21,7 +21,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
         aria-hidden={copy > 0 ? true : undefined}
         tabIndex={copy > 0 ? -1 : undefined}
         title={b.name}
-        className="group/brand flex h-20 w-[150px] flex-none items-center justify-center rounded-2xl bg-gray-50 px-5 ring-1 ring-black/[.04] transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-card sm:h-24 sm:w-[180px]"
+        className="group/brand mr-3 flex h-20 w-[150px] flex-none items-center justify-center rounded-2xl bg-gray-50 px-5 ring-1 ring-black/[.04] transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-card sm:h-24 sm:w-[180px]"
       >
         {b.logoUrl ? (
           <img
@@ -47,7 +47,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
           '@media (prefers-reduced-motion:reduce){.brand-marquee__track{animation:none}}'}
       </style>
       <div
-        className="brand-marquee__track flex w-max gap-3 py-2"
+        className="brand-marquee__track flex w-max py-2"
         style={{ ['--brand-speed' as string]: `${seconds}s` }}
       >
         {row(0)}
