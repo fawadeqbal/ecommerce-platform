@@ -9,6 +9,10 @@ export interface ModalProps {
   /** Buttons row at the bottom. */
   footer?: React.ReactNode;
   size?: 'md' | 'lg';
+  /** Extra classes for the dialog panel (optional; apps can restyle without changing the default). */
+  className?: string;
+  /** Extra classes for the dimmed backdrop. */
+  overlayClassName?: string;
   children?: React.ReactNode;
 }
 
@@ -20,6 +24,8 @@ export function Modal({
   onClose,
   footer,
   size = 'md',
+  className,
+  overlayClassName,
   children,
 }: ModalProps) {
   React.useEffect(() => {
@@ -32,7 +38,10 @@ export function Modal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 p-4"
+      className={cn(
+        'fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 p-4',
+        overlayClassName,
+      )}
       onClick={onClose}
     >
       <div
@@ -42,6 +51,7 @@ export function Modal({
         className={cn(
           'flex max-h-[90vh] w-full flex-col rounded-xl bg-white shadow-xl',
           size === 'lg' ? 'max-w-2xl' : 'max-w-md',
+          className,
         )}
         onClick={(e) => e.stopPropagation()}
       >

@@ -80,7 +80,9 @@ const config: Config = {
         },
       },
       animation: {
-        'page-in': 'page-in .32s cubic-bezier(.22,1,.36,1) both',
+        // `backwards`, not `both`: a transform kept after the animation would trap position:fixed
+        // children (dialogs, bottom sheets) inside the page instead of the viewport.
+        'page-in': 'page-in .32s cubic-bezier(.22,1,.36,1) backwards',
         'fade-in': 'fade-in .2s ease-out both',
         'pop-in': 'pop-in .18s cubic-bezier(.22,1,.36,1) both',
         'sheet-up': 'sheet-up .3s cubic-bezier(.22,1,.36,1) both',

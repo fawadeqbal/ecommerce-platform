@@ -18,7 +18,6 @@ import {
   Badge,
   Button,
   Card,
-  Checkbox,
   ConfirmDialog,
   EmptyState,
   Input,
@@ -41,6 +40,8 @@ export function AddressesView() {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
@@ -160,6 +161,9 @@ export function AddressesView() {
       <Modal
         open={editing !== null}
         size="lg"
+        className="animate-pop-in rounded-[28px] [&_#modal-title]:text-xl [&_#modal-title]:font-extrabold [&>div:first-child]:border-0 [&>div:first-child]:px-7 [&>div:first-child]:pt-6 [&>div:last-child]:border-0 [&>div:last-child]:px-7 [&>div:last-child]:pb-6 [&>div:nth-child(2)]:px-7"
+        overlayClassName="animate-fade-in bg-gray-900/50 backdrop-blur-sm"
+        description="Where should we deliver? You can pick it at checkout."
         title={editing === 'new' ? 'New address' : 'Edit address'}
         onClose={() => setEditing(null)}
         footer={
@@ -180,16 +184,46 @@ export function AddressesView() {
           onSubmit={handleSubmit((values) => save.mutate(values))}
         >
           {save.error ? <Alert tone="error">{save.error.message}</Alert> : null}
-          <Input
-            label="Label (optional)"
-            placeholder="Home, Office…"
-            {...register('label')}
-            error={errors.label?.message}
-          />
+          <div className="space-y-2">
+            <span className="block text-sm font-medium text-gray-700">Save as</span>
+            <div className="flex flex-wrap gap-2">
+              {['Home', 'Office', 'Other'].map((l) => {
+                const on = (watch('label') ?? '') === l;
+                return (
+                  <button
+                    key={l}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setValue('label', on ? '' : l, { shouldDirty: true })}
+                    className={
+                      on
+                        ? 'rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white'
+                        : 'rounded-full bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100'
+                    }
+                  >
+                    {l}
+                  </button>
+                );
+              })}
+            </div>
+            <Input
+              aria-label="Label"
+              placeholder="Or type a name, e.g. Mum’s house"
+              {...register('label')}
+              error={errors.label?.message}
+            />
+          </div>
           <AddressInputs
             fieldProps={(name) => ({ ...register(name), error: errors[name]?.message })}
           />
-          <Checkbox label="Use as my default address" {...register('isDefault')} />
+          <label className="flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-4 py-3 text-sm font-semibold">
+            Use as my default address
+            <input type="checkbox" className="peer sr-only" {...register('isDefault')} />
+            <span
+              aria-hidden
+              className="relative h-6 w-10 rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[19px]"
+            />
+          </label>
         </form>
       </Modal>
 
