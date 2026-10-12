@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { SearchBox } from '@/components/search/search-box';
 import { getMenu } from '@/lib/cms';
+import { categoriesApi } from '@/lib/api-client';
 import { getStoreSettings, storeName } from '@/lib/store-settings';
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { container } from './container';
@@ -22,8 +23,22 @@ const fallbackNav = [
 
 /** Violet bar (sticky, shadow on scroll) + white category bar with the current link underlined. */
 export async function SiteHeader() {
-  const [menu, settings] = await Promise.all([getMenu('header'), getStoreSettings()]);
-  const nav = menu.length > 0 ? menu.map((i) => ({ href: i.url, label: i.label })) : fallbackNav;
+  const [menu, settings, tree] = await Promise.all([
+    getMenu('header'),
+    getStoreSettings(),
+    categoriesApi.tree().catch(() => []),
+  ]);
+  // Live categories from the database first, then the admin's header menu (or the defaults).
+  const categories = tree.slice(0, 10).map((c) => ({ href: `/categories/${c.slug}`, label: c.name }));
+  const extras =
+    menu.length > 0 ? menu.map((i) => ({ href: i.url, label: i.label })) : fallbackNav.slice(1);
+  const seen = new Set<string>();
+  const nav = [fallbackNav[0]!, ...categories, ...extras].filter((item) => {
+    const key = item.href.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   return (
     <>
       <HeaderShell>
