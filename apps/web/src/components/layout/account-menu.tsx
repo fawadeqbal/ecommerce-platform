@@ -16,6 +16,7 @@ import {
 } from '@/components/icons';
 import { authApi } from '@/lib/api-client';
 import { toast } from '@/lib/toast';
+import { headerChip, headerTip } from './header-chip';
 
 const ITEMS = [
   { href: '/account/orders', label: 'My orders', icon: BoxIcon },
@@ -31,11 +32,13 @@ export function AccountMenu({
   lastName,
   email,
   greeting,
+  wishlistCount = 0,
 }: {
   firstName: string;
   lastName: string;
   email: string;
   greeting: string;
+  wishlistCount?: number;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -74,19 +77,18 @@ export function AccountMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className={cn(
-          'flex items-center gap-2 rounded-[14px] py-1.5 pl-1.5 pr-2 text-sm font-semibold text-white hover:bg-white/10',
-          open && 'bg-white/15',
-        )}
+        aria-label={greeting}
+        className={cn(headerChip, 'gap-1 pl-1 pr-2', open && 'bg-white/25')}
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-gray-900">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-xs font-extrabold text-gray-900">
           {initials}
         </span>
-        <span className="hidden whitespace-nowrap md:inline">{greeting}</span>
-        <ChevronDownIcon
-          size={16}
-          className={cn('hidden transition-transform md:block', open && 'rotate-180')}
-        />
+        {!open ? (
+          <span role="tooltip" className={headerTip}>
+            {greeting}
+          </span>
+        ) : null}
+        <ChevronDownIcon size={16} className={cn('transition-transform', open && 'rotate-180')} />
       </button>
       {open ? (
         <div
@@ -111,7 +113,12 @@ export function AccountMenu({
               )}
             >
               <ItemIcon size={18} className="text-gray-500" />
-              {label}
+              <span className="flex-1">{label}</span>
+              {href === '/account/wishlist' && wishlistCount > 0 ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-extrabold text-gray-900">
+                  {wishlistCount}
+                </span>
+              ) : null}
             </Link>
           ))}
           <div className="my-1 h-px bg-gray-100" />

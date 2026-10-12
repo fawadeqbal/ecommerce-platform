@@ -4,11 +4,9 @@ import Link from 'next/link';
 import { useCart, useMe } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useLocale } from '@/components/locale/locale-provider';
-import { CartIcon, HeartIcon, TruckIcon, UserIcon } from '@/components/icons';
+import { CartIcon, TruckIcon, UserIcon } from '@/components/icons';
+import { headerChip, headerTip } from './header-chip';
 import { AccountMenu } from './account-menu';
-
-const link =
-  'flex items-center gap-1.5 whitespace-nowrap rounded-[14px] px-2.5 py-[9px] text-white hover:bg-white/10 hover:text-white';
 
 export function HeaderActions() {
   const { data: cart } = useCart();
@@ -18,29 +16,16 @@ export function HeaderActions() {
   const saved = useWishlist().data?.items.length ?? 0;
 
   return (
-    <div className="flex items-center gap-1 text-sm font-semibold">
+    <div className="flex items-center gap-2">
       <Link
         href="/track-order"
-        title={t('header.trackOrder')}
         aria-label={t('header.trackOrder')}
-        className={`${link} hidden lg:flex`}
+        className={`${headerChip} hidden w-10 lg:flex`}
       >
         <TruckIcon />
-        <span className="hidden xl:inline">{t('header.trackOrder')}</span>
-      </Link>
-      <Link
-        href={me ? '/account/wishlist' : '/login?next=/account/wishlist'}
-        title={t('header.wishlist')}
-        aria-label={`${t('header.wishlist')}${saved > 0 ? ` (${saved})` : ''}`}
-        className={`${link} relative hidden sm:flex`}
-      >
-        <HeartIcon />
-        <span className="hidden xl:inline">{t('header.wishlist')}</span>
-        {saved > 0 ? (
-          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-extrabold text-gray-900 xl:static xl:h-5 xl:min-w-5 xl:text-[11px]">
-            {saved}
-          </span>
-        ) : null}
+        <span role="tooltip" className={headerTip}>
+          {t('header.trackOrder')}
+        </span>
       </Link>
       {me ? (
         <AccountMenu
@@ -48,17 +33,18 @@ export function HeaderActions() {
           lastName={me.lastName}
           email={me.email}
           greeting={t('header.hi', { name: me.firstName })}
+          wishlistCount={saved}
         />
       ) : (
-        <Link href="/login" className={link}>
-          <UserIcon />
+        <Link href="/login" className={`${headerChip} px-3`}>
+          <UserIcon size={18} />
           <span className="hidden sm:inline">{t('header.signIn')}</span>
         </Link>
       )}
       <Link
         href="/cart"
         aria-label={`${t('header.cart')} (${count})`}
-        className="ml-1 flex items-center gap-2 rounded-[14px] bg-white px-3 py-[9px] text-gray-900 shadow-[0_6px_16px_-8px_rgba(27,15,73,.6)] hover:-translate-y-px hover:text-brand-600"
+        className="flex h-10 items-center gap-2 rounded-xl bg-white px-3 text-sm font-bold text-gray-900 shadow-[0_6px_16px_-8px_rgba(27,15,73,.6)] hover:-translate-y-px hover:text-brand-600"
       >
         <CartIcon />
         <span className="hidden sm:inline">{t('header.cart')}</span>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@ecommerce/ui';
 import { ChevronDownIcon } from '@/components/icons';
+import { headerChip } from '@/components/layout/header-chip';
 import { useLocale } from './locale-provider';
 
 interface Option {
@@ -50,10 +51,7 @@ function HeaderPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className={cn(
-          'flex items-center gap-1.5 rounded-[14px] px-2.5 py-[9px] text-sm font-semibold text-white hover:bg-white/10',
-          open && 'bg-white/15',
-        )}
+        className={cn(headerChip, 'px-3', open && 'bg-white/25')}
       >
         {display}
         <ChevronDownIcon size={15} className={cn('transition-transform', open && 'rotate-180')} />
@@ -118,7 +116,7 @@ export function LocaleSwitcher() {
   if (!info) return null;
   const current = info.currencies.find((c) => c.code === currency);
   return (
-    <div className="hidden items-center xl:flex">
+    <div className="hidden items-center gap-2 lg:flex">
       {info.currencies.length > 1 ? (
         <HeaderPicker
           label={t('locale.currency')}
