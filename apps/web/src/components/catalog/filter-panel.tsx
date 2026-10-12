@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { cn } from '@ecommerce/ui';
+import { Portal, cn } from '@ecommerce/ui';
 
 /**
  * Filter sidebar. The form is a plain GET form (works without JavaScript); with JavaScript it
@@ -55,12 +55,14 @@ export function FilterPanel({
         ) : null}
       </button>
       {open ? (
-        <button
-          type="button"
-          aria-label="Close filters"
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-40 animate-fade-in bg-gray-900/40 lg:hidden"
-        />
+        <Portal>
+          <button
+            type="button"
+            aria-label="Close filters"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 animate-fade-in bg-gray-900/40 backdrop-blur-sm lg:hidden"
+          />
+        </Portal>
       ) : null}
       <aside
         aria-label="Filters"

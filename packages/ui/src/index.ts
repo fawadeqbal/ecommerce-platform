@@ -20,6 +20,7 @@ export * from './components/detail-list';
 export * from './components/empty-state';
 export * from './components/confirm-dialog';
 export * from './components/modal';
+export * from './components/portal';
 export * from './components/reason-dialog';
 export * from './components/timeline';
 export * from './components/page-placeholder';
