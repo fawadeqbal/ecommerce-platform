@@ -218,92 +218,9 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
             <div className={container}>
               <div
                 key={current.href}
-                className="menu-in mt-2.5 flex gap-8 overflow-hidden rounded-[20px] bg-white p-6 shadow-[0_0_0_1px_rgba(30,26,51,.05),0_30px_70px_-16px_rgba(30,26,51,.35)]"
+                className="menu-in mt-2.5 flex max-h-[min(72vh,580px)] overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_rgba(30,26,51,.05),0_30px_70px_-16px_rgba(30,26,51,.35)]"
               >
-                {/* Category card */}
-                <Link
-                  href={current.href}
-                  className="group relative hidden w-56 flex-none flex-col justify-end overflow-hidden rounded-3xl bg-brand-600 p-5 text-white lg:flex"
-                >
-                  {current.image ? (
-                    <img
-                      src={current.image}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <span
-                      aria-hidden
-                      className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent/80"
-                    />
-                  )}
-                  <span className="absolute inset-0 bg-gradient-to-t from-brand-800/90 via-brand-700/30 to-transparent" />
-                  <span className="relative text-xs font-bold uppercase tracking-[0.14em] text-brand-100">
-                    Explore
-                  </span>
-                  <span className="relative text-2xl font-extrabold leading-tight">
-                    {current.label}
-                  </span>
-                  <span className="relative mt-3 inline-flex items-center gap-1 self-start rounded-full bg-white px-3.5 py-1.5 text-sm font-bold text-gray-900 transition-colors group-hover:bg-accent">
-                    Shop all <span aria-hidden>→</span>
-                  </span>
-                </Link>
-
-                {/* Sub-categories as columns */}
-                <div className="grid flex-1 grid-cols-[repeat(auto-fill,minmax(180px,1fr))] content-start gap-x-8 gap-y-6">
-                  {current.children.map((child, k) => (
-                    <div
-                      key={child.href}
-                      className="menu-in flex min-w-0 flex-col gap-2"
-                      style={{ animationDelay: `${40 + k * 35}ms` }}
-                    >
-                      <Link
-                        href={child.href}
-                        className="group flex items-center gap-2.5 font-bold text-gray-900 hover:text-brand-700"
-                      >
-                        {child.image ? (
-                          <img
-                            src={child.image}
-                            alt=""
-                            className="h-9 w-9 flex-none rounded-xl bg-gray-50 object-cover"
-                          />
-                        ) : (
-                          <span
-                            aria-hidden
-                            className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-brand-50 text-sm font-extrabold text-brand-700"
-                          >
-                            {child.label.charAt(0)}
-                          </span>
-                        )}
-                        <span className="truncate">{child.label}</span>
-                      </Link>
-                      {child.children?.length ? (
-                        <ul className="flex flex-col gap-1 pl-[46px]">
-                          {child.children.slice(0, SHOW_GRANDCHILDREN).map((g) => (
-                            <li key={g.href}>
-                              <Link
-                                href={g.href}
-                                className="block truncate text-sm text-gray-500 transition-colors hover:translate-x-0.5 hover:text-brand-700"
-                              >
-                                {g.label}
-                              </Link>
-                            </li>
-                          ))}
-                          {child.children.length > SHOW_GRANDCHILDREN ? (
-                            <li>
-                              <Link
-                                href={child.href}
-                                className="text-sm font-semibold text-brand-700 hover:underline"
-                              >
-                                View all {child.children.length} →
-                              </Link>
-                            </li>
-                          ) : null}
-                        </ul>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
+                <CategoryDetail root={current} />
               </div>
             </div>
           </div>
@@ -319,7 +236,6 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
   const [hover, setHover] = useState(0);
   const root = roots[hover] ?? roots[0];
   if (!root) return null;
-  const kids = root.children ?? [];
 
   return (
     <div className={container}>
@@ -366,94 +282,104 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
           ))}
         </ul>
 
-        {/* Hovered category */}
-        <div key={root.href} className="menu-in min-w-0 flex-1 overflow-y-auto px-7 pb-7 pt-[26px]">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[#efedf5] pb-[18px]">
-            <div className="flex min-w-0 items-baseline gap-3">
-              <h3 className="truncate text-2xl font-extrabold tracking-[-0.5px] text-gray-900">{root.label}</h3>
-              {kids.length > 0 ? (
-                <span className="whitespace-nowrap text-sm text-[#8c88a3]">
-                  {kids.length} sub-categories
-                </span>
-              ) : null}
-            </div>
-            <Link
-              href={root.href}
-              className="flex h-[38px] flex-none items-center gap-2 rounded-[11px] bg-gray-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-600 hover:text-white"
-            >
-              Shop all <span aria-hidden>→</span>
-            </Link>
-          </div>
-          {kids.length === 0 ? (
-            <Link
-              href={root.href}
-              className="flex items-center gap-4 rounded-3xl bg-brand-50 p-5 text-brand-800 hover:bg-brand-100"
-            >
-              <span className="text-3xl" aria-hidden>
-                🛍️
-              </span>
-              <span>
-                <b className="block">Browse every product in {root.label}</b>
-                <span className="text-sm text-brand-700/80">Filters, deals and new arrivals inside.</span>
-              </span>
-            </Link>
-          ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-7 gap-y-6 pt-[22px]">
-              {kids.map((child, k) => (
-                <div
-                  key={child.href}
-                  className="menu-in flex min-w-0 flex-col gap-2.5"
-                  style={{ animationDelay: `${30 + k * 30}ms` }}
-                >
-                  <Link
-                    href={child.href}
-                    className="truncate text-[15px] font-bold text-gray-900 hover:text-brand-600"
-                  >
-                    {child.label}
-                  </Link>
-                  {child.children?.slice(0, SHOW_GRANDCHILDREN).map((g) => (
-                    <Link
-                      key={g.href}
-                      href={g.href}
-                      className="truncate text-[14.5px] text-[#6e6a85] transition-colors hover:text-brand-600"
-                    >
-                      {g.label}
-                    </Link>
-                  ))}
-                  {(child.children?.length ?? 0) > SHOW_GRANDCHILDREN ? (
-                    <Link href={child.href} className="text-sm font-semibold text-brand-700 hover:underline">
-                      View all →
-                    </Link>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Promo card (wide screens) */}
-        <Link
-          href={root.href}
-          className="relative m-6 ml-0 hidden w-[260px] flex-none flex-col overflow-hidden rounded-2xl bg-[radial-gradient(240px_160px_at_90%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-5 text-white hover:text-white xl:flex"
-        >
-          <span className="text-[11.5px] font-bold tracking-[1.2px] text-accent">THIS WEEK</span>
-          <span className="mt-1.5 text-2xl font-extrabold leading-[1.1] tracking-[-0.5px]">
-            Best of {root.label}
-          </span>
-          <span className="my-4 grid min-h-[110px] flex-1 place-items-center overflow-hidden rounded-xl bg-white/[.08] shadow-[inset_0_0_0_1px_rgba(255,255,255,.15)]">
-            {root.image ? (
-              <img src={root.image} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span aria-hidden className="text-5xl">
-                🛍️
-              </span>
-            )}
-          </span>
-          <span className="flex h-9 items-center gap-1.5 self-start rounded-[10px] bg-accent px-3.5 text-sm font-bold text-gray-900">
-            Shop the deal <span aria-hidden>→</span>
-          </span>
-        </Link>
+        <CategoryDetail root={root} />
       </div>
     </div>
+  );
+}
+
+/** Right side of a category menu: title row, sub-category columns, promo card. */
+function CategoryDetail({ root }: { root: NavItem }) {
+  const kids = root.children ?? [];
+  return (
+    <>
+      {/* Hovered category */}
+      <div key={root.href} className="menu-in min-w-0 flex-1 overflow-y-auto px-7 pb-7 pt-[26px]">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[#efedf5] pb-[18px]">
+          <div className="flex min-w-0 items-baseline gap-3">
+            <h3 className="truncate text-2xl font-extrabold tracking-[-0.5px] text-gray-900">{root.label}</h3>
+            {kids.length > 0 ? (
+              <span className="whitespace-nowrap text-sm text-[#8c88a3]">
+                {kids.length} sub-categories
+              </span>
+            ) : null}
+          </div>
+          <Link
+            href={root.href}
+            className="flex h-[38px] flex-none items-center gap-2 rounded-[11px] bg-gray-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-600 hover:text-white"
+          >
+            Shop all <span aria-hidden>→</span>
+          </Link>
+        </div>
+        {kids.length === 0 ? (
+          <Link
+            href={root.href}
+            className="flex items-center gap-4 rounded-3xl bg-brand-50 p-5 text-brand-800 hover:bg-brand-100"
+          >
+            <span className="text-3xl" aria-hidden>
+              🛍️
+            </span>
+            <span>
+              <b className="block">Browse every product in {root.label}</b>
+              <span className="text-sm text-brand-700/80">Filters, deals and new arrivals inside.</span>
+            </span>
+          </Link>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-7 gap-y-6 pt-[22px]">
+            {kids.map((child, k) => (
+              <div
+                key={child.href}
+                className="menu-in flex min-w-0 flex-col gap-2.5"
+                style={{ animationDelay: `${30 + k * 30}ms` }}
+              >
+                <Link
+                  href={child.href}
+                  className="truncate text-[15px] font-bold text-gray-900 hover:text-brand-600"
+                >
+                  {child.label}
+                </Link>
+                {child.children?.slice(0, SHOW_GRANDCHILDREN).map((g) => (
+                  <Link
+                    key={g.href}
+                    href={g.href}
+                    className="truncate text-[14.5px] text-[#6e6a85] transition-colors hover:text-brand-600"
+                  >
+                    {g.label}
+                  </Link>
+                ))}
+                {(child.children?.length ?? 0) > SHOW_GRANDCHILDREN ? (
+                  <Link href={child.href} className="text-sm font-semibold text-brand-700 hover:underline">
+                    View all →
+                  </Link>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Promo card (wide screens) */}
+      <Link
+        href={root.href}
+        className="relative m-6 ml-0 hidden w-[260px] flex-none flex-col overflow-hidden rounded-2xl bg-[radial-gradient(240px_160px_at_90%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-5 text-white hover:text-white xl:flex"
+      >
+        <span className="text-[11.5px] font-bold tracking-[1.2px] text-accent">THIS WEEK</span>
+        <span className="mt-1.5 text-2xl font-extrabold leading-[1.1] tracking-[-0.5px]">
+          Best of {root.label}
+        </span>
+        <span className="my-4 grid min-h-[110px] flex-1 place-items-center overflow-hidden rounded-xl bg-white/[.08] shadow-[inset_0_0_0_1px_rgba(255,255,255,.15)]">
+          {root.image ? (
+            <img src={root.image} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span aria-hidden className="text-5xl">
+              🛍️
+            </span>
+          )}
+        </span>
+        <span className="flex h-9 items-center gap-1.5 self-start rounded-[10px] bg-accent px-3.5 text-sm font-bold text-gray-900">
+          Shop the deal <span aria-hidden>→</span>
+        </span>
+      </Link>
+    </>
   );
 }
