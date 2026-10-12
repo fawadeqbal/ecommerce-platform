@@ -9,8 +9,11 @@
 # The server keeps its own ~/ecommerce/.env.server, so ENV_SERVER_FILE is only needed to change settings from GitHub.
 name: Deploy to server
 
+# Runs after CI passes on main (or by hand from the Actions tab).
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -20,10 +23,15 @@ concurrency:
 
 jobs:
   deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up SSH
         env:
