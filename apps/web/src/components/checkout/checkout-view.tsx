@@ -94,6 +94,9 @@ export function CheckoutView() {
   const [step, setStep] = useState(0);
   // Steps the customer tried to leave (or submit) while incomplete: shown in red.
   const [flagged, setFlagged] = useState<number[]>([]);
+  // Furthest step the customer has reached with Continue: earlier steps count as confirmed.
+  // (A pre-filled default address or payment method is not "done" until they've seen it.)
+  const [reached, setReached] = useState(0);
   const flag = (i: number) => setFlagged((f) => (f.includes(i) ? f : [...f, i]));
   useEffect(() => {
     const fromCart = new URLSearchParams(window.location.search).get('coupon');
@@ -235,18 +238,14 @@ export function CheckoutView() {
     { label: 'Review', done: false, required: false },
   ];
   const missing = steps.filter((st) => st.required && !st.done).map((st) => st.label);
-  const ready = missing.length === 0;
+  const ready = missing.length === 0 && reached >= steps.length - 1;
   const scrollUp = () =>
     document
       .getElementById('checkout-steps')
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const goTo = (i: number) => {
-    // Going back is always fine; going forward needs the steps before it.
-    const blocker = steps.findIndex((st, j) => j < i && st.required && !st.done);
-    if (i > step && blocker !== -1) {
-      flag(blocker);
-      setStep(blocker);
-    } else setStep(i);
+    // Back to any step; forward only as far as already reached with Continue.
+    setStep(Math.min(i, reached));
     scrollUp();
   };
   const next = async () => {
@@ -265,7 +264,9 @@ export function CheckoutView() {
       if (!ok || !addressDone) return flag(0);
     } else if (steps[step]?.required && !steps[step]?.done) return flag(step);
     setFlagged((f) => f.filter((x) => x !== step));
-    setStep((s) => Math.min(s + 1, steps.length - 1));
+    const to = Math.min(step + 1, steps.length - 1);
+    setStep(to);
+    setReached((r) => Math.max(r, to));
     scrollUp();
   };
   const chosenAddress = savedAddresses.find((a) => a.id === addressId);
@@ -288,13 +289,17 @@ export function CheckoutView() {
         className="scrollbar-none flex scroll-mt-[calc(var(--header-h)+16px)] gap-2 overflow-x-auto"
       >
         {steps.map((st, i) => {
-          const status = st.done
-            ? 'done'
-            : i === step
-              ? 'current'
-              : flagged.includes(i) || (st.required && i < step)
+          const confirmed = i < reached;
+          const status =
+            i === step
+              ? flagged.includes(i)
                 ? 'error'
-                : 'todo';
+                : 'current'
+              : confirmed && st.done
+                ? 'done'
+                : (confirmed && st.required) || flagged.includes(i)
+                  ? 'error'
+                  : 'todo';
           return (
             <button
               key={st.label}
@@ -915,7 +920,9 @@ export function CheckoutView() {
             </Button>
             {!ready ? (
               <p className="-mt-1 text-center text-xs font-semibold text-red-600">
-                Complete {missing.join(', ').toLowerCase()} to place your order.
+                {missing.length > 0
+                  ? `Complete ${missing.join(', ').toLowerCase()} to place your order.`
+                  : 'Go through the steps and review your order to place it.'}
               </p>
             ) : null}
             <p className="text-center text-xs text-gray-500">
