@@ -18,6 +18,7 @@ import {
   createPaymentProvider,
   type PaymentProvider,
 } from './providers';
+import { StripePaymentProvider } from './providers/stripe.provider';
 
 type Credentials = Record<string, string>;
 
@@ -167,6 +168,12 @@ export class PaymentGatewaysService {
             DEV_WEBHOOK_SECRET,
           siteUrl: this.config.get<string>('NEXT_PUBLIC_SITE_URL') || 'http://localhost:3000',
           enabled: !def || !this.blocked(def),
+        });
+        break;
+      case 'stripe':
+        provider = new StripePaymentProvider({
+          secretKey: creds.secretKey ?? '',
+          webhookSecret: creds.webhookSecret ?? '',
         });
         break;
       default:

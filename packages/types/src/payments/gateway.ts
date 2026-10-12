@@ -38,6 +38,26 @@ export const PAYMENT_GATEWAYS: GatewayDefinition[] = [
     ],
     testOnly: true,
   },
+  {
+    code: 'stripe',
+    name: 'Stripe',
+    description: 'Cards and wallets (Apple Pay, Google Pay) on the Stripe hosted checkout page.',
+    methods: ['CARD', 'WALLET'],
+    fields: [
+      {
+        key: 'secretKey',
+        label: 'Secret key',
+        secret: true,
+        hint: 'sk_test_… (test mode) or sk_live_… — Stripe dashboard → Developers → API keys.',
+      },
+      {
+        key: 'webhookSecret',
+        label: 'Webhook signing secret',
+        secret: true,
+        hint: 'whsec_… from the webhook endpoint (or `stripe listen`) pointing at the webhook URL below.',
+      },
+    ],
+  },
 ];
 
 export const GATEWAY_STATUSES = ['ACTIVE', 'STANDBY', 'DISABLED', 'BLOCKED'] as const;

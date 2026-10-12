@@ -89,6 +89,15 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 4. Cancel a paid order (customer or admin): a refund is recorded and the "refund processed" email arrives.
    Admin → order detail shows every payment attempt.
 
+**Stripe (test mode)**
+
+1. Admin → Settings → Payments → **Stripe**: paste the `sk_test_…` secret key and the `whsec_…` signing secret, enable it,
+   and give it a lower priority number than the test gateway (or disable the test gateway).
+2. Webhook endpoint: `<API_PUBLIC_URL>/api/v1/payments/webhooks/stripe`, events `checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`.
+   Locally: `stripe listen --forward-to localhost:4000/api/v1/payments/webhooks/stripe` (use the `whsec_…` it prints).
+3. Pay with test card `4242 4242 4242 4242`, any future date / CVC. Refunds on cancel go through Stripe.
+
 **Returns**
 
 1. As a signed-in customer, place an order; in the seller center move it to **Delivered**.
