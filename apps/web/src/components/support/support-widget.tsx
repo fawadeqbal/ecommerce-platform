@@ -8,7 +8,7 @@
  */
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import {
   SUPPORT_MESSAGE_MAX,
   SUPPORT_SUGGESTIONS,
@@ -50,6 +50,40 @@ const TOOL_LABELS: Record<string, string> = {
   search_products: 'Searched the catalog',
   open_support_ticket: 'Asked for a person',
 };
+
+/** Store links in answers: same-site URLs become in-app paths. */
+function toPath(href: string): string | null {
+  if (href.startsWith('/')) return href;
+  try {
+    const url = new URL(href);
+    return url.origin === window.location.origin || url.hostname === 'localhost'
+      ? url.pathname + url.search
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A readable title for a bare store URL the assistant wrote out. */
+function linkTitle(path: string): string {
+  const order = path.match(/^\/account\/orders\/([^/?#]+)/);
+  if (order) return `View order ${decodeURIComponent(order[1]!)}`;
+  if (path.startsWith('/account/returns')) return 'View your return';
+  if (path.startsWith('/products/')) return 'View product';
+  if (path.startsWith('/track-order')) return 'Track your order';
+  return 'Open page';
+}
+
+/** Bare http(s) URLs -> [title](url) so they render as named links. */
+function nameBareLinks(text: string): string {
+  return text.replace(
+    /(^|\s)(https?:\/\/[^\s)\]]+[^\s)\].,;:!?])/g,
+    (_, lead: string, url: string) => {
+      const path = toPath(url);
+      return `${lead}[${path ? linkTitle(path) : url}](${url})`;
+    },
+  );
+}
 
 let memoryVisitorId: string | null = null;
 function visitorId(): string {
@@ -442,6 +476,23 @@ export function SupportWidget() {
   }
   sendRef.current = send;
 
+  const markdown: Components = {
+    a: ({ href = '', children }) => {
+      const path = toPath(href);
+      const cls =
+        'inline-flex items-center gap-1 rounded-md border border-brand-600/30 bg-white px-2 py-0.5 font-medium text-brand-700 no-underline hover:bg-brand-50';
+      return path ? (
+        <Link href={path} className={cls}>
+          {children} →
+        </Link>
+      ) : (
+        <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+          {children} ↗
+        </a>
+      );
+    },
+  };
+
   function renderAssistant(m: ChatMessage, isLast: boolean) {
     if (m.error) {
       return (
@@ -456,7 +507,7 @@ export function SupportWidget() {
         {!done && !m.content && <Trace m={m} />}
         {m.content && (
           <div className="prose prose-sm max-w-none rounded-2xl rounded-bl-sm bg-gray-100 px-3 py-2 text-sm text-gray-900 [&_a]:text-brand-700 [&_p]:my-1">
-            <ReactMarkdown>{m.content}</ReactMarkdown>
+            <ReactMarkdown components={markdown}>{nameBareLinks(m.content)}</ReactMarkdown>
           </div>
         )}
         {done && isLast && (
