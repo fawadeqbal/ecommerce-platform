@@ -7,7 +7,7 @@ import { getStoreSettings, storeName } from '@/lib/store-settings';
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { container } from './container';
 import { HeaderActions } from './header-actions';
-import { CategoryNav } from './category-nav';
+import { CategoryNav, type NavItem } from './category-nav';
 import { HeaderShell } from './header-shell';
 import { StoreLogo } from './store-logo';
 
@@ -29,11 +29,18 @@ export async function SiteHeader() {
     categoriesApi.tree().catch(() => []),
   ]);
   // Live categories from the database first, then the admin's header menu (or the defaults).
-  const categories = tree.slice(0, 10).map((c) => ({ href: `/categories/${c.slug}`, label: c.name }));
+  type Node = (typeof tree)[number];
+  const toItem = (c: Node, depth: number): NavItem => ({
+    href: `/categories/${c.slug}`,
+    label: c.name,
+    image: c.imageUrl,
+    children: depth < 2 ? c.children.map((x) => toItem(x, depth + 1)) : [],
+  });
+  const categories = tree.slice(0, 10).map((c) => toItem(c, 0));
   const extras =
     menu.length > 0 ? menu.map((i) => ({ href: i.url, label: i.label })) : fallbackNav.slice(1);
   const seen = new Set<string>();
-  const nav = [fallbackNav[0]!, ...categories, ...extras].filter((item) => {
+  const nav: NavItem[] = [fallbackNav[0]!, ...categories, ...extras].filter((item) => {
     const key = item.href.toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
