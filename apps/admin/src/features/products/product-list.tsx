@@ -19,6 +19,7 @@ import {
 import { productsApi, queryKeys } from '@/lib/api-client';
 import { ProductStatusBadge } from './product-status-badge';
 import { ProductThumb } from './product-thumb';
+import { ProductsExportButton } from './products-export-button';
 
 type Filter = ProductStatus | 'ALL';
 
@@ -86,6 +87,7 @@ export function AdminProductList() {
       <PageHeader
         title="Products"
         description="All products across vendors. Review queue: “In review”."
+        actions={<ProductsExportButton />}
       />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

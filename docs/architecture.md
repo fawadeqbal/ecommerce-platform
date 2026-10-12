@@ -330,6 +330,19 @@ for 60 s, and falls back to built-in links/hero when the CMS is empty or unreach
   page). **JSON-LD**: Organization + WebSite search on every page, Product + BreadcrumbList on product pages,
   BreadcrumbList on category pages, FAQ / blog markup from the CMS.
 
+### Documents & bulk tools
+
+- **Invoice PDF** (pdfkit, `orders/documents/`): one invoice per seller sub-order (seller of record), numbered
+  `INV-<order>-<n>` and stored in `Invoice` on first issue; available once the order is paid / COD-confirmed.
+  Customers (own orders), sellers (own sub-orders, visible orders only), staff. **Packing slip**: no prices.
+- **Order notes**: staff (whole order or one seller's part) and sellers (own sub-order); internal or visible to the
+  customer ("Messages about your order"). Sellers delete only their own notes; staff any.
+- **Manual orders** (Admin → Orders → Manual order): a temporary cart + the normal checkout (staff flag skips the
+  guest-checkout and maintenance checks), COD, linked to the account with that email, internal note added.
+- **Buy again** puts an order's still-available items in the cart; **Buy now** adds the item and opens checkout.
+- **Product CSV**: sellers export / import (check first, then import; new SKUs → draft products, simple products
+  updated, empty cells unchanged; through ProductsService so all product rules apply); staff export all.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

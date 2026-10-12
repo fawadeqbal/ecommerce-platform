@@ -15,6 +15,7 @@ import {
   EmptyState,
   Input,
   PageHeader,
+  buttonStyles,
   Pagination,
   Tabs,
   formatDateTime,
@@ -107,7 +108,15 @@ export function AdminOrderList() {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <PageHeader title="Orders" description="Every order across all sellers." />
+      <PageHeader
+        title="Orders"
+        description="Every order across all sellers."
+        actions={
+          <Link href="/orders/new" className={buttonStyles()}>
+            Manual order
+          </Link>
+        }
+      />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Tabs

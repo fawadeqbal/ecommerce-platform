@@ -18,6 +18,7 @@ import {
   type DataTableColumn,
 } from '@ecommerce/ui';
 import { productsApi, queryKeys } from '@/lib/api-client';
+import { ProductCsvTools } from './product-csv-tools';
 import { ProductStatusBadge } from './product-status-badge';
 import { ProductThumb } from './product-thumb';
 
@@ -101,9 +102,12 @@ export function ProductList() {
         title="Products"
         description="Create products, then submit them for review to publish them in the store."
         actions={
-          <Link href="/products/new" className={buttonStyles()}>
-            Add product
-          </Link>
+          <>
+            <ProductCsvTools />
+            <Link href="/products/new" className={buttonStyles()}>
+              Add product
+            </Link>
+          </>
         }
       />
 

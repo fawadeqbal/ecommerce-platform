@@ -2,6 +2,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { MAX_LINE_QUANTITY, findVariant, type StorefrontProductDetail } from '@ecommerce/types';
 import { Alert, Button, buttonStyles, cn } from '@ecommerce/ui';
@@ -38,11 +39,21 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
         ),
     );
 
+  const router = useRouter();
   const add = useMutation({
     mutationFn: () => cartApi.add({ variantId: variant!.id, quantity }),
     onSuccess: (cart) => {
       setCart(cart);
       setAdded(true);
+    },
+  });
+
+  // Buy now: add this item and go straight to checkout.
+  const buyNow = useMutation({
+    mutationFn: () => cartApi.add({ variantId: variant!.id, quantity }),
+    onSuccess: (cart) => {
+      setCart(cart);
+      router.push('/checkout');
     },
   });
 
@@ -149,6 +160,15 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
           onClick={() => add.mutate()}
         >
           Add to cart
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          disabled={!variant || available <= 0 || buyNow.isPending}
+          loading={buyNow.isPending}
+          onClick={() => buyNow.mutate()}
+        >
+          Buy now
         </Button>
         <WishlistButton productId={product.id} variantId={variant?.id} slug={product.slug} />
       </div>

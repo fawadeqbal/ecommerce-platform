@@ -293,8 +293,13 @@ export class CheckoutService {
     };
   }
 
-  async place(ctx: CartContext, dto: PlaceOrderDto): Promise<PlaceOrderResultDto> {
-    if (await readSetting(this.prisma, 'store.maintenanceMode', false)) {
+  /** `staff`: a manual order placed by staff (allowed in maintenance mode and when guest checkout is off). */
+  async place(
+    ctx: CartContext,
+    dto: PlaceOrderDto,
+    opts: { staff?: boolean } = {},
+  ): Promise<PlaceOrderResultDto> {
+    if (!opts.staff && (await readSetting(this.prisma, 'store.maintenanceMode', false))) {
       throw new BadRequestException(
         'The store is in maintenance mode. Please try again a little later.',
       );
@@ -320,7 +325,8 @@ export class CheckoutService {
       : null;
     if (!user) {
       const guestAllowed = await readSetting(this.prisma, 'checkout.guestCheckout', true);
-      if (!guestAllowed) throw new BadRequestException('Please sign in to check out');
+      if (!guestAllowed && !opts.staff)
+        throw new BadRequestException('Please sign in to check out');
       if (!dto.email) throw new BadRequestException('Email is required for guest checkout');
     }
     const email = user?.email ?? dto.email!;

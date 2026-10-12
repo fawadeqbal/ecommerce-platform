@@ -10,6 +10,11 @@ import { BrandsService } from './brands/brands.service';
 import { AdminCategoriesController } from './categories/admin-categories.controller';
 import { CategoriesService } from './categories/categories.service';
 import { AdminProductsController } from './products/admin-products.controller';
+import {
+  AdminProductCsvController,
+  VendorProductCsvController,
+} from './products/product-csv.controller';
+import { ProductCsvService } from './products/product-csv.service';
 import { ProductsService } from './products/products.service';
 import { VendorProductsController } from './products/vendor-products.controller';
 
@@ -22,6 +27,8 @@ import { VendorProductsController } from './products/vendor-products.controller'
     AdminAttributesController,
     VendorProductsController,
     AdminProductsController,
+    VendorProductCsvController,
+    AdminProductCsvController,
   ],
   providers: [
     CatalogService,
@@ -29,6 +36,7 @@ import { VendorProductsController } from './products/vendor-products.controller'
     BrandsService,
     AttributesService,
     ProductsService,
+    ProductCsvService,
     DiscoveryService,
   ],
   exports: [CatalogService, CategoriesService, BrandsService, AttributesService, ProductsService],

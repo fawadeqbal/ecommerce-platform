@@ -176,6 +176,14 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 2. http://localhost:3000/sitemap.xml lists products, categories, brands, stores, pages and posts.
 3. Product page source: canonical link, Product + BreadcrumbList JSON-LD; every page: Organization.
 
+**Documents & bulk tools**
+
+1. Order page (customer): Download invoice (PDF), Buy again. Product page: Buy now.
+2. Seller center → order: Packing slip, Invoice, Notes (internal or shown to the customer).
+   Products → Export CSV, edit, Import CSV → Check file → Import.
+3. Admin → Orders → Manual order: search products, add, customer email + address → Place order (COD).
+   Admin → Products → Export CSV.
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

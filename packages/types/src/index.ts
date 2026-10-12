@@ -31,6 +31,7 @@ export * from './marketing/marketing';
 export * from './email-admin';
 export * from './seo/seo';
 export * from './orders/documents';
+export * from './orders/tools';
 export * from './schemas/seo.schema';
 export * from './schemas/common';
 export * from './schemas/auth.schema';
