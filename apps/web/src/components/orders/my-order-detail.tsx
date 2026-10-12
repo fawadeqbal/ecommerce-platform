@@ -4,11 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ORDER_REASON_MIN } from '@ecommerce/types';
-import { Alert, Button, ReasonDialog, Spinner } from '@ecommerce/ui';
+import { Alert, ReasonDialog, Spinner } from '@ecommerce/ui';
 import { ordersApi, queryKeys } from '@/lib/api-client';
 import { ReturnDialog } from '@/components/returns/return-dialog';
 import { OrderDetails } from './order-details';
-import { OrderDocuments } from './order-documents';
+import { InvoiceLink, OrderDocuments, orderActionClass } from './order-documents';
 import { BuyAgain } from './buy-again';
 
 export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
@@ -50,35 +50,48 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
       <OrderDetails
         order={order}
         actions={
-          order.canCancel ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                cancel.reset();
-                setCancelling(true);
-              }}
-            >
-              Cancel order
-            </Button>
-          ) : null
+          <>
+            <BuyAgain orderNumber={order.orderNumber} />
+            <InvoiceLink order={order} />
+            {order.canCancel ? (
+              <button
+                type="button"
+                className={`${orderActionClass} bg-white text-red-600 hover:bg-red-50`}
+                onClick={() => {
+                  cancel.reset();
+                  setCancelling(true);
+                }}
+              >
+                Cancel order
+              </button>
+            ) : null}
+          </>
         }
       />
-      <OrderDocuments order={order} />
-      <BuyAgain orderNumber={order.orderNumber} />
       {returnable.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm">
-          <span className="text-gray-700">Something wrong with your items?</span>
+        <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-white p-5 text-sm">
+          <div className="mr-auto">
+            <p className="font-bold text-gray-900">Something wrong with your items?</p>
+            <p className="text-gray-500">
+              Request a return and we’ll arrange the pickup.{' '}
+              <Link href="/account/returns" className="font-semibold text-brand-700">
+                My returns
+              </Link>
+            </p>
+          </div>
           {returnable.map((v) => (
-            <Button key={v.id} size="sm" variant="outline" onClick={() => setReturning(v.id)}>
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => setReturning(v.id)}
+              className={`${orderActionClass} bg-gray-50 text-gray-900 hover:bg-gray-100`}
+            >
               Return items{order.vendorOrders.length > 1 ? ` from ${v.vendor.name}` : ''}
-            </Button>
+            </button>
           ))}
-          <Link href="/account/returns" className="text-brand-700 hover:underline">
-            My returns
-          </Link>
         </div>
       ) : null}
+      <OrderDocuments order={order} />
       {returningFrom ? (
         <ReturnDialog
           orderNumber={order.orderNumber}

@@ -2,8 +2,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Alert, Button } from '@ecommerce/ui';
+import { Alert } from '@ecommerce/ui';
 import { queryKeys, toolsApi } from '@/lib/api-client';
+import { orderActionClass } from './order-documents';
 
 /** Puts this order's items back in the cart (what is still available), then opens the cart. */
 export function BuyAgain({ orderNumber }: { orderNumber: string }) {
@@ -17,12 +18,20 @@ export function BuyAgain({ orderNumber }: { orderNumber: string }) {
     },
   });
   return (
-    <div className="space-y-2">
-      <Button size="sm" variant="outline" loading={run.isPending} onClick={() => run.mutate()}>
-        Buy again
-      </Button>
+    <div className="relative">
+      <button
+        type="button"
+        disabled={run.isPending}
+        onClick={() => run.mutate()}
+        className={`${orderActionClass} bg-brand-600 text-white hover:bg-brand-700`}
+      >
+        {run.isPending ? 'Adding…' : 'Buy again'}
+      </button>
       {run.data && (run.data.skipped.length > 0 || run.data.added === 0) ? (
-        <Alert tone={run.data.added ? 'warning' : 'error'}>
+        <Alert
+          tone={run.data.added ? 'warning' : 'error'}
+          className="absolute right-0 top-full z-20 mt-2 w-80 max-w-[90vw] animate-pop-in shadow-card"
+        >
           {run.data.added
             ? `${run.data.added} item(s) added to your cart. `
             : 'Nothing could be added. '}
@@ -38,7 +47,11 @@ export function BuyAgain({ orderNumber }: { orderNumber: string }) {
           ) : null}
         </Alert>
       ) : null}
-      {run.error ? <Alert tone="error">{run.error.message}</Alert> : null}
+      {run.error ? (
+        <Alert tone="error" className="absolute right-0 top-full z-20 mt-2 w-72 shadow-card">
+          {run.error.message}
+        </Alert>
+      ) : null}
     </div>
   );
 }

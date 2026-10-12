@@ -33,7 +33,7 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
           </h1>
           <p className="text-sm text-gray-500">Placed {formatDateTime(order.placedAt)}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <OrderStatusBadge status={order.status} />
           {actions}
         </div>
