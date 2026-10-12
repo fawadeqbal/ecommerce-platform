@@ -29,7 +29,7 @@ const INTERVAL = 6000;
 /**
  * Rotating hero. CMS banners (Admin → Content → Banners, "home.hero") show as full images;
  * without banners the built-in slides are used, decorated with live products.
- * Swipe on phones, arrows on desktop, pauses while hovered.
+ * Swipe on phones, dots everywhere, pauses while hovered.
  */
 export function HeroCarousel({
   banners,
@@ -193,22 +193,6 @@ export function HeroCarousel({
 
       {count > 1 ? (
         <>
-          <button
-            type="button"
-            aria-label="Previous slide"
-            onClick={() => go(active - 1)}
-            className="absolute left-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-bold text-gray-900 opacity-0 shadow-lg transition-opacity hover:bg-white group-hover/hero:opacity-100 md:flex"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            aria-label="Next slide"
-            onClick={() => go(active + 1)}
-            className="absolute right-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-bold text-gray-900 opacity-0 shadow-lg transition-opacity hover:bg-white group-hover/hero:opacity-100 md:flex"
-          >
-            ›
-          </button>
           <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/25 px-2.5 py-2 backdrop-blur-sm">
             {Array.from({ length: count }, (_, i) => (
               <button
