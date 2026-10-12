@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { cn } from '@ecommerce/ui';
+import { Tooltip, cn } from '@ecommerce/ui';
 import {
   BoxIcon,
   ChevronDownIcon,
@@ -16,7 +16,7 @@ import {
 } from '@/components/icons';
 import { authApi } from '@/lib/api-client';
 import { toast } from '@/lib/toast';
-import { headerChip, headerTip } from './header-chip';
+import { headerChip } from './header-chip';
 
 const ITEMS = [
   { href: '/account/orders', label: 'My orders', icon: BoxIcon },
@@ -72,24 +72,21 @@ export function AccountMenu({
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        aria-label={greeting}
-        className={cn(headerChip, 'gap-1 pl-1 pr-2', open && 'bg-white/25')}
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-xs font-extrabold text-gray-900">
-          {initials}
-        </span>
-        {!open ? (
-          <span role="tooltip" className={headerTip}>
-            {greeting}
+      <Tooltip content={greeting}>
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          aria-label={greeting}
+          className={cn(headerChip, 'gap-1 pl-1 pr-2', open && 'bg-white/25')}
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-xs font-extrabold text-gray-900">
+            {initials}
           </span>
-        ) : null}
-        <ChevronDownIcon size={16} className={cn('transition-transform', open && 'rotate-180')} />
-      </button>
+          <ChevronDownIcon size={16} className={cn('transition-transform', open && 'rotate-180')} />
+        </button>
+      </Tooltip>
       {open ? (
         <div
           role="menu"

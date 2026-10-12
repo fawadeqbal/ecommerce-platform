@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { cn } from '@ecommerce/ui';
+import { Tooltip, cn } from '@ecommerce/ui';
 import { useMe } from '@/hooks/use-cart';
 import { useToggleWishlist, useWishlist } from '@/hooks/use-wishlist';
 
@@ -34,21 +34,26 @@ export function WishlistButton({
       shape,
       saved ? 'text-rose-600' : 'text-gray-600 hover:text-rose-600',
     );
+    const tip = saved ? 'Remove from wishlist' : 'Save to wishlist';
     return me.data ? (
-      <button
-        type="button"
-        aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
-        aria-pressed={saved}
-        disabled={toggle.isPending}
-        onClick={() => toggle.mutate({ productId, variantId, saved })}
-        className={cls}
-      >
-        {saved ? '♥' : '♡'}
-      </button>
+      <Tooltip content={tip}>
+        <button
+          type="button"
+          aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
+          aria-pressed={saved}
+          disabled={toggle.isPending}
+          onClick={() => toggle.mutate({ productId, variantId, saved })}
+          className={cls}
+        >
+          {saved ? '♥' : '♡'}
+        </button>
+      </Tooltip>
     ) : (
-      <Link href={`/login?next=/products/${slug}`} aria-label="Save to wishlist" className={cls}>
-        ♡
-      </Link>
+      <Tooltip content="Sign in to save">
+        <Link href={`/login?next=/products/${slug}`} aria-label="Save to wishlist" className={cls}>
+          ♡
+        </Link>
+      </Tooltip>
     );
   }
 
