@@ -27,16 +27,17 @@ export async function AuthCard({
     ['Only verified sellers', 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3ZM9 12l2 2 4-4'],
   ] as const;
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-gray-50 px-4 py-[clamp(16px,4vw,48px)]">
+    <div className="relative flex min-h-dvh items-stretch justify-center overflow-hidden bg-white sm:items-center sm:bg-gray-50 sm:px-4 sm:py-[clamp(16px,4vw,48px)]">
       {/* soft page glows */}
-      <span aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-brand-200/60 blur-3xl" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-40 -right-32 h-[420px] w-[420px] rounded-full bg-accent/30 blur-3xl" />
+      <span aria-hidden className="pointer-events-none absolute -left-32 -top-32 hidden sm:block h-[420px] w-[420px] rounded-full bg-brand-200/60 blur-3xl" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-40 -right-32 hidden sm:block h-[420px] w-[420px] rounded-full bg-accent/30 blur-3xl" />
 
-      <div className="relative flex w-full max-w-[1080px] flex-col overflow-hidden rounded-[32px] bg-white shadow-[0_0_0_1px_rgba(30,26,51,.04),0_40px_80px_-30px_rgba(30,26,51,.35)] md:flex-row">
+      <div className="relative flex w-full max-w-[1080px] flex-col overflow-hidden bg-white sm:rounded-[32px] sm:shadow-[0_0_0_1px_rgba(30,26,51,.04),0_40px_80px_-30px_rgba(30,26,51,.35)] md:flex-row">
         {/* Brand panel */}
-        <div className="relative flex flex-col justify-between gap-8 overflow-hidden bg-[radial-gradient(500px_220px_at_15%_-10%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-[clamp(22px,3.4vw,44px)] text-white md:w-[46%]">
+        <div className="relative flex flex-col justify-between gap-4 overflow-hidden rounded-b-[28px] bg-[radial-gradient(500px_220px_at_15%_-10%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] px-5 pb-7 pt-6 text-white sm:rounded-none sm:p-[clamp(22px,3.4vw,44px)] md:w-[46%] md:gap-8">
           <span aria-hidden className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10" />
-          <span aria-hidden className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-accent/90" />
+          <span aria-hidden className="absolute -bottom-10 right-10 hidden h-32 w-32 rounded-full bg-accent/90 sm:block" />
+          <span aria-hidden className="absolute -right-6 bottom-4 h-16 w-16 rounded-full bg-accent/90 sm:hidden" />
           <span aria-hidden className="absolute bottom-40 right-40 hidden h-10 w-10 rotate-12 rounded-xl bg-white/20 md:block" />
 
           <Link
@@ -56,6 +57,9 @@ export async function AuthCard({
             </span>
           </Link>
 
+          <p className="relative text-[22px] font-extrabold leading-tight tracking-heading md:hidden">
+            Welcome! <span className="text-white/75">Shop from sellers you can trust.</span>
+          </p>
           <div className="relative hidden flex-col gap-4 md:flex">
             <span className="-rotate-2 self-start rounded-full bg-accent px-3 py-1.5 text-[13px] font-bold text-gray-900">
               Earn points on every order
@@ -79,7 +83,7 @@ export async function AuthCard({
         </div>
 
         {/* Form */}
-      <div className="flex flex-1 items-center justify-center px-[clamp(20px,3.4vw,48px)] py-[clamp(24px,3.6vw,48px)]">
+      <div className="flex flex-1 items-start justify-center px-5 pb-10 pt-6 sm:items-center sm:px-[clamp(20px,3.4vw,48px)] sm:py-[clamp(24px,3.6vw,48px)]">
         <div className="flex w-full max-w-[420px] animate-fade-in flex-col gap-4">
           <Link
             href="/"
@@ -111,7 +115,7 @@ export async function AuthCard({
               ))}
             </div>
           ) : null}
-          <h1 className="text-[32px] font-extrabold leading-[1.05] tracking-display">{title}</h1>
+          <h1 className="text-[28px] font-extrabold leading-[1.05] tracking-display sm:text-[32px]">{title}</h1>
           {subtitle ? <p className="-mt-2 text-gray-500">{subtitle}</p> : null}
           <div className="[&_input]:h-[50px] [&_input]:rounded-[14px] [&_input]:border-[1.5px] [&_input]:border-gray-200 [&_button[type=submit]]:h-[54px] [&_button[type=submit]]:rounded-2xl [&_button[type=submit]]:text-base [&_button[type=submit]]:font-bold">
             {children}
