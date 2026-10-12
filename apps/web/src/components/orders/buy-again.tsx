@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@ecommerce/ui';
 import { queryKeys, toolsApi } from '@/lib/api-client';
+import { toast } from '@/lib/toast';
 import { orderActionClass } from './order-documents';
 
 /** Puts this order's items back in the cart (what is still available), then opens the cart. */
@@ -14,7 +15,10 @@ export function BuyAgain({ orderNumber }: { orderNumber: string }) {
     mutationFn: () => toolsApi.reorder(orderNumber),
     onSuccess: async (r) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.cart });
-      if (r.added > 0 && r.skipped.length === 0) router.push('/cart');
+      if (r.added > 0 && r.skipped.length === 0) {
+        toast.success(`${r.added} item${r.added === 1 ? '' : 's'} added to your cart`);
+        router.push('/cart');
+      }
     },
   });
   return (

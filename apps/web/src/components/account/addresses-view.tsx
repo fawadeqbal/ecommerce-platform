@@ -26,6 +26,7 @@ import {
 } from '@ecommerce/ui';
 import { addressesApi, queryKeys } from '@/lib/api-client';
 import { AddressInputs } from './address-inputs';
+import { toast } from '@/lib/toast';
 
 export function AddressesView() {
   const queryClient = useQueryClient();
@@ -59,13 +60,18 @@ export function AddressesView() {
     },
     onSuccess: async () => {
       await refresh();
+      toast.success(editing === 'new' ? 'Address added' : 'Address updated');
       setEditing(null);
     },
   });
 
   const makeDefault = useMutation({
     mutationFn: (id: string) => addressesApi.update(id, { isDefault: true }),
-    onSuccess: refresh,
+    onSuccess: async () => {
+      await refresh();
+      toast.success('Default address updated');
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   const remove = useMutation({
@@ -73,6 +79,7 @@ export function AddressesView() {
     onSuccess: async () => {
       await refresh();
       setDeleting(null);
+      toast.info('Address deleted');
     },
   });
 

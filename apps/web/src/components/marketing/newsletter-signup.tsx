@@ -4,12 +4,17 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { newsletterFormSchema } from '@ecommerce/types';
 import { marketingApi } from '@/lib/api-client';
+import { toast } from '@/lib/toast';
 
 /** Footer signup band: double opt-in (a confirmation email is sent). */
 export function NewsletterSignup() {
   const [email, setEmail] = useState('');
   const [invalid, setInvalid] = useState<string | null>(null);
-  const join = useMutation({ mutationFn: (value: string) => marketingApi.subscribe(value) });
+  const join = useMutation({
+    mutationFn: (value: string) => marketingApi.subscribe(value),
+    onSuccess: () =>
+      toast.success('Check your inbox', { description: 'Confirm your email to subscribe.' }),
+  });
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-brand-600 p-[clamp(20px,3vw,36px)] text-white">
       <div className="flex-[1_1_300px]">

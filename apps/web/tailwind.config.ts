@@ -73,6 +73,11 @@ const config: Config = {
           to: { opacity: '1', transform: 'none' },
         },
         'sheet-up': { from: { transform: 'translateY(100%)' }, to: { transform: 'none' } },
+        bump: {
+          '0%': { transform: 'scale(1)' },
+          '40%': { transform: 'scale(1.35)' },
+          '100%': { transform: 'scale(1)' },
+        },
         progress: {
           '0%': { transform: 'scaleX(0)' },
           '60%': { transform: 'scaleX(.7)' },
@@ -87,6 +92,7 @@ const config: Config = {
         'pop-in': 'pop-in .18s cubic-bezier(.22,1,.36,1) both',
         'sheet-up': 'sheet-up .3s cubic-bezier(.22,1,.36,1) both',
         progress: 'progress 2.5s cubic-bezier(.1,.6,.3,1) both',
+        bump: 'bump .35s cubic-bezier(.22,1,.36,1)',
       },
       letterSpacing: {
         display: '-0.04em',

@@ -7,6 +7,7 @@ import { Alert, Spinner, cn, formatMoney } from '@ecommerce/ui';
 import { useSetCart } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { queryKeys, wishlistApi } from '@/lib/api-client';
+import { haptic, toast } from '@/lib/toast';
 
 export function WishlistView() {
   const queryClient = useQueryClient();
@@ -14,13 +15,19 @@ export function WishlistView() {
   const { data, error, isLoading } = useWishlist();
   const remove = useMutation({
     mutationFn: (id: string) => wishlistApi.remove(id),
-    onSuccess: (w) => queryClient.setQueryData(queryKeys.wishlist, w),
+    onSuccess: (w) => {
+      queryClient.setQueryData(queryKeys.wishlist, w);
+      toast.info('Removed from wishlist');
+    },
+    onError: (e) => toast.error(e.message),
   });
   const move = useMutation({
     mutationFn: (id: string) => wishlistApi.moveToCart(id),
     onSuccess: ({ wishlist, cart }) => {
       queryClient.setQueryData(queryKeys.wishlist, wishlist);
       setCart(cart);
+      haptic();
+      toast.success('Moved to cart', { action: { label: 'View cart', href: '/cart' } });
     },
   });
 

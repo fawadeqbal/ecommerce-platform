@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@ecommerce/ui';
 import { useSetCart } from '@/hooks/use-cart';
 import { cartApi, storefrontApi } from '@/lib/api-client';
+import { haptic, toast } from '@/lib/toast';
 
 /** "Add to cart" on a product card. Products with options open the product page instead. */
 export function QuickAdd({
@@ -27,7 +28,12 @@ export function QuickAdd({
       if (!variant) throw new Error('Out of stock');
       return cartApi.add({ variantId: variant.id, quantity: 1 });
     },
-    onSuccess: setCart,
+    onSuccess: (cart) => {
+      setCart(cart);
+      haptic();
+      toast.success('Added to cart', { action: { label: 'View cart', href: '/cart' } });
+    },
+    onError: (e) => toast.error(e.message),
   });
   const label = !inStock
     ? 'Out of stock'

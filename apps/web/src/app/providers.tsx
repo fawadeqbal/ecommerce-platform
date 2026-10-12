@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { LocaleProvider } from '@/components/locale/locale-provider';
+import { Toaster } from '@/components/feedback/toaster';
 import { shouldRetryQuery } from '@/lib/api-client';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -16,7 +17,10 @@ export function Providers({ children }: { children: ReactNode }) {
   );
   return (
     <QueryClientProvider client={client}>
-      <LocaleProvider>{children}</LocaleProvider>
+      <LocaleProvider>
+        {children}
+        <Toaster />
+      </LocaleProvider>
     </QueryClientProvider>
   );
 }

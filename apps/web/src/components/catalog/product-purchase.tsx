@@ -10,6 +10,7 @@ import { useSetCart } from '@/hooks/use-cart';
 import { NotifyMe } from '@/components/wishlist/notify-me';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { cartApi } from '@/lib/api-client';
+import { haptic, toast } from '@/lib/toast';
 import { Money } from '@/components/locale/locale-provider';
 
 /** Option picker + quantity + add to cart. Stock and price follow the selected variant. */
@@ -45,6 +46,10 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
     onSuccess: (cart) => {
       setCart(cart);
       setAdded(true);
+      haptic();
+      toast.success(`${quantity > 1 ? `${quantity} × ` : ''}${product.name} added`, {
+        action: { label: 'View cart', href: '/cart' },
+      });
     },
   });
 

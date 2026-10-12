@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { POINTS_TYPE_LABELS } from '@ecommerce/types';
 import { Alert, Spinner, cn, formatDate, formatMoney } from '@ecommerce/ui';
 import { loyaltyApi, queryKeys } from '@/lib/api-client';
+import { toast } from '@/lib/toast';
 
 export function LoyaltyView() {
   const { data: s, error } = useQuery({
@@ -17,6 +18,7 @@ export function LoyaltyView() {
   const copy = async () => {
     await navigator.clipboard?.writeText(s.referralUrl).catch(() => undefined);
     setCopied(true);
+    toast.success('Invite link copied', { description: 'Share it with friends to earn points.' });
   };
   const progress =
     s.nextTier && s.tier

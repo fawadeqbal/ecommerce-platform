@@ -8,6 +8,7 @@ import { CART_PROBLEM_LABELS, type CartItemDto } from '@ecommerce/types';
 import { Alert, Spinner, cn, formatMoney } from '@ecommerce/ui';
 import { useCart, useMe, useSetCart } from '@/hooks/use-cart';
 import { cartApi, queryKeys } from '@/lib/api-client';
+import { toast } from '@/lib/toast';
 import { Money } from '@/components/locale/locale-provider';
 import { container } from '@/components/layout/container';
 import { Panel, SummaryRow, codeInput, darkButton } from '@/components/checkout/ui';
@@ -41,9 +42,14 @@ export function CartView() {
     },
     onSuccess: async (next, action) => {
       setCart(next);
-      if (action.kind === 'save')
+      if (action.kind === 'save') {
         await queryClient.invalidateQueries({ queryKey: queryKeys.savedItems });
+        toast.success('Saved for later');
+      } else if (action.kind === 'remove') {
+        toast.info(`Removed ${action.item.productName}`);
+      }
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const moveToCart = useMutation({
@@ -51,7 +57,9 @@ export function CartView() {
     onSuccess: async (next) => {
       setCart(next);
       await queryClient.invalidateQueries({ queryKey: queryKeys.savedItems });
+      toast.success('Moved to cart');
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const wrap = `${container} flex max-w-[1240px] flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`;
@@ -298,6 +306,7 @@ export function CartView() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   setSavedCode(code.trim().toUpperCase() || null);
+                  toast.info('Code saved — it’s checked at checkout');
                 }}
               >
                 <input

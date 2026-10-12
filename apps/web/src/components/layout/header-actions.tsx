@@ -60,7 +60,10 @@ export function HeaderActions() {
         className="flex items-center gap-2 rounded-[14px] bg-white px-3.5 py-[9px] text-gray-900 hover:text-brand-600"
       >
         {t('header.cart')}
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-bold text-white">
+        <span
+          key={count}
+          className="inline-flex h-5 min-w-5 animate-bump items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-bold text-white"
+        >
           {count}
         </span>
       </Link>

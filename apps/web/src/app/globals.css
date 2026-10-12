@@ -35,6 +35,34 @@ html {
   scroll-padding-top: calc(var(--header-h) + 16px);
 }
 
+/* Interaction feel: every button (and button-styled link) gives a small press, smooth
+   colour changes and a clear keyboard focus ring. */
+@layer base {
+  button,
+  a {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  button:not(:disabled):active,
+  a[class*='bg-']:active,
+  label[class*='has-[:checked]']:active {
+    transform: scale(0.97);
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid theme('colors.brand.500');
+    outline-offset: 2px;
+  }
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+  }
+}
+
 @layer utilities {
   .scrollbar-none {
     scrollbar-width: none;

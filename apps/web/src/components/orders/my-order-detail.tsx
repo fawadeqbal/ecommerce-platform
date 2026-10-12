@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ORDER_REASON_MIN } from '@ecommerce/types';
 import { Alert, ReasonDialog, Spinner } from '@ecommerce/ui';
 import { ordersApi, queryKeys } from '@/lib/api-client';
+import { toast } from '@/lib/toast';
 import { ReturnDialog } from '@/components/returns/return-dialog';
 import { OrderDetails } from './order-details';
 import { InvoiceLink, OrderDocuments, orderActionClass } from './order-documents';
@@ -26,6 +27,7 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
       await queryClient.invalidateQueries({ queryKey: queryKeys.orders.all, refetchType: 'none' });
       queryClient.setQueryData(queryKeys.orders.detail(orderNumber), updated);
       setCancelling(false);
+      toast.success('Order cancelled', { description: 'You will not be charged for it.' });
     },
   });
 
