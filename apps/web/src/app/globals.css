@@ -24,8 +24,15 @@ body {
   }
 }
 
+:root {
+  /* Height of the sticky header; kept up to date by <HeaderHeight /> (it wraps on small screens). */
+  --header-h: 76px;
+}
+
 html {
   scroll-behavior: smooth;
+  /* In-page links and focused fields land below the sticky header, not under it. */
+  scroll-padding-top: calc(var(--header-h) + 16px);
 }
 
 @layer utilities {

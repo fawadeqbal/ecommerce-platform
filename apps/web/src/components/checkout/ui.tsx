@@ -16,10 +16,7 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section
-      id={id}
-      className={cn('flex scroll-mt-28 flex-col gap-3.5 rounded-3xl bg-white p-5', className)}
-    >
+    <section id={id} className={cn('flex flex-col gap-3.5 rounded-3xl bg-white p-5', className)}>
       {title || action ? (
         <div className="flex items-center justify-between gap-2.5">
           {title ? <h2 className="text-xl font-extrabold">{title}</h2> : <span />}

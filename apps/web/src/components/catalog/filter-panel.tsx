@@ -5,7 +5,7 @@ import { cn } from '@ecommerce/ui';
 
 /**
  * Filter sidebar. The form is a plain GET form (works without JavaScript); with JavaScript it
- * re-submits on every change. Desktop: sticky column that scrolls on its own.
+ * re-submits on every change. Desktop: a normal column that scrolls with the page.
  * Phones: a "Filters" button opens it as a bottom sheet.
  */
 export function FilterPanel({
@@ -66,8 +66,8 @@ export function FilterPanel({
         aria-label="Filters"
         className={cn(
           'flex-col rounded-3xl bg-white',
-          // desktop: sticky column with its own scroll
-          'lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-7.5rem)]',
+          // desktop: part of the page (no inner scrolling)
+          'lg:flex',
           // phones: bottom sheet
           open
             ? 'fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] animate-sheet-up rounded-b-none shadow-card lg:animate-none'
@@ -95,7 +95,7 @@ export function FilterPanel({
         <form
           ref={formRef}
           method="get"
-          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-5 py-2 [scrollbar-width:thin]"
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-5 py-2 lg:overflow-visible"
         >
           {children}
           <noscript>

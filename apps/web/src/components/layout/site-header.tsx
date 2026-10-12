@@ -6,6 +6,7 @@ import { getStoreSettings, storeName } from '@/lib/store-settings';
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { container } from './container';
 import { HeaderActions } from './header-actions';
+import { HeaderHeight } from './header-height';
 import { StoreLogo } from './store-logo';
 
 /** Used until the header menu is set up in Admin → Content → Menus. */
@@ -24,7 +25,8 @@ export async function SiteHeader() {
   const nav = menu.length > 0 ? menu.map((i) => ({ href: i.url, label: i.label })) : fallbackNav;
   return (
     <>
-      <header className="sticky top-0 z-30 bg-brand-600 text-white">
+      <header id="site-header" className="sticky top-0 z-30 bg-brand-600 text-white">
+        <HeaderHeight />
         <div
           className={`${container} flex flex-wrap items-center gap-x-[clamp(14px,2.4vw,36px)] gap-y-3 py-3.5`}
         >

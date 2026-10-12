@@ -24,7 +24,7 @@ export function ProductTabs({ tabs }: { tabs: ProductTab[] }) {
   return (
     <section
       id="details"
-      className="flex scroll-mt-28 flex-col gap-5 rounded-3xl bg-white p-[clamp(18px,3vw,32px)]"
+      className="flex flex-col gap-5 rounded-3xl bg-white p-[clamp(18px,3vw,32px)]"
     >
       <div
         role="tablist"

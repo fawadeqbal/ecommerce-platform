@@ -596,7 +596,7 @@ export function CheckoutView() {
           </Panel>
         </div>
 
-        <aside className="flex-[1_1_320px] lg:sticky lg:top-24">
+        <aside className="flex-[1_1_320px] lg:sticky lg:top-[calc(var(--header-h)+16px)]">
           <Panel title="Order review">
             {quote.isPending ? <Spinner /> : null}
             {q ? (

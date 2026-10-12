@@ -80,7 +80,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
     <div
       className={`${container} flex max-w-[1240px] flex-wrap items-start gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`}
     >
-      <aside className="flex max-w-full flex-[1_1_240px] flex-col gap-3 md:sticky md:top-24">
+      <aside className="flex max-w-full flex-[1_1_240px] flex-col gap-3">
         <div className="flex items-center gap-3 rounded-3xl bg-brand-600 p-[18px] text-white">
           <span className="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full bg-accent text-xl font-extrabold text-gray-900">
             {initials}
