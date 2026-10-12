@@ -308,6 +308,16 @@ for 60 s, and falls back to built-in links/hero when the CMS is empty or unreach
   optional coupon in the last one); win-back every 6 h (last order older than `marketing.winBackDays`, once per
   inactive period). Marketing emails respect opt-outs in `NotificationsService`.
 
+### Email templates & log
+
+- Every email is a React Email template (`packages/email-templates`, one entry per `EmailTemplateKey`), rendered by
+  the worker. Admins override per template (`EmailTemplate`, locale `en`): subject for all; heading / text / button
+  text for generic-layout emails; on / off (security and order-confirmation emails are always on; campaign and
+  newsletter content comes from the campaign editor). `{{firstName}}`-style placeholders from `EMAIL_VARIABLES`.
+- Preview renders unsaved edits with `SAMPLE_EMAIL_DATA`; test send uses the saved version.
+- `EmailLog`: one row per email (queued → sent / failed, or suppressed). `EmailSuppression`: addresses that never
+  receive any email (bounce, complaint, manual).
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

@@ -29,7 +29,16 @@ export class EmailProcessor extends WorkerHost {
       return;
     }
 
-    const rendered = await renderEmail(template, data ?? {}, override?.subject);
+    const rendered = await renderEmail(
+      template,
+      data ?? {},
+      override
+        ? {
+            subject: override.subject,
+            ...((override.overrides ?? {}) as Record<string, string | null>),
+          }
+        : undefined,
+    );
 
     try {
       const result = await this.mail.send({ to, ...rendered });

@@ -28,6 +28,7 @@ export * from './payouts/payout';
 export * from './localization/localization';
 export * from './payments/gateway';
 export * from './marketing/marketing';
+export * from './email-admin';
 export * from './schemas/common';
 export * from './schemas/auth.schema';
 export * from './schemas/category.schema';

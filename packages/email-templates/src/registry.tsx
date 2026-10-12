@@ -14,6 +14,8 @@ type Data = Record<string, unknown>;
 export interface TemplateDefinition {
   subject: (data: Data) => string;
   render: (data: Data) => React.ReactElement;
+  /** Generic layout: heading / body / button text can be overridden by admins. */
+  blocks?: boolean;
 }
 
 const str = (v: unknown, fallback = '') => (typeof v === 'string' && v.length > 0 ? v : fallback);
@@ -23,6 +25,7 @@ function generic(subject: string | ((d: Data) => string), heading?: string): Tem
   const subjectFn = typeof subject === 'string' ? () => subject : subject;
   return {
     subject: subjectFn,
+    blocks: true,
     render: (d) => (
       <GenericNotificationEmail heading={heading ?? subjectFn(d)} {...(d as object)} />
     ),

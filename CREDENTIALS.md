@@ -162,6 +162,13 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 3. Abandoned cart: sign in, add to cart, wait past the first delay (Settings → Marketing emails, default 1 h).
    Win-back: customers with no order for 90 days get one email.
 
+**Email templates & log**
+
+1. Admin → Settings → Email templates: open "Shipped", set the subject to `Order {{orderNumber}} is on the way`,
+   Show preview, Save, Send test → Mailpit shows it (worker must be running).
+2. A generic email (e.g. Gift card received): edit heading / text / button. Reset to default undoes it.
+3. Email log: every email with status; Blocked addresses: block an address and no email goes to it.
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

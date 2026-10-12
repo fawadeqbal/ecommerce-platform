@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
-import { PagePlaceholder } from '@ecommerce/ui';
+import { EmailTemplatesPage } from '@/features/settings/email-templates-page';
 
-export const metadata: Metadata = { title: 'Email templates' };
+export const metadata: Metadata = { title: 'Emails' };
 
 export default function Page() {
-  return (
-    <PagePlaceholder
-      title="Email templates"
-      features={['Edit subjects and content blocks', 'Enable/disable', 'Email logs']}
-    />
-  );
+  return <EmailTemplatesPage />;
 }

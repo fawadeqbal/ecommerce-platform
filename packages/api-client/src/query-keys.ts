@@ -6,6 +6,13 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
   wishlist: ['wishlist'] as const,
+  emailAdmin: {
+    all: ['email-admin'] as const,
+    templates: ['email-admin', 'templates'] as const,
+    template: (key: string) => ['email-admin', 'template', key] as const,
+    logs: (params: object) => ['email-admin', 'logs', params] as const,
+    suppressions: ['email-admin', 'suppressions'] as const,
+  },
   marketing: {
     all: ['marketing'] as const,
     subscribers: (params: object) => ['marketing', 'subscribers', params] as const,

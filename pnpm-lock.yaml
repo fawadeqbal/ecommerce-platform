@@ -99,6 +99,9 @@ importers:
       '@ecommerce/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@ecommerce/email-templates':
+        specifier: workspace:*
+        version: link:../../packages/email-templates
       '@ecommerce/types':
         specifier: workspace:*
         version: link:../../packages/types
