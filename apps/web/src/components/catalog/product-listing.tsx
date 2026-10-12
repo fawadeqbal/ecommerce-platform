@@ -95,6 +95,7 @@ export async function ProductListing({
     maxPrice: first(searchParams.maxPrice) ? Number(first(searchParams.maxPrice)) : undefined,
     minRating: first(searchParams.minRating) ? Number(first(searchParams.minRating)) : undefined,
     inStock: first(searchParams.inStock) === 'true' || undefined,
+    onSale: first(searchParams.onSale) === 'true' || undefined,
     values: values.length > 0 ? values.join(',') : undefined,
     featured: first(searchParams.featured) === 'true' || undefined,
     page: Math.max(1, Number(first(searchParams.page)) || 1),
@@ -202,6 +203,7 @@ export async function ProductListing({
       ? [{ label: `${query.minRating}★ & up`, href: href({ minRating: undefined }) }]
       : []),
     ...(query.inStock ? [{ label: 'In stock', href: href({ inStock: undefined }) }] : []),
+    ...(query.onSale ? [{ label: 'On sale', href: href({ onSale: undefined }) }] : []),
     ...(query.featured ? [{ label: 'Featured', href: href({ featured: undefined }) }] : []),
   ];
 
@@ -432,6 +434,20 @@ export async function ProductListing({
                 name="inStock"
                 value="true"
                 defaultChecked={query.inStock}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden
+                className="relative h-6 w-10 rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[19px]"
+              />
+            </label>
+            <label className="mb-2 flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-3.5 py-3 text-sm font-semibold">
+              On sale only
+              <input
+                type="checkbox"
+                name="onSale"
+                value="true"
+                defaultChecked={query.onSale}
                 className="peer sr-only"
               />
               <span

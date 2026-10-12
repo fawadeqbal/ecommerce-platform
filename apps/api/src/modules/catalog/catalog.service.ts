@@ -62,6 +62,7 @@ export class CatalogService {
       ...(categoryIds ? { categoryId: { in: categoryIds } } : {}),
       ...(q.brand ? { brand: { slug: q.brand } } : {}),
       ...(q.featured ? { isFeatured: true } : {}),
+      ...(q.onSale ? { compareAtPrice: { gt: this.prisma.product.fields.basePrice } } : {}),
       ...(ids ? { id: { in: ids } } : {}),
       ...(q.minRating ? { ratingAverage: { gte: q.minRating } } : {}),
       ...(q.minPrice !== undefined || q.maxPrice !== undefined

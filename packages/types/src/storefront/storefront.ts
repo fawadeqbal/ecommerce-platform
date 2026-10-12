@@ -32,6 +32,8 @@ export interface StorefrontProductQuery {
   minRating?: number;
   /** Only products with sellable stock. */
   inStock?: boolean;
+  /** Only discounted products. */
+  onSale?: boolean;
   /** Comma-separated attribute value ids (OR within an attribute, AND across attributes). */
   values?: string;
   page?: number;

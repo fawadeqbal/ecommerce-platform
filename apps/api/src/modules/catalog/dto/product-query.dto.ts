@@ -58,6 +58,12 @@ export class ProductQueryDto extends PaginationQueryDto {
   @IsBoolean()
   inStock?: boolean;
 
+  @ApiPropertyOptional({ description: 'Only discounted products (compare-at price above price)' })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true' || value === '1')
+  @IsBoolean()
+  onSale?: boolean;
+
   @ApiPropertyOptional({ description: 'Comma-separated attribute value ids' })
   @IsOptional()
   @IsString()

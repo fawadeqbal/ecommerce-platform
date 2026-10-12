@@ -11,7 +11,9 @@ import { container } from '@/components/layout/container';
 import { getBanners } from '@/lib/cms';
 import { brandsApi, categoriesApi, storefrontApi } from '@/lib/api-client';
 
-const REVALIDATE = { next: { revalidate: 60 } };
+// Live data: new arrivals and deals change as sellers publish and discount products.
+export const dynamic = 'force-dynamic';
+const REVALIDATE = { cache: 'no-store' as const };
 
 async function products(
   params: Parameters<typeof storefrontApi.products>[0],
@@ -130,7 +132,7 @@ function uniqueStores(lists: StorefrontProductCard[][]) {
 }
 
 export default async function HomePage() {
-  const [hero, mid, tree, brands, featured, popular, latest] = await Promise.all([
+  const [hero, mid, tree, brands, featured, popular, latest, onSale] = await Promise.all([
     getBanners('home.hero'),
     getBanners('home.mid'),
     safe(categoriesApi.tree(), [] as CategoryTreeNode[]),
@@ -138,10 +140,9 @@ export default async function HomePage() {
     products({ featured: true, limit: 6 }),
     products({ sort: 'popular', limit: 40 }),
     products({ sort: 'newest', limit: 6 }),
+    products({ onSale: true, inStock: true, sort: 'newest', limit: 6 }),
   ]);
-  const deals = popular
-    .filter((p) => p.compareAtPrice && p.compareAtPrice > p.price && p.inStock)
-    .slice(0, 6);
+  const deals = onSale.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
   const best = popular.slice(0, 5);
   const cats = categoryTiles(tree);
   const catImages = await categoryImages(cats);
@@ -224,7 +225,7 @@ export default async function HomePage() {
         <section className="flex flex-col gap-5 rounded-4xl bg-brand-600 p-[clamp(18px,3vw,36px)] text-white">
           <SectionHead
             title="Today’s deals"
-            href="/products?sort=popular"
+            href="/products?onSale=true"
             linkLabel="All deals →"
             tone="light"
           >
