@@ -45,7 +45,7 @@ export function Tooltip({
         side === 'bottom' ? (roomBelow < 48 ? 'top' : 'bottom') : r.top < 48 ? 'bottom' : 'top';
       setPos({
         x: r.left + r.width / 2,
-        y: actual === 'bottom' ? r.bottom + 8 : r.top - 8,
+        y: actual === 'bottom' ? r.bottom + 10 : r.top - 10,
         side: actual,
       });
     }, delay);
@@ -98,20 +98,34 @@ export function Tooltip({
               ref={tipRef}
               id={id}
               role="tooltip"
-              style={{ left: pos.x + shift, top: pos.y }}
+              style={{
+                left: pos.x + shift,
+                top: pos.y,
+                transform: `translate(-50%, ${pos.side === 'top' ? '-100%' : '0'})`,
+              }}
               className={cn(
-                'pointer-events-none fixed z-[80] max-w-[240px] -translate-x-1/2 rounded-lg bg-gray-900 px-2.5 py-1.5 text-center text-xs font-semibold leading-snug text-white shadow-lg',
-                pos.side === 'top' && '-translate-y-full',
+                'pointer-events-none fixed z-[80] max-w-[240px] rounded-xl bg-gray-900 px-3 py-1.5 text-center text-xs font-semibold leading-snug text-white shadow-[0_8px_20px_-6px_rgba(17,15,32,.45)] ring-1 ring-white/10',
+                pos.side === 'top' ? 'origin-bottom' : 'origin-top',
                 className,
               )}
             >
-              {content}
+              <style>
+                {
+                  '@keyframes tooltip-in{from{opacity:0;transform:translateY(-2px) scale(.96)}to{opacity:1;transform:none}}'
+                }
+              </style>
+              <span
+                className="block"
+                style={{ animation: 'tooltip-in .14s cubic-bezier(.22,1,.36,1) both' }}
+              >
+                {content}
+              </span>
               <span
                 aria-hidden
                 style={{ left: `calc(50% - ${shift}px)` }}
                 className={cn(
-                  'absolute h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900',
-                  pos.side === 'bottom' ? '-top-1' : '-bottom-1',
+                  'absolute h-2.5 w-2.5 -translate-x-1/2 rotate-45 rounded-[2px] bg-gray-900',
+                  pos.side === 'bottom' ? '-top-[5px]' : '-bottom-[5px]',
                 )}
               />
             </span>,
