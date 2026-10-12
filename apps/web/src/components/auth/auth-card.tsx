@@ -21,36 +21,65 @@ export async function AuthCard({
   mode?: 'login' | 'register';
 }) {
   const name = storeName(await getStoreSettings());
+  const perks = [
+    ['Cash on delivery everywhere', 'M3 7h18v10H3zM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z'],
+    ['Easy 7-day returns', 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4'],
+    ['Only verified sellers', 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3ZM9 12l2 2 4-4'],
+  ] as const;
   return (
-    <div className="flex min-h-dvh flex-wrap">
-      <div className="relative flex min-h-[280px] flex-[1_1_480px] flex-col justify-between gap-8 overflow-hidden bg-brand-600 p-[clamp(24px,4vw,56px)]">
-        <span
-          aria-hidden
-          className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10"
-        />
-        <span
-          aria-hidden
-          className="absolute bottom-16 right-16 h-40 w-40 rounded-full bg-accent/90"
-        />
-        <Link
-          href="/"
-          aria-label={`${name} home`}
-          className="relative flex items-center gap-1.5 self-start text-[30px] font-extrabold leading-none tracking-display text-white hover:text-white"
-        >
-          {name}
-          <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full bg-accent" />
-        </Link>
-        <div className="relative flex max-w-[440px] flex-col gap-3">
-          <span className="-rotate-2 self-start rounded-full bg-accent px-3 py-1.5 text-[13px] font-bold text-gray-900">
-            Earn points on every order
-          </span>
-          <p className="text-balance text-[clamp(32px,4.4vw,56px)] font-extrabold leading-none tracking-display text-white">
-            Everything you need, from sellers you can trust.
-          </p>
-        </div>
-      </div>
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-gray-50 px-4 py-[clamp(16px,4vw,48px)]">
+      {/* soft page glows */}
+      <span aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-brand-200/60 blur-3xl" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-40 -right-32 h-[420px] w-[420px] rounded-full bg-accent/30 blur-3xl" />
 
-      <div className="flex flex-[1_1_420px] items-center justify-center px-4 py-[clamp(24px,4vw,56px)]">
+      <div className="relative flex w-full max-w-[1080px] flex-col overflow-hidden rounded-[32px] bg-white shadow-[0_0_0_1px_rgba(30,26,51,.04),0_40px_80px_-30px_rgba(30,26,51,.35)] md:flex-row">
+        {/* Brand panel */}
+        <div className="relative flex flex-col justify-between gap-8 overflow-hidden bg-[radial-gradient(500px_220px_at_15%_-10%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-[clamp(22px,3.4vw,44px)] text-white md:w-[46%]">
+          <span aria-hidden className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10" />
+          <span aria-hidden className="absolute -bottom-10 right-10 h-32 w-32 rounded-full bg-accent/90" />
+          <span aria-hidden className="absolute bottom-40 right-40 hidden h-10 w-10 rotate-12 rounded-xl bg-white/20 md:block" />
+
+          <Link
+            href="/"
+            aria-label={`${name} home`}
+            className="relative flex items-center gap-2.5 self-start text-[26px] font-extrabold leading-none tracking-[-0.8px] text-white hover:text-white"
+          >
+            <span className="flex h-10 w-10 -rotate-6 items-center justify-center rounded-[12px] bg-gradient-to-br from-[#ffe066] to-[#ffc61a] text-gray-900 shadow-[0_6px_14px_-4px_rgba(255,198,26,.6),inset_0_1px_0_rgba(255,255,255,.6)]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-5 w-5" aria-hidden>
+                <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
+                <path d="M9 8V7a3 3 0 0 1 6 0v1" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span>
+              {name}
+              <span className="text-accent">.</span>
+            </span>
+          </Link>
+
+          <div className="relative hidden flex-col gap-4 md:flex">
+            <span className="-rotate-2 self-start rounded-full bg-accent px-3 py-1.5 text-[13px] font-bold text-gray-900">
+              Earn points on every order
+            </span>
+            <p className="text-balance text-[clamp(30px,3.4vw,44px)] font-extrabold leading-[1.02] tracking-display">
+              Everything you need, from sellers you can trust.
+            </p>
+            <ul className="mt-2 flex flex-col gap-2.5">
+              {perks.map(([label, d]) => (
+                <li key={label} className="flex items-center gap-3 text-[15px] text-white/85">
+                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-white/[.14] text-accent shadow-[inset_0_0_0_1px_rgba(255,255,255,.2)]">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-4 w-4">
+                      <path d={d} />
+                    </svg>
+                  </span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Form */}
+      <div className="flex flex-1 items-center justify-center px-[clamp(20px,3.4vw,48px)] py-[clamp(24px,3.6vw,48px)]">
         <div className="flex w-full max-w-[420px] flex-col gap-4">
           <Link
             href="/"
@@ -59,7 +88,7 @@ export async function AuthCard({
             ← Back to the store
           </Link>
           {mode ? (
-            <div className="flex gap-1 rounded-2xl bg-white p-1">
+            <div className="flex gap-1 rounded-2xl bg-gray-50 p-1 ring-1 ring-inset ring-gray-200/70">
               {(
                 [
                   ['login', 'Sign in', '/login'],
@@ -89,7 +118,7 @@ export async function AuthCard({
           </div>
           {footer ? <p className="text-center text-sm text-gray-600">{footer}</p> : null}
           {mode ? (
-            <div className="flex flex-wrap justify-between gap-2.5 rounded-2xl bg-white px-4 py-3 text-sm text-gray-600">
+            <div className="flex flex-wrap justify-between gap-2.5 rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-600 ring-1 ring-inset ring-gray-200/70">
               Checked out as a guest?
               <Link href="/track-order" className="font-bold text-brand-700">
                 Track your order
@@ -98,6 +127,7 @@ export async function AuthCard({
           ) : null}
         </div>
       </div>
+    </div>
     </div>
   );
 }
