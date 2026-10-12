@@ -4,21 +4,35 @@ import { cn } from '@ecommerce/ui';
 
 export function SectionHead({
   title,
+  eyebrow,
   href,
   linkLabel = 'See all',
   tone = 'dark',
   children,
 }: {
   title: string;
+  /** Small label above the title (e.g. "Trending"). */
+  eyebrow?: string;
   href?: string;
   linkLabel?: string;
   tone?: 'dark' | 'light';
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-3.5">
-        <h2
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end gap-x-3.5 gap-y-2">
+        <div>
+          {eyebrow ? (
+            <p
+              className={cn(
+                'mb-0.5 text-xs font-bold uppercase tracking-[0.14em]',
+                tone === 'light' ? 'text-accent' : 'text-brand-600',
+              )}
+            >
+              {eyebrow}
+            </p>
+          ) : null}
+          <h2
           className={cn(
             'font-extrabold',
             tone === 'light'
@@ -27,26 +41,33 @@ export function SectionHead({
           )}
         >
           {title}
-        </h2>
+          </h2>
+        </div>
         {children}
       </div>
       {href ? (
         <Link
           href={href}
           className={cn(
-            'text-sm font-semibold',
+            'group/link inline-flex flex-none items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-colors',
             tone === 'light'
-              ? 'rounded-[14px] bg-white/[.16] px-4 py-2.5 font-bold text-white hover:bg-white/25 hover:text-white'
-              : 'text-brand-600 hover:text-brand-800',
+              ? 'bg-white/[.16] text-white hover:bg-white/25 hover:text-white'
+              : 'bg-gray-900 text-white hover:bg-brand-700 hover:text-white',
           )}
         >
-          {linkLabel}
+          {linkLabel.replace(/\s*→$/, '')}
+          <span aria-hidden className="transition-transform group-hover/link:translate-x-0.5">
+            →
+          </span>
         </Link>
       ) : null}
     </div>
   );
 }
 
-/** Responsive product grid used by the home rows. */
+/**
+ * Home product rows: a swipeable row on phones (cards snap into place),
+ * a responsive grid from tablets up.
+ */
 export const productGrid =
-  'grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,16vw,210px),1fr))] gap-3';
+  'scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(clamp(160px,16vw,210px),1fr))] md:overflow-visible md:px-0 [&>*]:w-[46%] [&>*]:flex-none [&>*]:snap-start sm:[&>*]:w-[31%] md:[&>*]:w-auto';

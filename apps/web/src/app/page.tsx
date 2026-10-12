@@ -167,11 +167,11 @@ export default async function HomePage() {
             products: [deals.length ? deals : popular, latest, featured.length ? featured : popular][i] ?? [],
           }))}
         />
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-2.5">
+        <div className="scrollbar-none -mx-4 flex snap-x gap-2.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
           {TRUST.map((t) => (
             <div
               key={t.title}
-              className="flex items-center gap-3 rounded-[18px] bg-white px-4 py-3.5"
+              className="flex w-[64%] flex-none snap-start items-center gap-3 rounded-[20px] bg-white px-4 py-3.5 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card sm:w-[40%] md:w-auto"
             >
               <span
                 className={cn(
@@ -267,6 +267,7 @@ export default async function HomePage() {
       {deals.length > 0 ? (
         <section className="flex flex-col gap-5 rounded-4xl bg-brand-600 p-[clamp(18px,3vw,36px)] text-white">
           <SectionHead
+            eyebrow="Limited time"
             title="Today’s deals"
             href="/products?onSale=true"
             linkLabel="All deals →"
@@ -274,7 +275,7 @@ export default async function HomePage() {
           >
             <DealsCountdown />
           </SectionHead>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,18vw,220px),1fr))] gap-3 text-gray-900">
+          <div className={`${productGrid} text-gray-900`}>
             {deals.map((p) => (
               <ProductCard key={p.id} product={p} dealPrice />
             ))}
@@ -284,7 +285,7 @@ export default async function HomePage() {
 
       {featured.length > 0 ? (
         <section className="flex flex-col gap-4">
-          <SectionHead title="Featured for you" href="/products?featured=true" />
+          <SectionHead eyebrow="Hand-picked" title="Featured for you" href="/products?featured=true" />
           <div className={productGrid}>
             {featured.map((p) => (
               <ProductCard key={p.id} product={p} quickAdd />
@@ -320,8 +321,8 @@ export default async function HomePage() {
 
       {best.length > 0 ? (
         <section className="flex flex-col gap-4">
-          <SectionHead title="Best sellers" href="/products?sort=popular" linkLabel="See all" />
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,17vw,240px),1fr))] gap-3">
+          <SectionHead eyebrow="Trending now" title="Best sellers" href="/products?sort=popular" />
+          <div className={productGrid}>
             {best.map((p, i) => (
               <ProductCard key={p.id} product={p} rank={i + 1} />
             ))}
@@ -331,17 +332,17 @@ export default async function HomePage() {
 
       {stores.length > 0 ? (
         <section className="flex flex-col gap-4">
-          <SectionHead title="Stores people love" />
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,290px),1fr))] gap-3">
+          <SectionHead eyebrow="Verified sellers" title="Stores people love" />
+          <div className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] md:overflow-visible md:px-0">
             {stores.map((s, i) => (
               <Link
                 key={s.slug}
                 href={`/stores/${s.slug}`}
-                className="flex items-center gap-3.5 rounded-3xl bg-white p-4 hover:text-gray-900"
+                className="group flex w-[82%] flex-none snap-start items-center gap-3.5 rounded-3xl bg-white p-4 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:text-gray-900 hover:shadow-card sm:w-[48%] md:w-auto"
               >
                 <span
                   className={cn(
-                    'flex h-16 w-16 flex-none items-center justify-center rounded-full text-[26px] font-extrabold',
+                    'flex h-16 w-16 flex-none items-center justify-center rounded-2xl text-[26px] font-extrabold ring-4 ring-white transition-transform duration-300 group-hover:scale-105',
                     TINTS[(i + 1) % TINTS.length],
                   )}
                 >
@@ -349,10 +350,12 @@ export default async function HomePage() {
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="truncate text-base font-bold">{s.name}</span>
-                  <span className="text-[13px] text-gray-500">Verified seller</span>
+                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-emerald-700">
+                    <span aria-hidden>✓</span> Verified seller
+                  </span>
                 </span>
-                <span className="rounded-xl bg-brand-100 px-3 py-2 text-[13px] font-bold text-brand-700">
-                  Visit
+                <span className="rounded-full bg-brand-100 px-3.5 py-2 text-[13px] font-bold text-brand-700 transition-colors group-hover:bg-brand-600 group-hover:text-white">
+                  Visit →
                 </span>
               </Link>
             ))}
@@ -362,7 +365,7 @@ export default async function HomePage() {
 
       {latest.length > 0 ? (
         <section className="flex flex-col gap-4">
-          <SectionHead title="New arrivals" href="/products?sort=newest" />
+          <SectionHead eyebrow="Just landed" title="New arrivals" href="/products?sort=newest" />
           <div className={productGrid}>
             {latest.map((p) => (
               <ProductCard key={p.id} product={p} badge="new" />
@@ -372,15 +375,27 @@ export default async function HomePage() {
       ) : null}
 
       {brands.length > 0 ? (
-        <section className="flex flex-col gap-3.5 rounded-3xl bg-white p-[clamp(18px,2.6vw,28px)]">
-          <h2 className="text-lg font-bold">Official brand stores</h2>
-          <div className="scrollbar-none flex gap-2.5 overflow-x-auto">
+        <section className="relative flex flex-col gap-4 overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] shadow-card">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-brand-200/50 blur-3xl"
+          />
+          <div className="relative">
+            <SectionHead eyebrow="Shop the brands" title="Official brand stores" />
+          </div>
+          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex gap-2.5 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1">
             {brands.slice(0, 16).map((b) => (
               <Link
                 key={b.id}
                 href={`/brands/${b.slug}`}
-                className="flex h-14 flex-none items-center rounded-full bg-gray-50 px-6 text-[17px] font-extrabold tracking-[-0.02em] text-gray-600 hover:bg-brand-100 hover:text-brand-700"
+                className="group flex h-14 flex-none items-center gap-2.5 rounded-full bg-gray-50 pl-2 pr-6 text-[16px] font-extrabold tracking-[-0.02em] text-gray-700 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:text-white"
               >
+                <span
+                  aria-hidden
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm text-brand-700 shadow-sm transition-colors group-hover:text-brand-700"
+                >
+                  {b.name.charAt(0).toUpperCase()}
+                </span>
                 {b.name}
               </Link>
             ))}
