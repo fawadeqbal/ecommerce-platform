@@ -97,6 +97,10 @@ export const navigation: NavGroup[] = [
         href: '/loyalty',
       },
       {
+        label: 'Rewards activity',
+        href: '/loyalty/activity',
+      },
+      {
         label: 'Campaigns',
         href: '/marketing/campaigns',
       },

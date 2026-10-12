@@ -26,4 +26,5 @@ export { reportsApi } from './endpoints/reports';
 export { blogApi } from './endpoints/blog';
 export { customersApi } from './endpoints/customers';
 export { commissionsApi } from './endpoints/commissions';
+export { rewardsApi } from './endpoints/rewards';
 export { rbacApi, settingsApi, vendorStaffApi } from './endpoints/rbac';

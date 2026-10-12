@@ -131,6 +131,14 @@ export const queryKeys = {
     access: ['vendor-staff', 'me'] as const,
     list: ['vendor-staff', 'list'] as const,
   },
+  rewards: {
+    all: ['rewards'] as const,
+    activity: (q: object) => ['rewards', 'activity', q] as const,
+    summary: (range: object) => ['rewards', 'summary', range] as const,
+    order: (id: string) => ['rewards', 'order', id] as const,
+    coupon: (id: string, page: number) => ['rewards', 'coupon', id, page] as const,
+    customer: (id: string) => ['rewards', 'customer', id] as const,
+  },
   commissions: {
     all: ['commissions'] as const,
     list: ['commissions', 'list'] as const,

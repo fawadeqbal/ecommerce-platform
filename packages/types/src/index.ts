@@ -23,6 +23,7 @@ export * from './reviews/review';
 export * from './wishlist/wishlist';
 export * from './promotions/promotion';
 export * from './loyalty/loyalty';
+export * from './loyalty/activity';
 export * from './payouts/payout';
 export * from './schemas/common';
 export * from './schemas/auth.schema';

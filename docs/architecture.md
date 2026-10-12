@@ -280,6 +280,11 @@ Computed by the API only (`POST /checkout/quote`); the UI never calculates total
   (`/admin/vendors/commissions`). The seller rate on the seller detail page and in the approve dialog
   is the seller's own rule (there is no `Vendor.commissionRate` column). Placed orders keep the
   commission they were charged.
+- Rewards tracking (admin): `RewardsActivityService` unions `PointsTransaction`, `CouponUsage` and
+  `GiftCardTransaction` into one ledger. Admin Loyalty → Rewards activity (`/loyalty/activity`) lists it
+  with filters, CSV and totals (points earned/redeemed/held + their value, coupon discounts, gift card
+  redeemed/balance left). The same ledger shows on the order page (Discounts & rewards), the coupon
+  page (Usage) and the customer page (Points & rewards history).
 - Settings are rows in the `Setting` table, read with `readSetting(prisma, key, fallback)`.
 
 ## Conventions

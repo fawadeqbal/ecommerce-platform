@@ -26,6 +26,7 @@ import {
   formatMoney,
 } from '@ecommerce/ui';
 import { ordersApi, queryKeys } from '@/lib/api-client';
+import { OrderRewards } from './order-rewards';
 import { OrderStatusBadge } from './order-status-badge';
 
 export function AdminOrderDetail({ id }: { id: string }) {
@@ -192,6 +193,8 @@ export function AdminOrderDetail({ id }: { id: string }) {
               ]}
             />
           </Card>
+
+          <OrderRewards orderId={o.id} />
 
           {o.payments.length > 0 && o.paymentMethod !== 'COD' ? (
             <Card>

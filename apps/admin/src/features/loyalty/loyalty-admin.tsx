@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useState } from 'react';
 import { POINTS_TYPE_LABELS, type TierDto } from '@ecommerce/types';
 import {
@@ -21,6 +22,11 @@ export function LoyaltyAdmin() {
       <PageHeader
         title="Loyalty"
         description="Earning and redemption rules are settings (loyalty.*) in the Setting table. Tiers follow lifetime points."
+        actions={
+          <Link href="/loyalty/activity">
+            <Button variant="outline">Rewards activity</Button>
+          </Link>
+        }
       />
       <Tiers />
       <Member />

@@ -27,6 +27,7 @@ import type { OrderSummaryDto } from '@ecommerce/types';
 import { customersApi, loyaltyApi, queryKeys } from '@/lib/api-client';
 import { OrderStatusBadge } from '../orders/order-status-badge';
 import { CustomerStatusBadge, SegmentBadges } from './customer-badges';
+import { CustomerRewards } from './customer-rewards';
 
 export function CustomerDetail({ id }: { id: string }) {
   const queryClient = useQueryClient();
@@ -160,6 +161,8 @@ export function CustomerDetail({ id }: { id: string }) {
               />
             </div>
           </Card>
+
+          <CustomerRewards userId={c.id} currency={c.currency} />
 
           <Card>
             <CardTitle className="mb-3">Addresses</CardTitle>

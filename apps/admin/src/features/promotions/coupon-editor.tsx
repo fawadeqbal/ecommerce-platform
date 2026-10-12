@@ -28,6 +28,7 @@ import {
   Spinner,
 } from '@ecommerce/ui';
 import { categoriesApi, productsApi, promotionsApi, queryKeys } from '@/lib/api-client';
+import { CouponUsage } from './coupon-usage';
 import { ScopePicker, flattenCategories } from './scope-picker';
 
 const optional = { setValueAs: emptyNumberToNull };
@@ -47,12 +48,15 @@ export function CouponEditor({ id }: { id?: string }) {
     );
   if (!detail.data) return <Spinner className="p-6" />;
   return (
-    <CouponForm
-      key={detail.data.id}
-      id={detail.data.id}
-      initial={couponToForm(detail.data)}
-      usedCount={detail.data.usedCount}
-    />
+    <>
+      <CouponForm
+        key={detail.data.id}
+        id={detail.data.id}
+        initial={couponToForm(detail.data)}
+        usedCount={detail.data.usedCount}
+      />
+      <CouponUsage couponId={detail.data.id} />
+    </>
   );
 }
 
