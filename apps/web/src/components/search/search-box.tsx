@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 import { formatMoney } from '@ecommerce/ui';
+import { useLocale } from '@/components/locale/locale-provider';
 import { queryKeys, searchApi } from '@/lib/api-client';
 
 /** Header search with typo-tolerant suggestions (products, categories, brands). */
@@ -17,6 +18,7 @@ export function SearchBox() {
   const [debounced, setDebounced] = useState(value);
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const { t } = useLocale();
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(value.trim()), 200);
@@ -49,8 +51,13 @@ export function SearchBox() {
   };
 
   return (
-    <div ref={boxRef} className="relative ml-auto hidden flex-1 md:block md:max-w-md">
-      <form action="/search" onSubmit={submit} role="search">
+    <div ref={boxRef} className="relative order-3 min-w-0 flex-[1_1_400px]">
+      <form
+        action="/search"
+        onSubmit={submit}
+        role="search"
+        className="flex h-12 items-center gap-2 rounded-2xl bg-white pl-[18px] pr-1.5"
+      >
         <input
           name="q"
           value={value}
@@ -60,19 +67,25 @@ export function SearchBox() {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-          placeholder="Search products, brands…"
+          placeholder={t('header.searchPlaceholder')}
           aria-label="Search products"
           aria-autocomplete="list"
           aria-controls={listId}
           aria-expanded={open && hasResults}
           autoComplete="off"
-          className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-[15px] text-gray-900 placeholder:text-gray-500 focus:outline-none"
         />
+        <button
+          type="submit"
+          className="h-9 rounded-xl bg-accent px-[18px] font-bold text-gray-900 hover:bg-accent-strong"
+        >
+          {t('header.search')}
+        </button>
       </form>
       {open && hasResults ? (
         <div
           id={listId}
-          className="absolute left-0 right-0 top-11 z-30 rounded-xl border border-gray-200 bg-white p-2 text-sm shadow-lg"
+          className="absolute left-0 right-0 top-[52px] z-40 rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
         >
           {data.products.map((p) => (
             <Link

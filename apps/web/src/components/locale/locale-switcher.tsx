@@ -7,7 +7,7 @@ export function LocaleSwitcher() {
   const { info, currency, setCurrency, language, setLanguage, t } = useLocale();
   if (!info) return null;
   const select =
-    'h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 focus:border-brand-500 focus:outline-none';
+    'h-9 rounded-[14px] border-0 bg-white/[.14] px-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white/40 [&>option]:text-gray-900';
   return (
     <div className="hidden items-center gap-2 lg:flex">
       {info.currencies.length > 1 ? (

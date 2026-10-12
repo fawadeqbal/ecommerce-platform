@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { NewsletterSignup } from '@/components/marketing/newsletter-signup';
 import { getMenu } from '@/lib/cms';
+import { getStoreSettings, storeName } from '@/lib/store-settings';
+import { container } from './container';
+import { StoreLogo } from './store-logo';
 
 /** Used until the footer menu is set up in Admin → Content → Menus. */
 const fallbackGroups = [
@@ -10,6 +13,7 @@ const fallbackGroups = [
       ['All products', '/products'],
       ['Track order', '/track-order'],
       ['Sell with us', process.env.NEXT_PUBLIC_VENDOR_URL || 'http://localhost:3002'],
+      ['Gift cards', '/account/loyalty'],
     ],
   },
   {
@@ -33,7 +37,8 @@ const fallbackGroups = [
 ] as const;
 
 export async function SiteFooter() {
-  const menu = await getMenu('footer');
+  const [menu, settings] = await Promise.all([getMenu('footer'), getStoreSettings()]);
+  const name = storeName(settings);
   const groups: { title: string; links: (readonly [string, string])[] }[] =
     menu.length > 0
       ? menu.map((col) => ({
@@ -45,26 +50,32 @@ export async function SiteFooter() {
         }))
       : fallbackGroups.map((g) => ({ title: g.title, links: [...g.links] }));
   return (
-    <footer className="mt-16 border-t border-gray-200 bg-gray-50">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-4">
+    <footer className="mt-[clamp(40px,5vw,72px)] bg-white">
+      <div className={`${container} pt-[clamp(28px,4vw,48px)]`}>
         <NewsletterSignup />
+      </div>
+      <div
+        className={`${container} grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-7 py-[clamp(28px,4vw,48px)]`}
+      >
+        <div className="flex flex-col gap-2.5">
+          <StoreLogo name={name} tone="dark" href={null} />
+          <p className="max-w-[240px] text-sm text-gray-500">
+            Thousands of products from trusted sellers, with cash on delivery.
+          </p>
+        </div>
         {groups.map((g) => (
-          <div key={g.title}>
-            <p className="mb-3 text-sm font-semibold">{g.title}</p>
-            <ul className="space-y-2 text-sm text-gray-600">
-              {g.links.map(([label, href]) => (
-                <li key={label}>
-                  <Link href={href} className="hover:text-brand-700">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <div key={g.title} className="flex flex-col gap-[9px]">
+            <p className="text-[15px] font-bold">{g.title}</p>
+            {g.links.map(([label, href]) => (
+              <Link key={label} href={href} className="text-sm text-gray-500 hover:text-brand-600">
+                {label}
+              </Link>
+            ))}
           </div>
         ))}
       </div>
-      <p className="pb-6 text-center text-xs text-gray-500">
-        © {new Date().getFullYear()} Ecommerce
+      <p className="border-t border-gray-200 p-4 text-center text-[13px] text-gray-500">
+        © {new Date().getFullYear()} {name}
       </p>
     </footer>
   );

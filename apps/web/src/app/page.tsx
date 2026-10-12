@@ -1,84 +1,341 @@
+/* eslint-disable @next/next/no-img-element -- images are served from object storage */
 import Link from 'next/link';
-import type { StorefrontProductCard } from '@ecommerce/types';
-import { buttonStyles } from '@ecommerce/ui';
+import type { BrandDto, CategoryTreeNode, StorefrontProductCard } from '@ecommerce/types';
+import { cn } from '@ecommerce/ui';
 import { ProductCard } from '@/components/catalog/product-card';
 import { BannerStrip } from '@/components/cms/banner-strip';
+import { DealsCountdown } from '@/components/home/deals-countdown';
+import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
+import { SectionHead, productGrid } from '@/components/home/section-head';
+import { container } from '@/components/layout/container';
 import { getBanners } from '@/lib/cms';
-import { storefrontApi } from '@/lib/api-client';
+import { brandsApi, categoriesApi, storefrontApi } from '@/lib/api-client';
 
-async function section(
+const REVALIDATE = { next: { revalidate: 60 } };
+
+async function products(
   params: Parameters<typeof storefrontApi.products>[0],
 ): Promise<StorefrontProductCard[]> {
   try {
-    return (await storefrontApi.products(params, { next: { revalidate: 60 } })).items;
+    return (await storefrontApi.products(params, REVALIDATE)).items;
   } catch {
     return [];
   }
 }
 
-function Row({
-  title,
-  href,
-  products,
-}: {
-  title: string;
-  href: string;
-  products: StorefrontProductCard[];
-}) {
-  if (products.length === 0) return null;
-  return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between">
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-        <Link href={href} className="text-sm font-medium text-brand-700 hover:underline">
-          View all
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
-    </section>
-  );
+const safe = <T,>(p: Promise<T>, fallback: T) => p.catch(() => fallback);
+
+const SLIDES: HeroSlide[] = [
+  {
+    tag: 'This week',
+    title: 'Top brands, up to 25% off',
+    sub: 'Phones, laptops and gadgets from verified sellers.',
+    cta: 'Shop deals',
+    href: '/products?sort=popular',
+    bg: 'bg-brand-600',
+  },
+  {
+    tag: 'Just in',
+    title: 'Thousands of new styles',
+    sub: 'Fresh arrivals from our stores every day. Pay on delivery.',
+    cta: 'See new arrivals',
+    href: '/products?sort=newest',
+    bg: 'bg-gray-900',
+  },
+  {
+    tag: 'Featured',
+    title: 'Hand-picked for you',
+    sub: 'Our team’s favourite products, all in one place.',
+    cta: 'Shop featured',
+    href: '/products?featured=true',
+    bg: 'bg-[#0055a9]',
+  },
+];
+
+const TRUST = [
+  { k: 'C', title: 'Cash on delivery', sub: 'Pay when it arrives', tint: 'bg-tint-yellow' },
+  { k: '↺', title: 'Easy returns', sub: 'Request from your orders', tint: 'bg-tint-mint' },
+  { k: '✓', title: 'Verified sellers', sub: 'Every store reviewed', tint: 'bg-tint-violet' },
+  { k: '%', title: 'Secure payments', sub: 'Card, wallet or cash', tint: 'bg-tint-rose' },
+];
+
+const TINTS = [
+  'bg-tint-violet',
+  'bg-tint-yellow',
+  'bg-tint-mint',
+  'bg-tint-rose',
+  'bg-tint-sky',
+  'bg-tint-pink',
+];
+
+function categoryTiles(tree: CategoryTreeNode[]): CategoryTreeNode[] {
+  const top = tree.slice(0, 12);
+  if (top.length >= 8) return top;
+  // Few top-level categories: fill with their children.
+  return [...top, ...tree.flatMap((c) => c.children)].slice(0, 12);
+}
+
+function uniqueStores(lists: StorefrontProductCard[][]) {
+  const seen = new Map<string, { name: string; slug: string; count: number }>();
+  for (const p of lists.flat()) {
+    const s = seen.get(p.vendor.slug) ?? { ...p.vendor, count: 0 };
+    s.count += 1;
+    seen.set(p.vendor.slug, s);
+  }
+  return [...seen.values()].sort((a, b) => b.count - a.count).slice(0, 4);
 }
 
 export default async function HomePage() {
-  const [featured, latest, hero, mid] = await Promise.all([
-    section({ featured: true, limit: 4 }),
-    section({ sort: 'newest', limit: 8 }),
+  const [hero, mid, tree, brands, featured, popular, latest] = await Promise.all([
     getBanners('home.hero'),
     getBanners('home.mid'),
+    safe(categoriesApi.tree(), [] as CategoryTreeNode[]),
+    safe(brandsApi.list(), [] as BrandDto[]),
+    products({ featured: true, limit: 6 }),
+    products({ sort: 'popular', limit: 40 }),
+    products({ sort: 'newest', limit: 6 }),
   ]);
-
-  const defaultHero = (
-    <section className="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-500 px-8 py-14 text-white">
-      <h1 className="max-w-xl text-4xl font-bold">
-        Everything you need, from sellers you can trust
-      </h1>
-      <p className="mt-3 max-w-lg text-brand-50">
-        Phones, laptops, fashion and more, with cash on delivery.
-      </p>
-      <Link
-        href="/products"
-        className={buttonStyles({
-          variant: 'secondary',
-          size: 'lg',
-          className: 'mt-6 bg-white text-brand-800 hover:bg-brand-50',
-        })}
-      >
-        Shop now
-      </Link>
-    </section>
-  );
+  const deals = popular
+    .filter((p) => p.compareAtPrice && p.compareAtPrice > p.price && p.inStock)
+    .slice(0, 6);
+  const best = popular.slice(0, 5);
+  const cats = categoryTiles(tree);
+  const stores = uniqueStores([featured, popular, latest]);
+  const empty = featured.length + popular.length + latest.length === 0;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-12 px-4 py-8">
-      <BannerStrip banners={hero} variant="hero" fallback={defaultHero} />
-      <Row title="Featured" href="/products?featured=true" products={featured} />
-      <BannerStrip banners={mid} variant="strip" />
-      <Row title="New arrivals" href="/products?sort=newest" products={latest} />
-      {featured.length === 0 && latest.length === 0 ? (
+    <div
+      className={`${container} flex flex-col gap-[clamp(30px,4vw,56px)] pt-[clamp(14px,2vw,24px)]`}
+    >
+      <section className="flex flex-col gap-3">
+        <HeroCarousel banners={hero} slides={SLIDES} />
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-2.5">
+          {TRUST.map((t) => (
+            <div
+              key={t.title}
+              className="flex items-center gap-3 rounded-[18px] bg-white px-4 py-3.5"
+            >
+              <span
+                className={cn(
+                  'flex h-10 w-10 flex-none items-center justify-center rounded-xl font-extrabold',
+                  t.tint,
+                )}
+              >
+                {t.k}
+              </span>
+              <div>
+                <p className="text-[15px] font-bold">{t.title}</p>
+                <p className="text-[13px] text-gray-500">{t.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {cats.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <SectionHead title="Shop by category" href="/products" />
+          <div className="scrollbar-none grid auto-cols-[clamp(100px,13vw,170px)] grid-flow-col grid-rows-[repeat(2,auto)] gap-2.5 overflow-x-auto">
+            {cats.map((c, i) => (
+              <Link
+                key={c.id}
+                href={`/categories/${c.slug}`}
+                className={cn(
+                  'flex flex-col gap-2 rounded-[22px] p-3 pb-3.5 text-sm font-semibold transition-transform hover:-translate-y-[3px] hover:text-gray-900',
+                  TINTS[i % TINTS.length],
+                )}
+              >
+                <span className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-white/50">
+                  {c.imageUrl ? (
+                    <img
+                      src={c.imageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="text-4xl font-extrabold text-gray-900/30">
+                      {c.name.charAt(0)}
+                    </span>
+                  )}
+                </span>
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {deals.length > 0 ? (
+        <section className="flex flex-col gap-5 rounded-4xl bg-brand-600 p-[clamp(18px,3vw,36px)] text-white">
+          <SectionHead
+            title="Today’s deals"
+            href="/products?sort=popular"
+            linkLabel="All deals →"
+            tone="light"
+          >
+            <DealsCountdown />
+          </SectionHead>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,18vw,220px),1fr))] gap-3 text-gray-900">
+            {deals.map((p) => (
+              <ProductCard key={p.id} product={p} dealPrice />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {featured.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <SectionHead title="Featured for you" href="/products?featured=true" />
+          <div className={productGrid}>
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} quickAdd />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {mid.length > 0 ? (
+        <div className="overflow-hidden rounded-4xl">
+          <BannerStrip banners={mid} variant="strip" />
+        </div>
+      ) : (
+        <section className="relative flex min-h-[clamp(220px,22vw,300px)] items-center overflow-hidden rounded-4xl bg-accent">
+          <div aria-hidden className="absolute inset-y-0 right-0 hidden w-1/2 md:block">
+            <span className="absolute -right-10 -top-10 h-80 w-80 rounded-full bg-white/40" />
+            <span className="absolute bottom-6 right-56 h-28 w-28 rounded-3xl bg-brand-600" />
+          </div>
+          <div className="relative flex max-w-full flex-col gap-2.5 p-[clamp(24px,4vw,52px)] md:max-w-[52%]">
+            <span className="text-sm font-bold">New every week · from all our stores</span>
+            <h2 className="text-balance text-[clamp(30px,4.4vw,56px)] font-extrabold leading-[.95] tracking-display">
+              Fresh arrivals, fair prices
+            </h2>
+            <Link
+              href="/products?sort=newest"
+              className="mt-1.5 self-start rounded-2xl bg-gray-900 px-6 py-3.5 font-bold text-white hover:text-white hover:opacity-90"
+            >
+              Shop new in
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {best.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <SectionHead title="Best sellers" href="/products?sort=popular" linkLabel="See all" />
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,17vw,240px),1fr))] gap-3">
+            {best.map((p, i) => (
+              <ProductCard key={p.id} product={p} rank={i + 1} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {stores.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <SectionHead title="Stores people love" />
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,290px),1fr))] gap-3">
+            {stores.map((s, i) => (
+              <Link
+                key={s.slug}
+                href={`/stores/${s.slug}`}
+                className="flex items-center gap-3.5 rounded-3xl bg-white p-4 hover:text-gray-900"
+              >
+                <span
+                  className={cn(
+                    'flex h-16 w-16 flex-none items-center justify-center rounded-full text-[26px] font-extrabold',
+                    TINTS[(i + 1) % TINTS.length],
+                  )}
+                >
+                  {s.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-base font-bold">{s.name}</span>
+                  <span className="text-[13px] text-gray-500">Verified seller</span>
+                </span>
+                <span className="rounded-xl bg-brand-100 px-3 py-2 text-[13px] font-bold text-brand-700">
+                  Visit
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {latest.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <SectionHead title="New arrivals" href="/products?sort=newest" />
+          <div className={productGrid}>
+            {latest.map((p) => (
+              <ProductCard key={p.id} product={p} badge="new" />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {brands.length > 0 ? (
+        <section className="flex flex-col gap-3.5 rounded-3xl bg-white p-[clamp(18px,2.6vw,28px)]">
+          <h2 className="text-lg font-bold">Official brand stores</h2>
+          <div className="scrollbar-none flex gap-2.5 overflow-x-auto">
+            {brands.slice(0, 16).map((b) => (
+              <Link
+                key={b.id}
+                href={`/brands/${b.slug}`}
+                className="flex h-14 flex-none items-center rounded-full bg-gray-50 px-6 text-[17px] font-extrabold tracking-[-0.02em] text-gray-600 hover:bg-brand-100 hover:text-brand-700"
+              >
+                {b.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] gap-3">
+        <div className="flex flex-col gap-3.5 rounded-4xl bg-gray-900 p-[clamp(22px,3.4vw,44px)] text-white">
+          <span className="self-start rounded-full bg-accent px-3 py-1.5 text-[13px] font-bold text-gray-900">
+            Rewards
+          </span>
+          <h2 className="text-balance text-[clamp(28px,3.6vw,44px)] font-extrabold leading-none tracking-display text-white">
+            Every order earns you points
+          </h2>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ['Earn', 'Shop', 'on delivered orders'],
+              ['Redeem', 'Save', 'at checkout'],
+              ['Tiers', 'More', 'as you shop more'],
+            ].map(([name, big, note]) => (
+              <div key={name} className="flex flex-col gap-0.5 rounded-[18px] bg-white/[.08] p-3.5">
+                <span className="text-[13px] text-gray-300">{name}</span>
+                <span className="text-2xl font-extrabold text-white">{big}</span>
+                <span className="text-xs text-gray-400">{note}</span>
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/account/loyalty"
+            className="self-start rounded-2xl bg-white px-[22px] py-[13px] font-bold text-gray-900 hover:text-brand-600"
+          >
+            See my points
+          </Link>
+        </div>
+        <div className="flex flex-col justify-between gap-3.5 rounded-4xl bg-brand-100 p-[clamp(22px,3.4vw,44px)]">
+          <div className="flex flex-col gap-2.5">
+            <span className="font-bold text-brand-700">Invite friends</span>
+            <h2 className="text-[clamp(28px,3.6vw,44px)] font-extrabold leading-none tracking-display">
+              You both get bonus points
+            </h2>
+            <p className="text-gray-600">After your friend’s first delivered order.</p>
+          </div>
+          <Link
+            href="/account/loyalty"
+            className="self-start rounded-2xl bg-brand-600 px-[22px] py-[13px] font-bold text-white hover:bg-brand-700 hover:text-white"
+          >
+            Share my link
+          </Link>
+        </div>
+      </section>
+
+      {empty ? (
         <p className="text-center text-gray-500">
           No products yet. Approve products in the admin to see them here.
         </p>

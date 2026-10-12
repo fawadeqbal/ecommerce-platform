@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Outfit } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Providers } from './providers';
 import { SiteHeader } from '@/components/layout/site-header';
@@ -6,7 +7,10 @@ import { SiteFooter } from '@/components/layout/site-footer';
 import { SupportWidget } from '@/components/support/support-widget';
 import { OrganizationJsonLd } from '@/components/seo/organization-json-ld';
 import { MaintenanceGate } from '@/components/layout/maintenance-gate';
+import { MobileTabBar } from '@/components/layout/mobile-tab-bar';
 import './globals.css';
+
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
@@ -16,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={outfit.variable}>
       <body className="flex min-h-screen flex-col">
         <MaintenanceGate>
           <Providers>
@@ -24,6 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />
+            <MobileTabBar />
             <SupportWidget />
           </Providers>
         </MaintenanceGate>
