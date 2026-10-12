@@ -95,13 +95,21 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
   }, [open]);
 
   const current = shown !== null ? items[shown] : undefined;
+  // Slide direction when switching menus: from the right when moving right, and vice versa.
+  const prevShown = useRef<number | null>(null);
+  const dir = shown !== null && prevShown.current !== null && shown < prevShown.current ? -1 : 1;
+  useEffect(() => {
+    if (shown !== null) prevShown.current = shown;
+  }, [shown]);
 
   return (
     <>
       <style>
         {'.menu-in{animation:menu-in .32s cubic-bezier(.22,1,.36,1) backwards}' +
           '@keyframes menu-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
-          '@media (prefers-reduced-motion:reduce){.menu-in{animation:none}}'}
+          '.menu-swap{animation:menu-swap .42s cubic-bezier(.22,1,.36,1) both}' +
+          '@keyframes menu-swap{from{opacity:0;transform:translateX(var(--menu-dx,14px))}to{opacity:1;transform:none}}' +
+          '@media (prefers-reduced-motion:reduce){.menu-in,.menu-swap{animation:none}}'}
       </style>
       {(() => {
         const renderLink = (item: NavItem, i: number) => {
@@ -216,12 +224,17 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
             onMouseLeave={scheduleClose}
           >
             <div className={container}>
-              <div
-                key={current.href}
-                className="menu-in mt-2.5 flex max-h-[min(72vh,580px)] overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_rgba(30,26,51,.05),0_30px_70px_-16px_rgba(30,26,51,.35)]"
-              >
-                <CategoryDetail root={current} />
-              </div>
+              {/* The card stays mounted while you move between categories: its height glides
+                  to the new content and the content cross-fades in from the side you moved to. */}
+              <SmoothCard>
+                <div
+                  key={current.href}
+                  className="menu-swap flex"
+                  style={{ ['--menu-dx' as string]: `${dir * 14}px` }}
+                >
+                  <CategoryDetail root={current} />
+                </div>
+              </SmoothCard>
             </div>
           </div>
         </Portal>
@@ -294,7 +307,7 @@ function CategoryDetail({ root }: { root: NavItem }) {
   return (
     <>
       {/* Hovered category */}
-      <div key={root.href} className="menu-in min-w-0 flex-1 overflow-y-auto px-7 pb-7 pt-[26px]">
+      <div key={root.href} className="menu-swap min-w-0 flex-1 overflow-y-auto px-7 pb-7 pt-[26px]">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[#efedf5] pb-[18px]">
           <div className="flex min-w-0 items-baseline gap-3">
             <h3 className="truncate text-2xl font-extrabold tracking-[-0.5px] text-gray-900">{root.label}</h3>
@@ -361,7 +374,8 @@ function CategoryDetail({ root }: { root: NavItem }) {
       {/* Promo card (wide screens) */}
       <Link
         href={root.href}
-        className="relative m-6 ml-0 hidden w-[260px] flex-none flex-col overflow-hidden rounded-2xl bg-[radial-gradient(240px_160px_at_90%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-5 text-white hover:text-white xl:flex"
+        key={`promo-${root.href}`}
+        className="menu-swap relative m-6 ml-0 hidden w-[260px] flex-none flex-col overflow-hidden rounded-2xl bg-[radial-gradient(240px_160px_at_90%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-5 text-white hover:text-white xl:flex"
       >
         <span className="text-[11.5px] font-bold tracking-[1.2px] text-accent">THIS WEEK</span>
         <span className="mt-1.5 text-2xl font-extrabold leading-[1.1] tracking-[-0.5px]">
@@ -381,5 +395,28 @@ function CategoryDetail({ root }: { root: NavItem }) {
         </span>
       </Link>
     </>
+  );
+}
+
+/** White menu card whose height animates to fit its content (no jump between categories). */
+function SmoothCard({ children }: { children: React.ReactNode }) {
+  const inner = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    const el = inner.current;
+    if (!el) return;
+    const update = () => setHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div
+      className="mt-2.5 max-h-[min(72vh,580px)] overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_rgba(30,26,51,.05),0_30px_70px_-16px_rgba(30,26,51,.35)] transition-[height] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+      style={{ height }}
+    >
+      <div ref={inner}>{children}</div>
+    </div>
   );
 }
