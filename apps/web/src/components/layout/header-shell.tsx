@@ -4,18 +4,30 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@ecommerce/ui';
 
 /**
- * Sticky violet header. Gets a soft shadow and a slightly slimmer bar once the page scrolls,
+ * Sticky violet header. Gets a soft shadow once the page scrolls (its size never changes),
  * and publishes its height as --header-h for sticky panels and anchor jumps.
  */
 export function HeaderShell({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
 
+  // Shadow only (no size change) and hysteresis, so the state can't flip back and forth
+  // while the page settles (that caused flicker on phones).
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY;
+        setScrolled((was) => (was ? y > 4 : y > 24));
+      });
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -35,15 +47,11 @@ export function HeaderShell({ children }: { children: ReactNode }) {
       ref={ref}
       data-scrolled={scrolled}
       className={cn(
-        'group/header sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-600 to-brand-700 text-white transition-shadow duration-300',
+        // Soft light spots are plain gradients (no blur filter): cheap to repaint while scrolling.
+        'group/header sticky top-0 z-30 bg-brand-600 text-white transition-shadow duration-300 [background-image:radial-gradient(circle_at_8%_-40%,rgba(255,255,255,.14),transparent_45%),radial-gradient(circle_at_70%_-60%,rgba(255,211,46,.16),transparent_40%),linear-gradient(90deg,#6445df,#6445df_55%,#532bc7)]',
         scrolled && 'shadow-[0_10px_30px_-12px_rgba(46,27,114,0.55)]',
       )}
     >
-      {/* soft light spots */}
-      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <span className="absolute -left-20 -top-24 h-56 w-56 rounded-full bg-white/[.07] blur-2xl" />
-        <span className="absolute -top-16 right-1/4 h-40 w-40 rounded-full bg-accent/[.12] blur-2xl" />
-      </span>
       <div className="relative">{children}</div>
     </header>
   );

@@ -28,7 +28,7 @@ export async function SiteHeader() {
     <>
       <HeaderShell>
         <div
-          className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,1.8vw,28px)] gap-y-3 py-3 transition-[padding] duration-300 group-data-[scrolled=true]/header:md:py-2 md:flex-nowrap`}
+          className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,1.8vw,28px)] gap-y-3 py-3 md:flex-nowrap`}
         >
           <StoreLogo name={storeName(settings)} logoUrl={settings?.logoUrl} />
           <Suspense

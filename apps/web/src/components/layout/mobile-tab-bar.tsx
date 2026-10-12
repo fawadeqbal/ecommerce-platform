@@ -39,7 +39,7 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label="Shortcuts"
-      className="sticky bottom-0 z-30 grid grid-cols-5 border-t border-gray-200 bg-white/95 px-1 pb-2 pt-1.5 backdrop-blur md:hidden"
+      className="sticky bottom-0 z-30 grid grid-cols-5 border-t border-gray-200 bg-white px-1 pb-2 pt-1.5 md:hidden"
     >
       {tabs.map((tab) => {
         const TabIcon = tab.icon;
