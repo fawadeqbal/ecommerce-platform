@@ -5,12 +5,29 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
-import { formatMoney } from '@ecommerce/ui';
+import { RECENTLY_VIEWED_KEY } from '@ecommerce/types';
+import { cn, formatMoney } from '@ecommerce/ui';
 import { useLocale } from '@/components/locale/locale-provider';
-import { SearchIcon } from '@/components/icons';
-import { queryKeys, searchApi } from '@/lib/api-client';
+import { ArrowUpLeftIcon, ClockIcon, SearchIcon } from '@/components/icons';
+import { queryKeys, searchApi, storefrontApi } from '@/lib/api-client';
+import { clearSearches, forgetSearch, readSearches, rememberSearch } from '@/lib/search-history';
 
-/** Header search with typo-tolerant suggestions (products, categories, brands). */
+function readViewed(): string[] {
+  try {
+    const raw = window.localStorage.getItem(RECENTLY_VIEWED_KEY);
+    return raw ? (JSON.parse(raw) as string[]).slice(0, 4) : [];
+  } catch {
+    return [];
+  }
+}
+
+const row =
+  'group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left text-gray-900 hover:bg-gray-50 hover:text-gray-900';
+
+/**
+ * Header search: typo-tolerant suggestions while typing; when empty, this browser's recent
+ * searches and recently viewed products. Press "/" anywhere to focus it.
+ */
 export function SearchBox() {
   const router = useRouter();
   const params = useSearchParams();
@@ -18,13 +35,15 @@ export function SearchBox() {
   const [value, setValue] = useState(params.get('q') ?? '');
   const [debounced, setDebounced] = useState(value);
   const [open, setOpen] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
+  const [viewed, setViewed] = useState<string[]>([]);
   const boxRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useLocale();
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(value.trim()), 200);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setDebounced(value.trim()), 200);
+    return () => clearTimeout(id);
   }, [value]);
 
   // Press "/" anywhere to jump to the search box.
@@ -48,22 +67,48 @@ export function SearchBox() {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
+  const openPanel = () => {
+    setRecent(readSearches());
+    setViewed(readViewed());
+    setOpen(true);
+  };
+
   const { data } = useQuery({
     queryKey: queryKeys.searchSuggest(debounced),
     queryFn: () => searchApi.suggest(debounced),
     enabled: debounced.length >= 2,
     staleTime: 60_000,
   });
+  const viewedProducts = useQuery({
+    queryKey: queryKeys.recentlyViewed(viewed),
+    queryFn: () => storefrontApi.bySlugs(viewed),
+    enabled: open && viewed.length > 0,
+    staleTime: 60_000,
+  });
+
+  const typed = value.trim();
   const hasResults =
     !!data && (data.products.length > 0 || data.categories.length > 0 || data.brands.length > 0);
+  const matchingRecent = typed
+    ? recent.filter((r) => r.toLowerCase().includes(typed.toLowerCase()) && r !== typed).slice(0, 3)
+    : [];
+  const showHistory = !typed && (recent.length > 0 || (viewedProducts.data?.length ?? 0) > 0);
+  const showSuggest = typed.length > 0 && (hasResults || matchingRecent.length > 0);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = value.trim();
+  const go = (term: string) => {
+    const q = term.trim();
     if (!q) return;
+    setRecent(rememberSearch(q));
+    setValue(q);
     setOpen(false);
+    inputRef.current?.blur();
     router.push(`/search?q=${encodeURIComponent(q)}`);
   };
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    go(value);
+  };
+  const remember = () => typed.length >= 2 && setRecent(rememberSearch(typed));
 
   return (
     <div
@@ -85,21 +130,34 @@ export function SearchBox() {
             setValue(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={openPanel}
           onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
           placeholder={t('header.searchPlaceholder')}
           aria-label="Search products"
           aria-autocomplete="list"
           aria-controls={listId}
-          aria-expanded={open && hasResults}
+          aria-expanded={open && (showHistory || showSuggest)}
           autoComplete="off"
           className="min-w-0 flex-1 bg-transparent text-[15px] text-gray-900 placeholder:text-gray-500 focus:outline-none"
         />
-        {!value ? (
+        {value ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => {
+              setValue('');
+              inputRef.current?.focus();
+              openPanel();
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+          >
+            ×
+          </button>
+        ) : (
           <kbd className="hidden rounded-md border border-gray-200 px-1.5 py-0.5 font-sans text-[11px] font-semibold text-gray-400 lg:block">
             /
           </kbd>
-        ) : null}
+        )}
         <button
           type="submit"
           className="h-8 rounded-xl bg-accent px-4 text-sm font-bold text-gray-900 hover:bg-accent-strong"
@@ -107,58 +165,152 @@ export function SearchBox() {
           {t('header.search')}
         </button>
       </form>
-      {open && hasResults ? (
+
+      {open && (showHistory || showSuggest) ? (
         <div
           id={listId}
-          className="absolute left-0 right-0 top-[50px] z-40 animate-pop-in rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
+          className="absolute left-0 right-0 top-[50px] z-40 max-h-[70vh] animate-pop-in overflow-y-auto rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
         >
-          {data.products.map((p) => (
-            <Link
-              key={p.slug}
-              href={`/products/${p.slug}`}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50"
-            >
-              <span className="h-9 w-9 shrink-0 overflow-hidden rounded border border-gray-100 bg-gray-50">
-                {p.imageUrl ? (
-                  <img src={p.imageUrl} alt="" className="h-full w-full object-contain" />
-                ) : null}
-              </span>
-              <span className="flex-1 truncate text-gray-900">{p.name}</span>
-              <span className="text-gray-500">{formatMoney(p.price, p.currency)}</span>
-            </Link>
-          ))}
-          {data.categories.length + data.brands.length > 0 ? (
-            <div className="mt-1 flex flex-wrap gap-2 border-t border-gray-100 px-2 pt-2">
-              {data.categories.map((c) => (
+          {showHistory ? (
+            <>
+              {recent.length > 0 ? (
+                <section>
+                  <div className="flex items-center justify-between px-2.5 pb-1 pt-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                      Recent searches
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRecent(clearSearches())}
+                      className="text-xs font-semibold text-brand-700 hover:text-brand-900"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                  {recent.map((term) => (
+                    <div key={term} className="flex items-center">
+                      <button type="button" onClick={() => go(term)} className={row}>
+                        <ClockIcon size={17} className="flex-none text-gray-400" />
+                        <span className="flex-1 truncate">{term}</span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${term} from history`}
+                        onClick={() => setRecent(forgetSearch(term))}
+                        className="ml-1 flex h-8 w-8 flex-none items-center justify-center rounded-lg text-lg leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </section>
+              ) : null}
+              {viewedProducts.data && viewedProducts.data.length > 0 ? (
+                <section className={cn(recent.length > 0 && 'mt-1 border-t border-gray-100 pt-1')}>
+                  <p className="px-2.5 pb-1 pt-1.5 text-xs font-bold uppercase tracking-wide text-gray-500">
+                    Recently viewed
+                  </p>
+                  <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+                    {viewedProducts.data.map((p) => (
+                      <Link
+                        key={p.id}
+                        href={`/products/${p.slug}`}
+                        onClick={() => setOpen(false)}
+                        className="flex flex-col gap-1.5 rounded-xl p-2 hover:bg-gray-50 hover:text-gray-900"
+                      >
+                        <span className="aspect-square overflow-hidden rounded-lg bg-gray-50">
+                          {p.imageUrl ? (
+                            <img
+                              src={p.imageUrl}
+                              alt=""
+                              className="h-full w-full object-contain p-1.5 mix-blend-multiply"
+                            />
+                          ) : null}
+                        </span>
+                        <span className="line-clamp-2 text-xs">{p.name}</span>
+                        <span className="text-xs font-bold">
+                          {formatMoney(p.price, p.currency)}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </>
+          ) : (
+            <>
+              {matchingRecent.map((term) => (
+                <button key={term} type="button" onClick={() => go(term)} className={row}>
+                  <ClockIcon size={17} className="flex-none text-gray-400" />
+                  <span className="flex-1 truncate">{term}</span>
+                  <ArrowUpLeftIcon size={15} className="text-gray-300 group-hover:text-gray-500" />
+                </button>
+              ))}
+              {data?.products.map((p) => (
                 <Link
-                  key={`c-${c.slug}`}
-                  href={`/categories/${c.slug}`}
-                  onClick={() => setOpen(false)}
-                  className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700 hover:bg-gray-200"
+                  key={p.slug}
+                  href={`/products/${p.slug}`}
+                  onClick={() => {
+                    remember();
+                    setOpen(false);
+                  }}
+                  className={row}
                 >
-                  {c.name}
+                  <span className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-gray-50">
+                    {p.imageUrl ? (
+                      <img
+                        src={p.imageUrl}
+                        alt=""
+                        className="h-full w-full object-contain p-0.5 mix-blend-multiply"
+                      />
+                    ) : null}
+                  </span>
+                  <span className="flex-1 truncate">{p.name}</span>
+                  <span className="font-semibold text-gray-600">
+                    {formatMoney(p.price, p.currency)}
+                  </span>
                 </Link>
               ))}
-              {data.brands.map((b) => (
-                <Link
-                  key={`b-${b.slug}`}
-                  href={`/brands/${b.slug}`}
-                  onClick={() => setOpen(false)}
-                  className="rounded-full bg-brand-50 px-2.5 py-1 text-brand-800 hover:bg-brand-100"
-                >
-                  {b.name}
-                </Link>
-              ))}
-            </div>
-          ) : null}
-          <button
-            type="button"
-            onClick={submit}
-            className="mt-1 w-full rounded-lg px-2 py-1.5 text-left text-brand-700 hover:bg-gray-50"
-          >
-            See all results for “{value.trim()}”
-          </button>
+              {data && data.categories.length + data.brands.length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-2 border-t border-gray-100 px-2 pt-2">
+                  {data.categories.map((c) => (
+                    <Link
+                      key={`c-${c.slug}`}
+                      href={`/categories/${c.slug}`}
+                      onClick={() => {
+                        remember();
+                        setOpen(false);
+                      }}
+                      className="rounded-full bg-gray-100 px-3 py-1 text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                    >
+                      {c.name}
+                    </Link>
+                  ))}
+                  {data.brands.map((b) => (
+                    <Link
+                      key={`b-${b.slug}`}
+                      href={`/brands/${b.slug}`}
+                      onClick={() => {
+                        remember();
+                        setOpen(false);
+                      }}
+                      className="rounded-full bg-brand-50 px-3 py-1 text-brand-800 hover:bg-brand-100"
+                    >
+                      {b.name}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => go(value)}
+                className="mt-1 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left font-semibold text-brand-700 hover:bg-brand-50"
+              >
+                <SearchIcon size={16} />
+                See all results for “{typed}”
+              </button>
+            </>
+          )}
         </div>
       ) : null}
     </div>
