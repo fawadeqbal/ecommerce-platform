@@ -119,7 +119,7 @@ export function SearchBox() {
         action="/search"
         onSubmit={submit}
         role="search"
-        className="flex h-11 items-center gap-2 rounded-2xl bg-white pl-4 pr-1.5 shadow-[0_6px_18px_-10px_rgba(27,15,73,.7)] ring-accent/50 transition-shadow focus-within:ring-4"
+        className="flex h-11 items-center gap-2 rounded-2xl bg-white pl-4 pr-1.5 shadow-[0_6px_18px_-10px_rgba(27,15,73,.7)] transition-shadow focus-within:shadow-[0_0_0_3px_rgba(255,255,255,.35),0_8px_22px_-10px_rgba(27,15,73,.7)]"
       >
         <SearchIcon size={18} className="flex-none text-gray-400" />
         <input
