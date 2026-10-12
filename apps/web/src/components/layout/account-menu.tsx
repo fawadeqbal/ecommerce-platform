@@ -1,0 +1,131 @@
+'use client';
+
+import { useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { cn } from '@ecommerce/ui';
+import {
+  BoxIcon,
+  ChevronDownIcon,
+  HeartIcon,
+  LogoutIcon,
+  PinIcon,
+  SettingsIcon,
+  StarIcon,
+} from '@/components/icons';
+import { authApi } from '@/lib/api-client';
+import { toast } from '@/lib/toast';
+
+const ITEMS = [
+  { href: '/account/orders', label: 'My orders', icon: BoxIcon },
+  { href: '/account/wishlist', label: 'Wishlist', icon: HeartIcon },
+  { href: '/account/loyalty', label: 'Points & rewards', icon: StarIcon },
+  { href: '/account/addresses', label: 'Addresses', icon: PinIcon },
+  { href: '/account/profile', label: 'Profile & settings', icon: SettingsIcon },
+];
+
+/** Avatar button with a dropdown: account pages + sign out. */
+export function AccountMenu({
+  firstName,
+  lastName,
+  email,
+  greeting,
+}: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  greeting: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const signOut = async () => {
+    setOpen(false);
+    await authApi.logout().catch(() => undefined);
+    queryClient.clear();
+    toast.info('You’re signed out');
+    router.refresh();
+  };
+
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          'flex items-center gap-2 rounded-[14px] py-1.5 pl-1.5 pr-2 text-sm font-semibold text-white hover:bg-white/10',
+          open && 'bg-white/15',
+        )}
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-gray-900">
+          {initials}
+        </span>
+        <span className="hidden whitespace-nowrap md:inline">{greeting}</span>
+        <ChevronDownIcon
+          size={16}
+          className={cn('hidden transition-transform md:block', open && 'rotate-180')}
+        />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-40 mt-2 w-64 animate-pop-in overflow-hidden rounded-2xl border border-gray-200 bg-white p-1.5 text-gray-900 shadow-card"
+        >
+          <div className="px-3 pb-2 pt-1.5">
+            <p className="font-bold">
+              {firstName} {lastName}
+            </p>
+            <p className="truncate text-xs text-gray-500">{email}</p>
+          </div>
+          <div className="my-1 h-px bg-gray-100" />
+          {ITEMS.map(({ href, label, icon: ItemIcon }) => (
+            <Link
+              key={href}
+              href={href}
+              role="menuitem"
+              className={cn(
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-gray-50 hover:text-gray-900',
+                pathname.startsWith(href) && 'bg-brand-50 text-brand-700 hover:text-brand-700',
+              )}
+            >
+              <ItemIcon size={18} className="text-gray-500" />
+              {label}
+            </Link>
+          ))}
+          <div className="my-1 h-px bg-gray-100" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={signOut}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+          >
+            <LogoutIcon size={18} />
+            Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}

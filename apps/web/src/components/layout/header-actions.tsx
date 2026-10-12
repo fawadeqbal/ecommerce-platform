@@ -1,31 +1,21 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCart, useMe } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useLocale } from '@/components/locale/locale-provider';
-import { authApi } from '@/lib/api-client';
-import { CartIcon, HeartIcon, LogoutIcon, TruckIcon, UserIcon } from '@/components/icons';
+import { CartIcon, HeartIcon, TruckIcon, UserIcon } from '@/components/icons';
+import { AccountMenu } from './account-menu';
 
 const link =
-  'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-[9px] text-white hover:bg-white/10 hover:text-white';
+  'flex items-center gap-1.5 whitespace-nowrap rounded-[14px] px-2.5 py-[9px] text-white hover:bg-white/10 hover:text-white';
 
 export function HeaderActions() {
   const { data: cart } = useCart();
   const { t } = useLocale();
   const { data: me } = useMe();
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const count = cart?.itemCount ?? 0;
   const saved = useWishlist().data?.items.length ?? 0;
-
-  const signOut = async () => {
-    await authApi.logout().catch(() => undefined);
-    queryClient.clear();
-    router.refresh();
-  };
 
   return (
     <div className="flex items-center gap-1 text-sm font-semibold">
@@ -53,21 +43,12 @@ export function HeaderActions() {
         ) : null}
       </Link>
       {me ? (
-        <>
-          <Link href="/account/orders" title="My account" className={link}>
-            <UserIcon />
-            <span className="hidden md:inline">{t('header.hi', { name: me.firstName })}</span>
-          </Link>
-          <button
-            type="button"
-            onClick={signOut}
-            title={t('header.signOut')}
-            aria-label={t('header.signOut')}
-            className="hidden rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white xl:flex"
-          >
-            <LogoutIcon size={18} />
-          </button>
-        </>
+        <AccountMenu
+          firstName={me.firstName}
+          lastName={me.lastName}
+          email={me.email}
+          greeting={t('header.hi', { name: me.firstName })}
+        />
       ) : (
         <Link href="/login" className={link}>
           <UserIcon />
@@ -77,7 +58,7 @@ export function HeaderActions() {
       <Link
         href="/cart"
         aria-label={`${t('header.cart')} (${count})`}
-        className="ml-1 flex items-center gap-2 rounded-[14px] bg-white px-3 py-[9px] text-gray-900 hover:text-brand-600"
+        className="ml-1 flex items-center gap-2 rounded-[14px] bg-white px-3 py-[9px] text-gray-900 shadow-[0_6px_16px_-8px_rgba(27,15,73,.6)] hover:-translate-y-px hover:text-brand-600"
       >
         <CartIcon />
         <span className="hidden sm:inline">{t('header.cart')}</span>

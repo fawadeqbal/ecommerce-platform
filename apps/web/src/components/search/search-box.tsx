@@ -19,12 +19,26 @@ export function SearchBox() {
   const [debounced, setDebounced] = useState(value);
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useLocale();
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(value.trim()), 200);
     return () => clearTimeout(t);
   }, [value]);
+
+  // Press "/" anywhere to jump to the search box.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement;
+      if (e.key !== '/' || el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
+        return;
+      e.preventDefault();
+      inputRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -60,10 +74,11 @@ export function SearchBox() {
         action="/search"
         onSubmit={submit}
         role="search"
-        className="flex h-11 items-center gap-2 rounded-2xl bg-white pl-4 pr-1.5"
+        className="flex h-11 items-center gap-2 rounded-2xl bg-white pl-4 pr-1.5 shadow-[0_6px_18px_-10px_rgba(27,15,73,.7)] ring-accent/50 transition-shadow focus-within:ring-4"
       >
         <SearchIcon size={18} className="flex-none text-gray-400" />
         <input
+          ref={inputRef}
           name="q"
           value={value}
           onChange={(e) => {
@@ -80,6 +95,11 @@ export function SearchBox() {
           autoComplete="off"
           className="min-w-0 flex-1 bg-transparent text-[15px] text-gray-900 placeholder:text-gray-500 focus:outline-none"
         />
+        {!value ? (
+          <kbd className="hidden rounded-md border border-gray-200 px-1.5 py-0.5 font-sans text-[11px] font-semibold text-gray-400 lg:block">
+            /
+          </kbd>
+        ) : null}
         <button
           type="submit"
           className="h-8 rounded-xl bg-accent px-4 text-sm font-bold text-gray-900 hover:bg-accent-strong"
