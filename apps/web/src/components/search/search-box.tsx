@@ -85,7 +85,7 @@ export function SearchBox() {
       {open && hasResults ? (
         <div
           id={listId}
-          className="absolute left-0 right-0 top-[52px] z-40 rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
+          className="absolute left-0 right-0 top-[52px] z-40 animate-pop-in rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
         >
           {data.products.map((p) => (
             <Link

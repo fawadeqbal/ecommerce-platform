@@ -61,6 +61,31 @@ const config: Config = {
       boxShadow: {
         card: '0 14px 34px -16px rgba(60, 40, 140, 0.35)',
       },
+      // Screen and panel transitions (all disabled under prefers-reduced-motion in globals.css).
+      keyframes: {
+        'page-in': {
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+        'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+        'pop-in': {
+          from: { opacity: '0', transform: 'translateY(-6px) scale(.98)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+        'sheet-up': { from: { transform: 'translateY(100%)' }, to: { transform: 'none' } },
+        progress: {
+          '0%': { transform: 'scaleX(0)' },
+          '60%': { transform: 'scaleX(.7)' },
+          '100%': { transform: 'scaleX(.92)' },
+        },
+      },
+      animation: {
+        'page-in': 'page-in .32s cubic-bezier(.22,1,.36,1) both',
+        'fade-in': 'fade-in .2s ease-out both',
+        'pop-in': 'pop-in .18s cubic-bezier(.22,1,.36,1) both',
+        'sheet-up': 'sheet-up .3s cubic-bezier(.22,1,.36,1) both',
+        progress: 'progress 2.5s cubic-bezier(.1,.6,.3,1) both',
+      },
       letterSpacing: {
         display: '-0.04em',
         heading: '-0.03em',

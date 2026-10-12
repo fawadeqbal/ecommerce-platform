@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Outfit } from 'next/font/google';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Providers } from './providers';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
@@ -9,6 +9,7 @@ import { OrganizationJsonLd } from '@/components/seo/organization-json-ld';
 import { MaintenanceGate } from '@/components/layout/maintenance-gate';
 import { MobileTabBar } from '@/components/layout/mobile-tab-bar';
 import { StoreChrome } from '@/components/layout/store-chrome';
+import { NavigationProgress } from '@/components/layout/navigation-progress';
 import './globals.css';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' });
@@ -26,6 +27,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <MaintenanceGate>
           <Providers>
             <OrganizationJsonLd />
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
             <StoreChrome
               header={<SiteHeader />}
               footer={<SiteFooter />}

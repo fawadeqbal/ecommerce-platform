@@ -59,7 +59,7 @@ export function FilterPanel({
           type="button"
           aria-label="Close filters"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-40 bg-gray-900/40 lg:hidden"
+          className="fixed inset-0 z-40 animate-fade-in bg-gray-900/40 lg:hidden"
         />
       ) : null}
       <aside
@@ -70,7 +70,7 @@ export function FilterPanel({
           'lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-7.5rem)]',
           // phones: bottom sheet
           open
-            ? 'fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-b-none shadow-card'
+            ? 'fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] animate-sheet-up rounded-b-none shadow-card lg:animate-none'
             : 'hidden',
         )}
       >
