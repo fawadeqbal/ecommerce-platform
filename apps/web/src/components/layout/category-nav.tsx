@@ -28,29 +28,50 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
   const search = useSearchParams().toString();
   const here = search ? `${pathname}?${search}` : pathname;
 
-  const [open, setOpen] = useState<number | null>(null);
+  // `open` = highlighted link, `shown` = panel content kept mounted while it fades out.
+  const [open, setOpenState] = useState<number | null>(null);
+  const [shown, setShown] = useState<number | null>(null);
+  const [visible, setVisible] = useState(false);
   const [top, setTop] = useState(0);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visibleRef = useRef(false);
 
-  const cancelClose = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
+  const clear = () => {
+    if (timer.current) clearTimeout(timer.current);
   };
+  const setOpen = (i: number | null) => {
+    clear();
+    setOpenState(i);
+    if (i === null) {
+      visibleRef.current = false;
+      setVisible(false);
+      timer.current = setTimeout(() => setShown(null), 220); // let it fade out
+      return;
+    }
+    setShown(i);
+    visibleRef.current = true;
+    requestAnimationFrame(() => setVisible(true));
+  };
+  const cancelClose = clear;
   const scheduleClose = () => {
-    cancelClose();
-    closeTimer.current = setTimeout(() => setOpen(null), 140);
+    clear();
+    timer.current = setTimeout(() => setOpen(null), 160);
   };
   const show = (i: number, el: HTMLElement) => {
-    cancelClose();
+    clear();
     if (!items[i]?.children?.length || !window.matchMedia('(min-width: 768px)').matches) {
-      setOpen(null);
+      if (visibleRef.current) scheduleClose();
       return;
     }
     const bar = el.closest('nav') ?? el;
     setTop(bar.getBoundingClientRect().bottom);
-    setOpen(i);
+    // Already open: switch at once. Closed: wait a beat so passing the mouse over doesn't flash it.
+    if (visibleRef.current) setOpen(i);
+    else timer.current = setTimeout(() => setOpen(i), 90);
   };
 
   // Close on navigation, scroll and Escape.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setOpen(null), [here]);
   useEffect(() => {
     if (open === null) return;
@@ -64,10 +85,15 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
     };
   }, [open]);
 
-  const current = open !== null ? items[open] : undefined;
+  const current = shown !== null ? items[shown] : undefined;
 
   return (
     <>
+      <style>
+        {'.menu-in{animation:menu-in .32s cubic-bezier(.22,1,.36,1) backwards}' +
+          '@keyframes menu-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
+          '@media (prefers-reduced-motion:reduce){.menu-in{animation:none}}'}
+      </style>
       {items.map((item, i) => {
         const active =
           item.href === here || (item.href !== '/' && here.startsWith(`${item.href}/`));
@@ -120,7 +146,10 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
       {current?.kind === 'all' && current.children?.length ? (
         <Portal>
           <div
-            className="fixed inset-x-0 z-[60] animate-fade-in"
+            className={cn(
+              'fixed inset-x-0 z-[60] origin-top transition-[opacity,transform] duration-200 ease-out',
+              visible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0',
+            )}
             style={{ top }}
             onMouseEnter={cancelClose}
             onMouseLeave={scheduleClose}
@@ -131,13 +160,16 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
       ) : current?.children?.length ? (
         <Portal>
           <div
-            className="fixed inset-x-0 z-[60] animate-fade-in"
+            className={cn(
+              'fixed inset-x-0 z-[60] origin-top transition-[opacity,transform] duration-200 ease-out',
+              visible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0',
+            )}
             style={{ top }}
             onMouseEnter={cancelClose}
             onMouseLeave={scheduleClose}
           >
             <div className="border-y border-gray-200 bg-white shadow-[0_24px_48px_-12px_rgba(27,24,48,0.18)]">
-              <div className={cn(container, 'flex gap-8 py-6')}>
+              <div key={current.href} className={cn(container, 'menu-in flex gap-8 py-6')}>
                 {/* Category card */}
                 <Link
                   href={current.href}
@@ -169,8 +201,12 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
 
                 {/* Sub-categories as columns */}
                 <div className="grid flex-1 grid-cols-[repeat(auto-fill,minmax(180px,1fr))] content-start gap-x-8 gap-y-6">
-                  {current.children.map((child) => (
-                    <div key={child.href} className="flex min-w-0 flex-col gap-2">
+                  {current.children.map((child, k) => (
+                    <div
+                      key={child.href}
+                      className="menu-in flex min-w-0 flex-col gap-2"
+                      style={{ animationDelay: `${40 + k * 35}ms` }}
+                    >
                       <Link
                         href={child.href}
                         className="group flex items-center gap-2.5 font-bold text-gray-900 hover:text-brand-700"
@@ -247,7 +283,7 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
                 onMouseEnter={() => setHover(i)}
                 onFocus={() => setHover(i)}
                 className={cn(
-                  'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors',
+                  'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-200',
                   i === hover ? 'bg-brand-50 text-brand-700' : 'text-gray-700 hover:bg-gray-50',
                 )}
               >
@@ -276,7 +312,7 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
         </ul>
 
         {/* Hovered category */}
-        <div key={root.href} className="min-w-0 flex-1 animate-fade-in overflow-y-auto py-5 pl-8">
+        <div key={root.href} className="menu-in min-w-0 flex-1 overflow-y-auto py-5 pl-8">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-xl font-extrabold tracking-heading text-gray-900">{root.label}</h3>
             <Link
@@ -301,8 +337,12 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
             </Link>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-x-8 gap-y-6">
-              {kids.map((child) => (
-                <div key={child.href} className="flex min-w-0 flex-col gap-1.5">
+              {kids.map((child, k) => (
+                <div
+                  key={child.href}
+                  className="menu-in flex min-w-0 flex-col gap-1.5"
+                  style={{ animationDelay: `${30 + k * 30}ms` }}
+                >
                   <Link
                     href={child.href}
                     className="truncate font-bold text-gray-900 hover:text-brand-700"
