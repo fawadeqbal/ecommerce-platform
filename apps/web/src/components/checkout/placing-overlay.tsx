@@ -8,8 +8,21 @@ import { CartIcon } from '@/components/icons';
  * Full-screen "placing your order" state: a calm card with progress steps instead of a bare
  * spinner. Covers the page so nothing can be clicked twice while the order is created.
  */
-export function PlacingOverlay({ online, done }: { online: boolean; done: boolean }) {
-  const steps = [
+export function PlacingOverlay({
+  online,
+  done,
+  title,
+  message,
+  steps: customSteps,
+}: {
+  online: boolean;
+  done: boolean;
+  /** Overrides for other waits (e.g. confirming a card payment). */
+  title?: string;
+  message?: string;
+  steps?: string[];
+}) {
+  const steps = customSteps ?? [
     'Checking stock and prices',
     'Reserving your items',
     'Creating your order',
@@ -28,7 +41,7 @@ export function PlacingOverlay({ online, done }: { online: boolean; done: boolea
         role="alertdialog"
         aria-modal="true"
         aria-live="assertive"
-        aria-label="Placing your order"
+        aria-label={title ?? 'Placing your order'}
         className="fixed inset-0 z-[90] flex animate-fade-in items-center justify-center bg-gray-50/85 p-4 backdrop-blur-sm"
       >
         <div className="flex w-[min(92vw,380px)] animate-pop-in flex-col items-center gap-5 rounded-3xl bg-white p-8 text-center shadow-card">
@@ -40,12 +53,13 @@ export function PlacingOverlay({ online, done }: { online: boolean; done: boolea
           </div>
           <div>
             <h2 className="text-xl font-extrabold tracking-heading">
-              {done && online ? 'Almost there…' : 'Placing your order'}
+              {title ?? (done && online ? 'Almost there…' : 'Placing your order')}
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              {online
-                ? 'You’ll be taken to a secure payment page in a moment.'
-                : 'This only takes a few seconds. Please don’t close this page.'}
+              {message ??
+                (online
+                  ? 'You’ll be taken to a secure payment page in a moment.'
+                  : 'This only takes a few seconds. Please don’t close this page.')}
             </p>
           </div>
           <ol className="w-full space-y-2.5 text-left text-sm">
