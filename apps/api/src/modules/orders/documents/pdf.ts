@@ -32,8 +32,23 @@ export interface PackingSlipData {
   customerNote: string | null;
 }
 
-const date = (d: Date) => d.toISOString().slice(0, 10);
-const GREY = '#6b7280';
+/** Storefront design tokens ("Bazaar Bright"), so documents match the shop. */
+const C = {
+  brand: '#6445df',
+  brandDark: '#532bc7',
+  brandSoft: '#ebebff',
+  accent: '#ffd32e',
+  ink: '#1b1830',
+  muted: '#6c6883',
+  line: '#e6e3f0',
+  canvas: '#f5f4fa',
+  white: '#ffffff',
+};
+const PAGE = { w: 595.28, h: 841.89, x: 40, right: 555.28 };
+const WIDTH = PAGE.right - PAGE.x;
+
+const date = (d: Date) =>
+  d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 function toBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -45,17 +60,80 @@ function toBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
   });
 }
 
-function header(doc: PDFKit.PDFDocument, title: string, right: string[]) {
-  doc.font('Helvetica-Bold').fontSize(20).fillColor('#111827').text(title, 50, 50);
-  doc.font('Helvetica').fontSize(9).fillColor(GREY);
-  right.forEach((line, i) => doc.text(line, 300, 52 + i * 12, { width: 245, align: 'right' }));
-  doc.moveTo(50, 110).lineTo(545, 110).strokeColor('#e5e7eb').stroke();
+function newDoc(compress?: boolean): PDFKit.PDFDocument {
+  return new PDFDocument({
+    size: 'A4',
+    margin: 0,
+    compress: compress ?? true,
+    autoFirstPage: false,
+    info: { Producer: 'Storefront', Creator: 'Storefront' },
+  });
 }
 
-function block(doc: PDFKit.PDFDocument, x: number, y: number, label: string, lines: string[]) {
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(GREY).text(label.toUpperCase(), x, y);
-  doc.font('Helvetica').fontSize(10).fillColor('#111827');
-  lines.filter(Boolean).forEach((l, i) => doc.text(l, x, y + 14 + i * 13, { width: 230 }));
+/** Text that never triggers pdfkit's automatic page break. */
+function put(
+  doc: PDFKit.PDFDocument,
+  s: string,
+  x: number,
+  y: number,
+  o: PDFKit.Mixins.TextOptions & { size?: number; bold?: boolean; color?: string } = {},
+) {
+  const { size = 10, bold = false, color = C.ink, ...rest } = o;
+  doc
+    .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+    .fontSize(size)
+    .fillColor(color)
+    .text(s, x, y, { lineBreak: rest.width !== undefined, ...rest });
+}
+
+/** Violet band: store name with the yellow dot, document title and meta on the right. */
+function band(doc: PDFKit.PDFDocument, store: string, title: string, meta: [string, string][]) {
+  doc.rect(0, 0, PAGE.w, 132).fill(C.brand);
+  // soft decorative circles
+  doc.circle(PAGE.w - 40, -20, 90).fillOpacity(0.08).fill(C.white).fillOpacity(1);
+  doc.circle(PAGE.w - 130, 135, 28).fillOpacity(0.9).fill(C.accent).fillOpacity(1);
+
+  doc.font('Helvetica-Bold').fontSize(22);
+  const nameW = doc.widthOfString(store);
+  put(doc, store, PAGE.x, 38, { size: 22, bold: true, color: C.white });
+  doc.circle(PAGE.x + nameW + 7, 52, 4).fill(C.accent);
+  put(doc, title.toUpperCase(), PAGE.x, 72, { size: 30, bold: true, color: C.white, characterSpacing: 1 });
+
+  // meta pairs, right aligned
+  let y = 38;
+  for (const [k, v] of meta) {
+    put(doc, k, 330, y, { size: 8, color: '#d8d7ff', width: 90, align: 'right' });
+    put(doc, v, 425, y, { size: 9.5, bold: true, color: C.white, width: 130, align: 'right' });
+    y += 17;
+  }
+}
+
+/** Rounded light card with a label and lines. */
+function card(doc: PDFKit.PDFDocument, x: number, y: number, w: number, h: number, label: string, lines: string[]) {
+  doc.roundedRect(x, y, w, h, 12).fill(C.canvas);
+  put(doc, label.toUpperCase(), x + 14, y + 12, { size: 7.5, bold: true, color: C.muted, characterSpacing: 0.6 });
+  let ly = y + 27;
+  lines.filter(Boolean).forEach((l, i) => {
+    put(doc, l, x + 14, ly, { size: i === 0 ? 10.5 : 9, bold: i === 0, color: i === 0 ? C.ink : C.muted, width: w - 28, height: 13, ellipsis: true });
+    ly += i === 0 ? 15 : 12.5;
+  });
+}
+
+function pill(doc: PDFKit.PDFDocument, text: string, x: number, y: number, bg: string, fg: string) {
+  doc.font('Helvetica-Bold').fontSize(8);
+  const w = doc.widthOfString(text) + 16;
+  doc.roundedRect(x, y, w, 16, 8).fill(bg);
+  put(doc, text, x + 8, y + 4.5, { size: 8, bold: true, color: fg });
+  return w;
+}
+
+function footer(doc: PDFKit.PDFDocument, lines: string[], page: string) {
+  const y = PAGE.h - 58;
+  doc.moveTo(PAGE.x, y).lineTo(PAGE.right, y).lineWidth(1).strokeColor(C.line).stroke();
+  lines.slice(0, 2).forEach((l, i) =>
+    put(doc, l, PAGE.x, y + 12 + i * 11, { size: 7.5, color: C.muted, width: WIDTH - 60, height: 11, ellipsis: true }),
+  );
+  put(doc, page, PAGE.right - 60, y + 12, { size: 7.5, color: C.muted, width: 60, align: 'right' });
 }
 
 /** One page per invoice (each seller's sub-order of the order). */
@@ -63,75 +141,123 @@ export function renderInvoices(
   invoices: InvoiceData[],
   opts: { compress?: boolean } = {},
 ): Promise<Buffer> {
-  const doc = new PDFDocument({
-    size: 'A4',
-    margin: 50,
-    compress: opts.compress ?? true,
-    autoFirstPage: false,
-  });
-  for (const inv of invoices) {
+  const doc = newDoc(opts.compress);
+  invoices.forEach((inv, index) => {
     doc.addPage();
-    header(doc, 'Invoice', [
-      `Invoice ${inv.number}`,
-      `Issued ${date(inv.issuedAt)}`,
-      `Order ${inv.orderNumber} · placed ${date(inv.placedAt)}`,
-      inv.payment,
+    band(doc, inv.store.name, 'Invoice', [
+      ['Invoice no.', inv.number],
+      ['Issued', date(inv.issuedAt)],
+      ['Order', inv.orderNumber],
+      ['Placed', date(inv.placedAt)],
     ]);
-    block(doc, 50, 125, 'Sold by', [
+
+    // Parties + payment
+    const top = 152;
+    const gap = 12;
+    const cw = (WIDTH - gap * 2) / 3;
+    card(doc, PAGE.x, top, cw, 92, 'Sold by', [
       inv.seller.name,
       inv.seller.email,
       inv.seller.phone ?? '',
       `via ${inv.store.name}`,
     ]);
-    block(doc, 315, 125, 'Bill / ship to', inv.billTo);
+    card(doc, PAGE.x + cw + gap, top, cw, 92, 'Bill / ship to', inv.billTo);
+    const [method, status] = inv.payment.split(' · ');
+    card(doc, PAGE.x + (cw + gap) * 2, top, cw, 92, 'Payment', [method ?? inv.payment]);
+    if (status) {
+      const paid = /paid/i.test(status) && !/unpaid|pending/i.test(status);
+      pill(
+        doc,
+        status,
+        PAGE.x + (cw + gap) * 2 + 14,
+        top + 50,
+        paid ? '#c6f5da' : '#ffefb1',
+        paid ? '#065f46' : '#92400e',
+      );
+    }
 
-    let y = 215;
-    const cols = { name: 50, qty: 310, unit: 350, tax: 420, total: 480 };
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(GREY);
-    doc.text('ITEM', cols.name, y).text('QTY', cols.qty, y, { width: 35, align: 'right' });
-    doc
-      .text('PRICE', cols.unit, y, { width: 65, align: 'right' })
-      .text('TAX', cols.tax, y, { width: 55, align: 'right' });
-    doc.text('TOTAL', cols.total, y, { width: 65, align: 'right' });
-    y += 16;
-    doc.font('Helvetica').fontSize(10).fillColor('#111827');
-    for (const l of inv.lines) {
-      if (y > 720) {
+    // Items table
+    let y = top + 92 + 24;
+    const col = { name: PAGE.x + 14, qty: 330, unit: 370, tax: 440, total: 495 };
+    doc.roundedRect(PAGE.x, y, WIDTH, 26, 8).fill(C.brandSoft);
+    const head = (s: string, x: number, w?: number) =>
+      put(doc, s, x, y + 9, { size: 7.5, bold: true, color: C.brandDark, characterSpacing: 0.6, ...(w ? { width: w, align: 'right' as const } : {}) });
+    head('ITEM', col.name);
+    head('QTY', col.qty, 30);
+    head('PRICE', col.unit, 62);
+    head('TAX', col.tax, 48);
+    head('TOTAL', col.total, PAGE.right - 14 - col.total);
+    y += 34;
+
+    const totalsHeight = inv.totals.length * 18 + 30;
+    const limit = PAGE.h - 80 - totalsHeight - 40;
+    inv.lines.forEach((l, i) => {
+      doc.font('Helvetica-Bold').fontSize(9.5);
+      const nameH = Math.min(doc.heightOfString(l.name, { width: 260 }), 24);
+      const rowH = Math.max(nameH + 14, 30);
+      if (y + rowH > limit) {
+        footer(doc, [], `Page continues`);
         doc.addPage();
         y = 50;
       }
-      doc.text(l.name, cols.name, y, { width: 250 });
-      const h = Math.max(doc.heightOfString(l.name, { width: 250 }), 12);
-      doc
-        .fontSize(8)
-        .fillColor(GREY)
-        .text(l.sku, cols.name, y + h, { width: 250 });
-      doc.fontSize(10).fillColor('#111827');
-      doc.text(String(l.qty), cols.qty, y, { width: 35, align: 'right' });
-      doc.text(l.unit, cols.unit, y, { width: 65, align: 'right' });
-      doc.text(l.tax ?? '—', cols.tax, y, { width: 55, align: 'right' });
-      doc.text(l.total, cols.total, y, { width: 65, align: 'right' });
-      y += h + 18;
-    }
-    doc.moveTo(300, y).lineTo(545, y).strokeColor('#e5e7eb').stroke();
-    y += 8;
-    for (const t of inv.totals) {
-      doc.font(t.strong ? 'Helvetica-Bold' : 'Helvetica').fontSize(t.strong ? 11 : 10);
-      doc
-        .text(t.label, 300, y, { width: 160 })
-        .text(t.value, 460, y, { width: 85, align: 'right' });
-      y += 16;
-    }
-    doc.font('Helvetica').fontSize(8).fillColor(GREY);
-    const foot = [
-      ...inv.notes,
-      [inv.store.name, inv.store.address, inv.store.email, inv.store.phone]
-        .filter(Boolean)
-        .join(' · '),
-    ];
-    doc.text(foot.join('\n'), 50, 760, { width: 495, align: 'center' });
+      if (i % 2 === 1) doc.roundedRect(PAGE.x, y - 4, WIDTH, rowH, 6).fill('#faf9fd');
+      put(doc, l.name, col.name, y, { size: 9.5, bold: true, width: 260, height: 24, ellipsis: true });
+      put(doc, l.sku, col.name, y + nameH + 1, { size: 7.5, color: C.muted });
+      put(doc, String(l.qty), col.qty, y, { size: 9.5, width: 30, align: 'right' });
+      put(doc, l.unit, col.unit, y, { size: 9.5, width: 62, align: 'right' });
+      put(doc, l.tax ?? '—', col.tax, y, { size: 8.5, color: C.muted, width: 48, align: 'right' });
+      put(doc, l.total, col.total, y, { size: 9.5, bold: true, width: PAGE.right - 14 - col.total, align: 'right' });
+      y += rowH;
+      doc.moveTo(PAGE.x, y - 4).lineTo(PAGE.right, y - 4).lineWidth(0.5).strokeColor(C.line).stroke();
+    });
+
+    // Totals
+    y += 14;
+    const tx = 315;
+    const tw = PAGE.right - tx;
+    const plain = inv.totals.filter((t) => !t.strong);
+    const strong = inv.totals.filter((t) => t.strong);
+    plain.forEach((t) => {
+      put(doc, t.label, tx + 14, y, { size: 9.5, color: C.muted });
+      put(doc, t.value, tx, y, { size: 9.5, bold: true, width: tw - 14, align: 'right' });
+      y += 18;
+    });
+    strong.forEach((t) => {
+      y += 4;
+      doc.roundedRect(tx, y, tw, 38, 10).fill(C.brand);
+      put(doc, t.label, tx + 14, y + 13, { size: 11, bold: true, color: C.white });
+      put(doc, t.value, tx, y + 11, { size: 15, bold: true, color: C.white, width: tw - 14, align: 'right' });
+      y += 44;
+    });
+
+    // Thank-you note on the left of the totals
+    const noteTop = y - 18 * plain.length - 44 * strong.length - 4;
+    put(doc, 'Thank you for your order!', PAGE.x, Math.max(noteTop, top + 92 + 60), {
+      size: 13,
+      bold: true,
+      color: C.ink,
+    });
+    put(
+      doc,
+      'Questions about this invoice? Reply to your order email or contact us below.',
+      PAGE.x,
+      Math.max(noteTop, top + 92 + 60) + 18,
+      { size: 8.5, color: C.muted, width: 250 },
+    );
+
+    footer(
+      doc,
+      [
+        inv.notes.join(' '),
+        [inv.store.name, inv.store.address, inv.store.email, inv.store.phone].filter(Boolean).join('  ·  '),
+      ].filter(Boolean),
+      invoices.length > 1 ? `${index + 1} / ${invoices.length}` : '',
+    );
+  });
+  if (invoices.length === 0) {
+    doc.addPage();
+    put(doc, 'No invoice available.', PAGE.x, 60);
   }
-  if (invoices.length === 0) doc.addPage().text('No invoice available.');
   return toBuffer(doc);
 }
 
@@ -140,45 +266,47 @@ export function renderPackingSlips(
   slips: PackingSlipData[],
   opts: { compress?: boolean } = {},
 ): Promise<Buffer> {
-  const doc = new PDFDocument({
-    size: 'A4',
-    margin: 50,
-    compress: opts.compress ?? true,
-    autoFirstPage: false,
-  });
-  for (const s of slips) {
+  const doc = newDoc(opts.compress);
+  slips.forEach((s) => {
     doc.addPage();
-    header(doc, 'Packing slip', [
-      `Order ${s.orderNumber}`,
-      `Placed ${date(s.placedAt)}`,
-      s.seller,
-      s.shippingMethod ?? '',
+    band(doc, s.seller, 'Packing slip', [
+      ['Order', s.orderNumber],
+      ['Placed', date(s.placedAt)],
+      ['Delivery', s.shippingMethod ?? 'Standard'],
+      ['Items', String(s.lines.reduce((n, l) => n + l.qty, 0))],
     ]);
-    block(doc, 50, 125, 'Ship to', s.shipTo);
-    let y = 225;
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(GREY);
-    doc.text('ITEM', 75, y).text('SKU', 360, y).text('QTY', 480, y, { width: 65, align: 'right' });
-    y += 16;
-    doc.font('Helvetica').fontSize(11).fillColor('#111827');
+    const top = 152;
+    card(doc, PAGE.x, top, WIDTH / 2 - 6, 92, 'Ship to', s.shipTo);
+    if (s.customerNote) {
+      doc.roundedRect(PAGE.x + WIDTH / 2 + 6, top, WIDTH / 2 - 6, 92, 12).fill('#fff7d6');
+      put(doc, 'CUSTOMER NOTE', PAGE.x + WIDTH / 2 + 20, top + 12, { size: 7.5, bold: true, color: '#92400e', characterSpacing: 0.6 });
+      put(doc, s.customerNote, PAGE.x + WIDTH / 2 + 20, top + 27, { size: 9.5, color: C.ink, width: WIDTH / 2 - 34, height: 56, ellipsis: true });
+    }
+    let y = top + 92 + 24;
+    doc.roundedRect(PAGE.x, y, WIDTH, 26, 8).fill(C.brandSoft);
+    put(doc, 'PACKED', PAGE.x + 14, y + 9, { size: 7.5, bold: true, color: C.brandDark });
+    put(doc, 'ITEM', PAGE.x + 64, y + 9, { size: 7.5, bold: true, color: C.brandDark });
+    put(doc, 'SKU', 370, y + 9, { size: 7.5, bold: true, color: C.brandDark });
+    put(doc, 'QTY', PAGE.right - 64, y + 9, { size: 7.5, bold: true, color: C.brandDark, width: 50, align: 'right' });
+    y += 36;
     for (const l of s.lines) {
-      if (y > 740) {
+      if (y > PAGE.h - 90) {
         doc.addPage();
         y = 50;
       }
-      doc.rect(50, y, 10, 10).strokeColor('#9ca3af').stroke();
-      doc.text(l.name, 75, y, { width: 275 });
-      doc.fontSize(9).text(l.sku, 360, y, { width: 115 }).fontSize(11);
-      doc
-        .font('Helvetica-Bold')
-        .text(String(l.qty), 480, y, { width: 65, align: 'right' })
-        .font('Helvetica');
-      y += Math.max(doc.heightOfString(l.name, { width: 275 }), 12) + 12;
+      doc.roundedRect(PAGE.x + 16, y - 2, 14, 14, 3).lineWidth(1.2).strokeColor(C.brand).stroke();
+      put(doc, l.name, PAGE.x + 64, y, { size: 10.5, bold: true, width: 290, height: 26, ellipsis: true });
+      put(doc, l.sku, 370, y + 1, { size: 9, color: C.muted, width: 110 });
+      doc.roundedRect(PAGE.right - 50, y - 4, 36, 20, 6).fill(C.canvas);
+      put(doc, String(l.qty), PAGE.right - 50, y + 1, { size: 11, bold: true, width: 36, align: 'center' });
+      y += 30;
+      doc.moveTo(PAGE.x, y - 6).lineTo(PAGE.right, y - 6).lineWidth(0.5).strokeColor(C.line).stroke();
     }
-    if (s.customerNote) {
-      y += 10;
-      block(doc, 50, y, 'Customer note', [s.customerNote]);
-    }
+    footer(doc, ['Tick each item as you pack it. No prices are shown on this slip.'], '');
+  });
+  if (slips.length === 0) {
+    doc.addPage();
+    put(doc, 'Nothing to pack.', PAGE.x, 60);
   }
-  if (slips.length === 0) doc.addPage().text('Nothing to pack.');
   return toBuffer(doc);
 }
