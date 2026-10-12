@@ -8,8 +8,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { RECENTLY_VIEWED_KEY } from '@ecommerce/types';
 import { cn, formatMoney } from '@ecommerce/ui';
 import { useLocale } from '@/components/locale/locale-provider';
-import { ArrowUpLeftIcon, ClockIcon, SearchIcon } from '@/components/icons';
-import { queryKeys, searchApi, storefrontApi } from '@/lib/api-client';
+import { ArrowUpLeftIcon, ChevronDownIcon, ClockIcon, GridIcon, SearchIcon } from '@/components/icons';
+import { categoriesApi, queryKeys, searchApi, storefrontApi } from '@/lib/api-client';
 import { clearSearches, forgetSearch, readSearches, rememberSearch } from '@/lib/search-history';
 
 function readViewed(): string[] {
@@ -95,9 +95,26 @@ export function SearchBox() {
   const showHistory = !typed && (recent.length > 0 || (viewedProducts.data?.length ?? 0) > 0);
   const showSuggest = typed.length > 0 && (hasResults || matchingRecent.length > 0);
 
+  // Scope chip ("All ▾"): search one top-level category or the whole store.
+  const tree = useQuery({
+    queryKey: queryKeys.categories.tree,
+    queryFn: () => categoriesApi.tree(),
+    staleTime: 10 * 60_000,
+  });
+  const [scope, setScope] = useState('');
+  const scopeLabel = tree.data?.find((c) => c.slug === scope)?.name ?? 'All';
+
   const go = (term: string) => {
     const q = term.trim();
     if (!q) return;
+    if (scope) {
+      setRecent(rememberSearch(q));
+      setValue(q);
+      setOpen(false);
+      inputRef.current?.blur();
+      router.push(`/search?q=${encodeURIComponent(q)}&category=${encodeURIComponent(scope)}`);
+      return;
+    }
     setRecent(rememberSearch(q));
     setValue(q);
     setOpen(false);
@@ -119,9 +136,27 @@ export function SearchBox() {
         action="/search"
         onSubmit={submit}
         role="search"
-        className="flex h-[50px] items-center gap-2 rounded-2xl bg-white p-[5px] pl-4 shadow-[0_10px_24px_-10px_rgba(20,8,70,.5)] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(255,209,46,.7),0_10px_24px_-10px_rgba(20,8,70,.5)]"
+        className="flex h-[50px] items-center gap-2 rounded-2xl bg-white p-[5px] shadow-[0_10px_24px_-10px_rgba(20,8,70,.5)] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(255,209,46,.7),0_10px_24px_-10px_rgba(20,8,70,.5)]"
       >
-        <SearchIcon size={18} className="flex-none text-gray-400" />
+        <label className="relative flex h-10 flex-none cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[11px] bg-[#f3f0fd] pl-3.5 pr-3 text-sm font-semibold text-[#3b2390] transition-colors hover:bg-[#e9e3fc]">
+          <GridIcon size={16} />
+          <span className="hidden max-w-[110px] truncate xl:inline">{scopeLabel}</span>
+          <ChevronDownIcon size={14} />
+          <select
+            aria-label="Search in"
+            value={scope}
+            onChange={(e) => setScope(e.target.value)}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          >
+            <option value="">All categories</option>
+            {(tree.data ?? []).map((c) => (
+              <option key={c.id} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <SearchIcon size={20} className="ml-1.5 flex-none text-[#9894ae]" />
         <input
           ref={inputRef}
           name="q"
