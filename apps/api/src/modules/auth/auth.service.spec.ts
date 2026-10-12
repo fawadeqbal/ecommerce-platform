@@ -23,6 +23,11 @@ function setup() {
     user: { findUnique: jest.fn(), update: jest.fn(), findUniqueOrThrow: jest.fn() },
     otpCode: { updateMany: jest.fn(), create: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
     refreshToken: { updateMany: jest.fn(), create: jest.fn() },
+    session: {
+      create: jest.fn().mockResolvedValue({ id: 's1' }),
+      update: jest.fn().mockResolvedValue({ id: 's1' }),
+      updateMany: jest.fn(),
+    },
     $transaction: jest.fn().mockResolvedValue([]),
   };
   const notifications = { sendEmail: jest.fn() };
