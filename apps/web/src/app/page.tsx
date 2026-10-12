@@ -192,11 +192,11 @@ export default async function HomePage() {
           {TRUST.map((t) => (
             <div
               key={t.title}
-              className="flex w-[64%] flex-none snap-start items-center gap-3 rounded-[20px] bg-white px-4 py-3.5 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card sm:w-[40%] md:w-auto"
+              className="flex w-[64%] flex-none snap-start items-center gap-2.5 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card sm:w-[40%] md:w-auto"
             >
               <span
                 className={cn(
-                  'flex h-11 w-11 flex-none items-center justify-center rounded-2xl',
+                  'flex h-8 w-8 flex-none items-center justify-center rounded-lg',
                   t.tint,
                 )}
               >
@@ -204,18 +204,18 @@ export default async function HomePage() {
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth={2}
+                  strokeWidth={1.8}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                 >
                   <path d={t.icon} />
                 </svg>
               </span>
               <div>
-                <p className="text-[15px] font-bold">{t.title}</p>
-                <p className="text-[13px] text-gray-500">{t.sub}</p>
+                <p className="text-sm font-bold">{t.title}</p>
+                <p className="text-xs text-gray-500">{t.sub}</p>
               </div>
             </div>
           ))}
