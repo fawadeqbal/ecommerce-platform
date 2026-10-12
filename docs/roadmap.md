@@ -10,7 +10,7 @@ We build one entity at a time through every layer:
 6. Seed data so the screen has something to show
 
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
-Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 32.** (Step 22 support is deferred: it will be built together with the RAG support assistant. The assistant's Python backend was imported as-is into `services/support-ai`; integration pending.)
+Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 32.** (Step 22 support is deferred: it will be built together with the RAG support assistant. Step 33a connected the assistant; step 33b adds tickets.)
 
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
@@ -75,5 +75,7 @@ encrypted credentials). Step 28: `cart_recovery` (CartRecovery: abandoned-cart e
 | 30  | **SEO tools**                      | Redirect manager (301), canonical URLs, full sitemap (products, categories, brands, stores), Organization / Breadcrumb structured data (5.17)                                 | **Done**                      |
 | 31  | **Documents & bulk tools**         | Invoice PDF, packing slips, order notes, manual orders, reorder / buy now, CSV product import / export (3.7, 4.2, 4.4, 5.2, 5.4)                                              | **Done**                      |
 | 32  | **Reports extras**                 | Customer, coupon, tax, inventory & abandoned-cart reports, conversion rate, scheduled report emails (5.1, 5.16, 4.6)                                                          | Next                          |
+| 33a | **Support assistant (chat)**       | RAG assistant (`services/support-ai`) behind `/support/assistant`; store look-ups (own orders, products) read-only; storefront chat widget                                    | Done                          |
+| 33b | **Support tickets** (was 22)       | "Talk to a person" → ticket in the API, admin inbox (assign, replies, notes), live updates                                                                                    | Next                          |
 
 Later (optional, not in scope doc): branches / multi-location.

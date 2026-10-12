@@ -7,10 +7,19 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]   # the backend/ folder
-load_dotenv(BASE_DIR / ".env")  # loads ANTHROPIC_API_KEY, DATABASE_URL and ADMIN_TOKEN
+load_dotenv(BASE_DIR / ".env")                # this service's own overrides (optional)
+load_dotenv(BASE_DIR.parents[1] / ".env")     # the monorepo .env (SUPPORT_AI_*, STORE_*, ANTHROPIC_API_KEY)
 
-# ---- database ----
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://rag:rag@localhost:5432/rag")
+# ---- databases ----
+# Own tables (chats, messages, knowledge base): a separate database, created on first start.
+DATABASE_URL = os.getenv("SUPPORT_AI_DATABASE_URL", "postgresql://ecommerce:ecommerce@localhost:5432/support_ai")
+# The store (orders, products): read-only, see app/db/store.py. Defaults to the API's DATABASE_URL.
+STORE_DATABASE_URL = (os.getenv("STORE_DATABASE_URL") or os.getenv("DATABASE_URL")
+                      or "postgresql://ecommerce:ecommerce@localhost:5432/ecommerce")
+STORE_NAME = os.getenv("STORE_NAME", "Our Store")
+STORE_URL = os.getenv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000").rstrip("/")
+# Shared with the NestJS API (SUPPORT_AI_KEY). Empty = no check (local experiments only).
+SERVICE_KEY = os.getenv("SUPPORT_AI_KEY", "")
 
 # ---- documents + chunking ----
 DATA_DIR = BASE_DIR / "data"            # put your PDF files here

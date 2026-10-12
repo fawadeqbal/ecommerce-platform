@@ -1,10 +1,12 @@
 """Write the answer from the retrieved passages, streaming it to the browser."""
+from app.core.caller import set_customer
 from app.graph.events import emit
 from app.graph.nodes.retrieval import _add_usage
 
 
 def generate(state, deps):
     conv = state["conversation"]
+    set_customer(conv.get("customer"))   # tools read it (app/core/caller.py)
     emit("meta", {
         "conversation_id": conv["id"], "title": conv["title"], "route": state["route"],
         "query": state["query"], "sources": state["results"],

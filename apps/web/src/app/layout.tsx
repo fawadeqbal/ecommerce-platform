@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Providers } from './providers';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
+import { SupportWidget } from '@/components/support/support-widget';
 import { OrganizationJsonLd } from '@/components/seo/organization-json-ld';
 import { MaintenanceGate } from '@/components/layout/maintenance-gate';
 import './globals.css';
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />
+            <SupportWidget />
           </Providers>
         </MaintenanceGate>
       </body>

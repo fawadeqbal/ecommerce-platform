@@ -11,7 +11,7 @@ SPEC = {
     "description": (
         "Transfer the customer to the human support team by showing the support ticket form in the chat. "
         "Use it when the customer asks to talk to a person, human, agent, the support team or customer service "
-        "(in any language, e.g. 'agent se baat karni hai'), or when their problem needs ShopEase staff according "
+        "(in any language, e.g. 'agent se baat karni hai'), or when their problem needs store staff according "
         "to the handbook (money deducted but no order after 7 working days, damaged, wrong or missing items, "
         "a late refund, an account they cannot access, or a complaint). After calling it, tell the customer to "
         "fill in the form below with their name, email and the issue, and that an agent will reply in this chat."

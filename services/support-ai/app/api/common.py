@@ -26,6 +26,12 @@ def visitor_id():
     return vid if is_valid_id(vid) else None
 
 
+def customer():
+    """Signed-in customer sent by the NestJS API (trusted: the request carried the service key)."""
+    cid = request.headers.get("X-Customer-Id", "").strip()
+    return {"id": cid, "email": request.headers.get("X-Customer-Email", "").strip()} if cid else None
+
+
 def client_ip():
     return request.headers.get("X-Real-IP") or request.remote_addr or "unknown"
 

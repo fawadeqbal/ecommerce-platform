@@ -365,6 +365,16 @@ Computed by the API only (`POST /checkout/quote`); the UI never calculates total
   page (Usage) and the customer page (Points & rewards history).
 - Settings are rows in the `Setting` table, read with `readSetting(prisma, key, fallback)`.
 
+## Support assistant
+
+- `services/support-ai` (Python: Flask, LangGraph, pgvector) answers. It is internal: only the API calls it, at
+  `SUPPORT_AI_URL` with the shared `SUPPORT_AI_KEY`; browsers use `/api/v1/support/assistant/*`.
+- Owner of a chat: signed-in customer → a stable UUID derived from the user id; guest → `X-Visitor-Id` (browser UUID).
+- Own tables (chats, messages, knowledge chunks) live in a separate database (`SUPPORT_AI_DATABASE_URL`), so Prisma
+  never sees them. Store data is read with fixed, customer-scoped queries (`app/db/store.py`) over a read-only connection:
+  `lookup_order` (signed in: own orders; guest: order number + checkout email), `search_products` (published only).
+- Knowledge: PDFs in `services/support-ai/data/` → `python -m scripts.ingest`.
+
 ## Conventions
 
 - **Email only through `NotificationsService.sendEmail()`.** It checks the suppression list and marketing

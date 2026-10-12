@@ -11,13 +11,14 @@ because its shape depends on the embedding model.
 import logging
 from pathlib import Path
 
-from app.db.connection import connect_plain
+from app.db.connection import connect_plain, ensure_database
 
 log = logging.getLogger(__name__)
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 
 def run_migrations():
+    ensure_database()
     files = sorted(MIGRATIONS_DIR.glob("*.sql"))
     with connect_plain() as conn:
         conn.execute("""CREATE TABLE IF NOT EXISTS schema_migrations (

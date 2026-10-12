@@ -9,7 +9,7 @@ import logging
 
 from flask import Blueprint, Response, jsonify, request
 
-from app.api.common import check_limits, deps, error, graph, visitor_id
+from app.api.common import check_limits, customer, deps, error, graph, visitor_id
 from app.api.schemas import ChatRequest, parse
 
 log = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ def _start():
     else:   # new chat: created only once there is an answer (save node)
         conversation = {"id": None, "title": body.message[:60], "summary": ""}
     conversation["visitor_id"] = vid
+    conversation["customer"] = customer()
     return {"question": body.message, "conversation": conversation}, None
 
 

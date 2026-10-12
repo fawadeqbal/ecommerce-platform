@@ -8,12 +8,15 @@ Prompts live in plain text files next to this one, so they can be edited without
 from functools import lru_cache
 from pathlib import Path
 
+from app.core import config
+
 PROMPTS_DIR = Path(__file__).parent
 
 
 @lru_cache(maxsize=None)
 def _read(name):
-    return (PROMPTS_DIR / f"{name}.md").read_text(encoding="utf-8").strip()
+    text = (PROMPTS_DIR / f"{name}.md").read_text(encoding="utf-8").strip()
+    return text.replace("ShopEase", config.STORE_NAME)   # the prompts were written for the demo store
 
 
 def load_prompt(name, **values):

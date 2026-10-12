@@ -89,6 +89,15 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
 4. Cancel a paid order (customer or admin): a refund is recorded and the "refund processed" email arrives.
    Admin → order detail shows every payment attempt.
 
+**Support assistant (chat bubble on the storefront)**
+
+1. Postgres needs pgvector: `docker compose up -d` (the image is now `pgvector/pgvector:pg16`, data is kept).
+2. In `.env`: set `ANTHROPIC_API_KEY` (and keep `SUPPORT_AI_KEY` the same for API and assistant; both read the root `.env`).
+3. Once: `cd services/support-ai && python -m venv .venv && source .venv/Scripts/activate && pip install -r requirements.txt`
+   then `python -m scripts.ingest` (loads `data/*.pdf` into the knowledge base; replace the demo handbook with your policies).
+4. Run: `python -m app.main` (port 5000) next to `pnpm dev`. Click **Support** on the right edge of the store.
+5. Signed in, ask "where is my order?"; as a guest it asks for the order number + checkout email.
+
 **Stripe (test mode)**
 
 1. Admin → Settings → Payments → **Stripe**: paste the `sk_test_…` secret key and the `whsec_…` signing secret, enable it,

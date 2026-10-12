@@ -27,7 +27,7 @@ from app.providers import factory
 log = logging.getLogger(__name__)
 
 FALLBACK = ("Sorry, I couldn't finish that answer. Please try asking again, "
-            "or contact ShopEase support on WhatsApp at 0300-1234567.")
+            "or tap 'Talk to a person'.")
 
 
 class Assistant:

@@ -6,7 +6,9 @@ The Flask application (app factory).
 
 Routes live in app/api/, the chat workflow in app/graph/, data access in app/db/.
 """
-from flask import Flask
+import hmac
+
+from flask import Flask, jsonify, request
 
 from app.api import admin, chat, conversations, feedback, live, support
 from app.core import config
@@ -28,6 +30,14 @@ def create_app(deps=None):
     app.extensions["graph"] = build_graph(deps)
     app.extensions["limiters"] = (RateLimiter(config.IP_RATE_LIMIT_PER_MINUTE),   # per IP
                                   RateLimiter(config.RATE_LIMIT_PER_MINUTE))      # per visitor
+    @app.before_request
+    def _require_service_key():
+        path = request.path
+        if config.SERVICE_KEY and path.startswith("/api/") and not path.startswith("/api/admin"):
+            if not hmac.compare_digest(request.headers.get("X-Service-Key", ""), config.SERVICE_KEY):
+                return jsonify(error="Unauthorized."), 401
+        return None
+
     for module in (chat, conversations, feedback, support, admin):
         app.register_blueprint(module.bp)
     live.sock.init_app(app)          # WebSockets: /ws/support and /ws/admin

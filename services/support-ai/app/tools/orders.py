@@ -1,60 +1,58 @@
 """
-The lookup_order tool.
+The lookup_order tool: live order status from the store database.
 
-The handbook (RAG) answers questions about POLICIES. Questions about ONE customer's
-order need live data, so the model gets a tool: "where is order SE10482931?" ->
-the model calls lookup_order -> we query the orders table -> the model answers from it.
+Signed-in customers: their own orders (a number is optional: without one they get their recent orders).
+Guests: the order number AND the email used at checkout, so nobody can read a stranger's order.
 """
 import json
 import re
 
-from app.db.repositories.orders import OrderRepository
+from app.core.caller import customer
+from app.db.store import StoreRepository
 
-ORDER_NUMBER = re.compile(r"\bSE[\s-]?\d{8}\b", re.I)
+ORDER_NUMBER = re.compile(r"\bORD-\d{6}-[A-Z0-9]{4,8}\b", re.I)
 
 SPEC = {
     "name": "lookup_order",
     "description": (
-        "Look up the current status of a ShopEase order: status, items, total, payment method, "
-        "city, expected delivery date, courier and tracking number. Use it whenever the customer "
-        "asks about a specific order and has given an order number."
+        "Look up the customer's orders: status, payment, items, totals, shipping method, courier, tracking number "
+        "and delivery dates. Signed-in customers: call it without an order number to list their recent orders. "
+        "Guests must give the order number and the email they used at checkout."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-            "order_number": {
-                "type": "string",
-                "description": "Order number: 'SE' followed by 8 digits, e.g. SE10482931",
-            }
+            "order_number": {"type": "string", "description": "e.g. ORD-261011-7K2QX (optional when signed in)"},
+            "email": {"type": "string", "description": "Checkout email (guests only)"},
         },
-        "required": ["order_number"],
     },
 }
 
-_orders = OrderRepository()
+_store = StoreRepository()
 
 
-def lookup_order(order_number):
-    number = re.sub(r"[\s-]", "", str(order_number)).upper()
-    if not re.fullmatch(r"SE\d{8}", number):
-        return {"error": "That doesn't look like an order number. It should be SE followed by 8 digits."}
-    row = _orders.find(number)
-    if not row:
-        return {"error": f"No order found with number {number}."}
-    row["placed_at"] = row["placed_at"].strftime("%d %b %Y")
-    if row["expected_delivery"]:
-        row["expected_delivery"] = row["expected_delivery"].strftime("%d %b %Y")
-    return row
+def lookup_order(order_number="", email=""):
+    who = customer()
+    number = str(order_number or "").strip().upper()
+    if not number:
+        if who.get("id"):
+            return {"recent_orders": _store.recent_orders(who["id"])}
+        return {"error": "Ask the customer for the order number and the email used at checkout, or to sign in."}
+    if not ORDER_NUMBER.fullmatch(number):
+        return {"error": "That doesn't look like an order number. It looks like ORD-261011-7K2QX."}
+    if not who.get("id") and not str(email or "").strip():
+        return {"error": "Ask the customer for the email used at checkout (or to sign in)."}
+    row = _store.order(number, who.get("id"), str(email or "").strip())
+    return row or {"error": f"No order {number} found for this customer."}
 
 
 def run(arguments):
-    return lookup_order(arguments.get("order_number", ""))
+    return lookup_order(arguments.get("order_number", ""), arguments.get("email", ""))
 
 
 def prefetch(question):
-    """For models WITHOUT tool calling: if the message contains an order number,
-    look it up ourselves and hand the result to the model as extra context."""
+    """For models WITHOUT tool calling: look up an order number found in the message (signed-in customers)."""
     found = ORDER_NUMBER.search(question)
-    if not found:
+    if not found or not customer().get("id"):
         return ""
     return f"Order lookup result for {found.group(0)}: {json.dumps(lookup_order(found.group(0)), default=str)}"
