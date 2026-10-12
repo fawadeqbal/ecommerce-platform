@@ -18,7 +18,9 @@ export function ProfileView() {
   if (!me) return <Spinner />;
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+      <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+        Profile
+      </h1>
       <EmailCard me={me} />
       <ProfileForm key={me.id} me={me} />
       <PasswordForm hasPassword={me.hasPassword} />

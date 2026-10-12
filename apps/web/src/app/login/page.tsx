@@ -9,6 +9,7 @@ export const metadata: Metadata = { title: 'Sign in', robots: { index: false } }
 export default function LoginPage() {
   return (
     <AuthCard
+      mode="login"
       title="Sign in"
       subtitle="Items in your cart are kept when you sign in."
       footer={

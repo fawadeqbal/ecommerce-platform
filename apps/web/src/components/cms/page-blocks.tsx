@@ -11,7 +11,10 @@ export function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
         switch (block.type) {
           case 'heading':
             return block.level === 2 ? (
-              <h2 key={i} className="pt-2 text-2xl font-bold text-gray-900">
+              <h2
+                key={i}
+                className="pt-2 text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900"
+              >
                 {block.text}
               </h2>
             ) : (

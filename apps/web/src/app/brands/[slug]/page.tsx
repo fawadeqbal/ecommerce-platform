@@ -54,7 +54,9 @@ export default async function BrandPage({
             />
           ) : null}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{brand.name}</h1>
+            <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+              {brand.name}
+            </h1>
             {brand.description ? (
               <p className="mt-1 max-w-2xl text-gray-600">{brand.description}</p>
             ) : null}

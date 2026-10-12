@@ -8,6 +8,7 @@ export const metadata: Metadata = { title: 'Create account', robots: { index: fa
 export default function RegisterPage() {
   return (
     <AuthCard
+      mode="register"
       title="Create your account"
       subtitle="Track orders, save items for later and check out faster."
       footer={

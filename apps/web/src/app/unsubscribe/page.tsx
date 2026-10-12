@@ -12,7 +12,9 @@ export default async function Page({
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
   return (
     <div className="mx-auto max-w-lg px-4 py-16">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Unsubscribe</h1>
+      <h1 className="mb-6 text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+        Unsubscribe
+      </h1>
       <EmailLinkAction kind="unsubscribe" email={one(q.email)} sig={one(q.sig)} />
     </div>
   );

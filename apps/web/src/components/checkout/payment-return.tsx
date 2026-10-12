@@ -70,7 +70,9 @@ export function PaymentReturn() {
           ✓
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payment received, thank you!</h1>
+          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+            Payment received, thank you!
+          </h1>
           <p className="mt-2 text-gray-600">
             Order <span className="font-mono font-semibold text-gray-900">{data.orderNumber}</span>{' '}
             is confirmed. {formatMoney(data.amount, data.currency)} paid by{' '}
@@ -100,7 +102,7 @@ export function PaymentReturn() {
   } else if (data) {
     body = (
       <>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
           {data.attemptStatus === 'CANCELLED' ? 'Payment cancelled' : 'Payment failed'}
         </h1>
         {data.canRetry ? (

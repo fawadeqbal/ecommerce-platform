@@ -88,7 +88,9 @@ export function AddressesView() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Addresses</h1>
+        <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+          Addresses
+        </h1>
         <Button onClick={() => open('new')}>Add address</Button>
       </div>
 
@@ -109,11 +111,14 @@ export function AddressesView() {
         </Card>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-3">
         {data?.map((a) => (
-          <Card key={a.id} className="space-y-2 text-sm">
+          <Card
+            key={a.id}
+            className="space-y-1.5 rounded-3xl border-0 p-[18px] text-sm shadow-none"
+          >
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900">{a.fullName}</span>
+              <span className="text-[17px] font-bold text-gray-900">{a.label || a.fullName}</span>
               {a.label ? <Badge>{a.label}</Badge> : null}
               {a.isDefault ? <Badge tone="blue">Default</Badge> : null}
             </div>

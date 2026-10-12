@@ -30,7 +30,9 @@ export function OrderPlaced() {
           ✓
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Thank you, your order is placed!</h1>
+          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+            Thank you, your order is placed!
+          </h1>
           {orderNumber ? (
             <p className="mt-2 text-gray-600">
               Order number{' '}
