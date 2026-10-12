@@ -50,9 +50,35 @@ export async function SiteHeader() {
   });
   return (
     <>
+      {/* Utility strip: promises on the left, quick links on the right. */}
+      <div className="bg-brand-800 text-[12.5px] text-white/80">
+        <div className={`${container} flex h-9 items-center justify-between gap-4`}>
+          <p className="flex min-w-0 items-center gap-2 truncate">
+            <span aria-hidden className="h-1.5 w-1.5 flex-none rounded-full bg-accent" />
+            <span className="truncate">
+              <b className="font-semibold text-white">Cash on delivery</b> everywhere ·{' '}
+              Easy returns · Verified sellers
+            </span>
+          </p>
+          <nav aria-label="Quick links" className="hidden flex-none items-center gap-5 md:flex">
+            <Link href="/track-order" className="transition-colors hover:text-white">
+              Track order
+            </Link>
+            <Link href="/faq" className="transition-colors hover:text-white">
+              Help center
+            </Link>
+            <a
+              href={process.env.NEXT_PUBLIC_VENDOR_URL || '#'}
+              className="rounded-full bg-white/10 px-3 py-1 font-semibold text-white transition-colors hover:bg-accent hover:text-gray-900"
+            >
+              Sell with us
+            </a>
+          </nav>
+        </div>
+      </div>
       <HeaderShell>
         <div
-          className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,1.8vw,28px)] gap-y-3 py-3 md:flex-nowrap`}
+          className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,1.8vw,28px)] gap-y-3 py-3 md:flex-nowrap md:py-4`}
         >
           <StoreLogo name={storeName(settings)} logoUrl={settings?.logoUrl} />
           <Suspense
@@ -68,7 +94,7 @@ export async function SiteHeader() {
           </div>
         </div>
       </HeaderShell>
-      <div className="border-b border-gray-200 bg-white">
+      <div className="border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(27,24,48,0.02)]">
         <nav
           aria-label="Categories"
           className={`${container} scrollbar-none flex items-center gap-0.5 overflow-x-auto`}
@@ -86,10 +112,6 @@ export async function SiteHeader() {
           >
             <CategoryNav items={nav} />
           </Suspense>
-          <span className="ml-auto hidden items-center gap-1.5 whitespace-nowrap rounded-full bg-brand-100 px-3 py-1.5 text-[13px] font-semibold text-brand-700 sm:flex">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Cash on delivery everywhere
-          </span>
         </nav>
       </div>
     </>

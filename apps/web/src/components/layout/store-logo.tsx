@@ -23,6 +23,19 @@ export function StoreLogo({
         tone === 'light' ? 'text-[28px] text-white' : 'text-[26px] text-gray-900',
       )}
     >
+      {/* Mark: a shopping bag in the accent colour. */}
+      <span
+        aria-hidden
+        className={cn(
+          'mr-1 flex h-9 w-9 flex-none -rotate-6 items-center justify-center rounded-xl shadow-sm transition-transform duration-300 hover:rotate-0',
+          tone === 'light' ? 'bg-accent text-gray-900' : 'bg-brand-600 text-white',
+        )}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-5 w-5">
+          <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
+          <path d="M9 8V7a3 3 0 0 1 6 0v1" strokeLinecap="round" />
+        </svg>
+      </span>
       {name}
       <span
         aria-hidden
