@@ -21,6 +21,7 @@ import { useCart, useMe } from '@/hooks/use-cart';
 import { addressesApi, checkoutApi, queryKeys } from '@/lib/api-client';
 import { useLocale } from '@/components/locale/locale-provider';
 import { container } from '@/components/layout/container';
+import { PlacingOverlay } from './placing-overlay';
 import { Panel, RadioDot, SummaryRow, codeInput, darkButton, optionCard } from './ui';
 
 function newIdempotencyKey(): string {
@@ -180,7 +181,9 @@ export function CheckoutView() {
   );
 
   const wrap = `${container} flex max-w-[1240px] flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`;
-  if (cartLoading || me.isPending || placed) return <Spinner className="mx-auto p-8" />;
+  // After success we redirect (gateway / success page); keep the progress card up meanwhile.
+  if (placed) return <PlacingOverlay online={isOnlinePayment(paymentMethod)} done />;
+  if (cartLoading || me.isPending) return <Spinner className="mx-auto p-8" />;
   if (cartError) {
     return (
       <div className={wrap}>
@@ -270,6 +273,7 @@ export function CheckoutView() {
 
   return (
     <div className={wrap}>
+      {place.isPending ? <PlacingOverlay online={online} done={false} /> : null}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-none tracking-display">
           Checkout
@@ -907,7 +911,7 @@ export function CheckoutView() {
               loading={place.isPending}
               disabled={!q?.canPlace || !ready}
             >
-              {online ? 'Continue to payment' : 'Place order'}
+              {place.isPending ? 'Placing order…' : online ? 'Continue to payment' : 'Place order'}
             </Button>
             {!ready ? (
               <p className="-mt-1 text-center text-xs font-semibold text-red-600">
