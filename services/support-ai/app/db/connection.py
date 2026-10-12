@@ -8,13 +8,16 @@ from pgvector.psycopg import register_vector
 from app.core import config
 
 
-def _open():
+def _open(retry=True):
     try:
         return psycopg.connect(config.DATABASE_URL, autocommit=True, row_factory=dict_row,
                                connect_timeout=5)
     except psycopg.OperationalError as e:
-        raise SystemExit(f"Can't reach Postgres at DATABASE_URL ({e}).\n"
-                         "Start it from the RAG folder:  docker compose up -d") from None
+        if retry and "does not exist" in str(e):   # first start: create this service's database, then retry
+            ensure_database()
+            return _open(retry=False)
+        raise SystemExit(f"Can't reach Postgres at SUPPORT_AI_DATABASE_URL ({e}).\n"
+                         "Start it from the monorepo root:  pnpm infra:up") from None
 
 
 def connect():
