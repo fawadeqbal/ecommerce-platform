@@ -60,25 +60,25 @@ const TRUST = [
   {
     title: 'Cash on delivery',
     sub: 'Pay when it arrives',
-    tint: 'bg-accent text-gray-900',
+    tint: 'bg-tint-yellow text-amber-800',
     icon: 'M3 7h18v10H3zM7 12h.01M17 12h.01M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   },
   {
     title: 'Easy returns',
     sub: 'Request from your orders',
-    tint: 'bg-emerald-600 text-white',
+    tint: 'bg-tint-mint text-emerald-800',
     icon: 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4',
   },
   {
     title: 'Verified sellers',
     sub: 'Every store reviewed',
-    tint: 'bg-brand-600 text-white',
+    tint: 'bg-tint-violet text-brand-800',
     icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3ZM9 12l2 2 4-4',
   },
   {
     title: 'Secure payments',
     sub: 'Card, wallet or cash',
-    tint: 'bg-rose-500 text-white',
+    tint: 'bg-tint-rose text-rose-800',
     icon: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5zM12 15v2',
   },
 ];
