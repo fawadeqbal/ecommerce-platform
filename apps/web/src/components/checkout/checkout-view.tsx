@@ -191,8 +191,14 @@ export function CheckoutView() {
   );
 
   const wrap = `${container} flex max-w-[1240px] flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`;
+  // One overlay instance from "Place order" until the next page opens: it is always the first
+  // child of the returned fragment, so React keeps it mounted (no re-animation, no flicker).
+  const overlay =
+    place.isPending || placed ? (
+      <PlacingOverlay key="placing" online={isOnlinePayment(paymentMethod)} done={placed} />
+    ) : null;
   // After success we redirect (gateway / success page); keep the progress card up meanwhile.
-  if (placed) return <PlacingOverlay online={isOnlinePayment(paymentMethod)} done />;
+  if (placed) return <>{overlay}</>;
   if (cartLoading || me.isPending) return <Spinner className="mx-auto p-8" />;
   if (cartError) {
     return (
@@ -280,8 +286,9 @@ export function CheckoutView() {
   const typedAddress = [line1, city, state, countryCode].filter((x) => x?.trim()).join(', ');
 
   return (
-    <div className={wrap}>
-      {place.isPending ? <PlacingOverlay online={online} done={false} /> : null}
+    <>
+      {overlay}
+      <div className={wrap}>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-none tracking-display">
           Checkout
@@ -943,6 +950,7 @@ export function CheckoutView() {
         </aside>
       </form>
     </div>
+    </>
   );
 }
 
