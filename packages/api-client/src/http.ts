@@ -32,12 +32,45 @@ export type RequestOptions = Omit<RequestInit, 'body'> & {
   next?: { revalidate?: number | false; tags?: string[] };
 };
 
+let refreshing: Promise<boolean> | null = null;
+
+/** One shared refresh for every request that hit 401 at the same time. */
+function refreshSession(): Promise<boolean> {
+  refreshing ??= fetch(`${API_URL}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+  })
+    .then((r) => r.ok)
+    .catch(() => false)
+    .finally(() => {
+      setTimeout(() => (refreshing = null), 0);
+    });
+  return refreshing;
+}
+
 /** Fetch wrapper for the NestJS API. Sends cookies, unwraps { success, data }, throws ApiClientError. */
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const res = await send(path, options);
+  // Access token expired: refresh once (browser only, cookie sessions) and retry.
+  if (
+    res.status === 401 &&
+    typeof window !== 'undefined' &&
+    !options.token &&
+    !path.startsWith('/auth/') &&
+    (await refreshSession())
+  ) {
+    return parse<T>(await send(path, options));
+  }
+  return parse<T>(res);
+}
+
+function send(path: string, options: RequestOptions): Promise<Response> {
   const { body, token, headers, ...init } = options;
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
 
-  const res = await fetch(`${API_URL}${path}`, {
+  return fetch(`${API_URL}${path}`, {
     ...init,
     credentials: 'include',
     headers: {
@@ -48,7 +81,9 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     },
     body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
   });
+}
 
+async function parse<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as T;
   const json = (await res.json().catch(() => undefined)) as ApiResponse<T> | ApiError | undefined;
   if (!res.ok) throw new ApiClientError(res.status, json as ApiError | undefined);

@@ -153,6 +153,7 @@ export const queryKeys = {
   searchSuggest: (q: string) => ['search', 'suggest', q] as const,
   recentlyViewed: (slugs: string[]) => ['catalog', 'by-slugs', slugs.join(',')] as const,
   authProviders: ['auth', 'providers'] as const,
+  authSessions: ['auth', 'sessions'] as const,
   rbac: {
     access: ['rbac', 'access'] as const,
     roles: ['rbac', 'roles'] as const,

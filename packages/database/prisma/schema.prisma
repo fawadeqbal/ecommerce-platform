@@ -311,7 +311,10 @@ model Session {
   expiresAt DateTime
   revokedAt DateTime?
   createdAt DateTime  @default(now())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Last time this device refreshed its tokens.
+  lastUsedAt    DateTime       @default(now())
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens RefreshToken[]
 
   @@index([userId])
 }
@@ -323,9 +326,13 @@ model RefreshToken {
   expiresAt DateTime
   revokedAt DateTime?
   createdAt DateTime  @default(now())
+  /// Device session this token belongs to (rotated tokens share one session).
+  sessionId String?
+  session   Session?  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([sessionId])
 }
 
 model OtpCode {

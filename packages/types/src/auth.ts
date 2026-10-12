@@ -5,6 +5,18 @@ export interface JwtPayload {
   email: string;
   roles: Role[];
   vendorId?: string;
+  /** Device session id (see GET /auth/sessions). */
+  sid?: string;
+}
+
+/** One signed-in device. */
+export interface DeviceSession {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  lastUsedAt: string;
+  current: boolean;
 }
 
 export interface AuthTokens {

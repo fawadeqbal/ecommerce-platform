@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   HttpCode,
   HttpStatus,
   Logger,
@@ -15,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import type { AuthProviders, AuthTokens } from '@ecommerce/types';
+import type { AuthProviders, AuthTokens, DeviceSession, JwtPayload } from '@ecommerce/types';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { REFRESH_COOKIE, clearAuthCookies, setAuthCookies } from './auth-cookies';
@@ -187,10 +189,47 @@ export class AuthController {
     }
   }
 
+  // ---------------------------------------------------------------- device sessions
+
+  @Get('sessions')
+  @Throttle({ default: { ttl: 60_000, limit: 60 } })
+  sessions(@CurrentUser() user: JwtPayload | undefined): Promise<DeviceSession[]> {
+    return this.authService.listSessions(this.requireUser(user).sub, user?.sid);
+  }
+
+  /** Signs out every other device. */
+  @Delete('sessions')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async revokeOthers(@CurrentUser() user: JwtPayload | undefined): Promise<void> {
+    await this.authService.revokeOtherSessions(this.requireUser(user).sub, user?.sid);
+  }
+
+  @Delete('sessions/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async revokeOne(
+    @CurrentUser() user: JwtPayload | undefined,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.authService.revokeSession(this.requireUser(user).sub, id);
+  }
+
   // ---------------------------------------------------------------- helpers
+
+  private requireUser(user: JwtPayload | undefined): JwtPayload {
+    if (!user) throw new UnauthorizedException();
+    return user;
+  }
 
   private withCookies(res: Response, tokens: AuthTokens): AuthTokens {
     setAuthCookies(res, tokens, this.config.get<number>('JWT_REFRESH_TTL_DAYS', 30));
+    const req = res.req;
+    const ip =
+      String(req.headers['x-forwarded-for'] ?? '')
+        .split(',')[0]
+        ?.trim() || req.ip;
+    void this.authService
+      .tagSession(tokens.refreshToken, req.headers['user-agent'], ip)
+      .catch(() => undefined);
     return tokens;
   }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import {
   changePasswordSchema,
@@ -24,6 +24,7 @@ export function ProfileView() {
       <EmailCard me={me} />
       <ProfileForm key={me.id} me={me} />
       <PasswordForm hasPassword={me.hasPassword} />
+      <DevicesCard />
     </div>
   );
 }
@@ -191,6 +192,91 @@ function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
           Save password
         </Button>
       </form>
+    </Card>
+  );
+}
+
+/** "Chrome on Windows" from a user-agent string. */
+function deviceName(ua: string | null): string {
+  if (!ua) return 'Unknown device';
+  const browser = /Edg\//.test(ua)
+    ? 'Edge'
+    : /OPR\//.test(ua)
+      ? 'Opera'
+      : /Chrome\//.test(ua)
+        ? 'Chrome'
+        : /Firefox\//.test(ua)
+          ? 'Firefox'
+          : /Safari\//.test(ua)
+            ? 'Safari'
+            : 'Browser';
+  const os = /Android/.test(ua)
+    ? 'Android'
+    : /iPhone|iPad/.test(ua)
+      ? 'iOS'
+      : /Windows/.test(ua)
+        ? 'Windows'
+        : /Mac OS/.test(ua)
+          ? 'macOS'
+          : /Linux/.test(ua)
+            ? 'Linux'
+            : '';
+  return os ? `${browser} on ${os}` : browser;
+}
+
+function DevicesCard() {
+  const queryClient = useQueryClient();
+  const sessions = useQuery({ queryKey: queryKeys.authSessions, queryFn: authApi.sessions });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.authSessions });
+  const revoke = useMutation({ mutationFn: authApi.revokeSession, onSuccess: refresh });
+  const revokeOthers = useMutation({ mutationFn: authApi.revokeOtherSessions, onSuccess: refresh });
+  const list = sessions.data ?? [];
+  const others = list.filter((s) => !s.current).length;
+
+  return (
+    <Card>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <CardTitle>Signed-in devices</CardTitle>
+        {others > 0 ? (
+          <Button
+            variant="outline"
+            size="sm"
+            loading={revokeOthers.isPending}
+            onClick={() => revokeOthers.mutate()}
+          >
+            Sign out other devices
+          </Button>
+        ) : null}
+      </div>
+      {sessions.isLoading ? (
+        <Spinner />
+      ) : (
+        <ul className="mt-3 divide-y divide-gray-100">
+          {list.map((s) => (
+            <li key={s.id} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="flex flex-wrap items-center gap-2 font-semibold text-gray-900">
+                  {deviceName(s.userAgent)}
+                  {s.current ? <Badge>This device</Badge> : null}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {s.ip ? `${s.ip} · ` : ''}Active {new Date(s.lastUsedAt).toLocaleString()}
+                </p>
+              </div>
+              {s.current ? null : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  loading={revoke.isPending && revoke.variables === s.id}
+                  onClick={() => revoke.mutate(s.id)}
+                >
+                  Sign out
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }

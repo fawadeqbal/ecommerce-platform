@@ -1,6 +1,7 @@
 import type {
   AuthProviders,
   AuthTokens,
+  DeviceSession,
   ForgotPasswordInput,
   LoginFormValues,
   OtpRequestInput,
@@ -17,6 +18,10 @@ export const authApi = {
     api<AuthTokens>('/auth/register', { method: 'POST', body }),
   refresh: () => api<AuthTokens>('/auth/refresh', { method: 'POST', body: {} }),
   logout: () => api<void>('/auth/logout', { method: 'POST', body: {} }),
+  sessions: () => api<DeviceSession[]>('/auth/sessions'),
+  revokeSession: (id: string) =>
+    api<void>(`/auth/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  revokeOtherSessions: () => api<void>('/auth/sessions', { method: 'DELETE' }),
 
   providers: () => api<AuthProviders>('/auth/providers'),
   forgotPassword: (body: ForgotPasswordInput) =>

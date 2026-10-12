@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'node:crypto';
-import type { OtpPurpose, User } from '@ecommerce/database';
+import type { OtpPurpose, Prisma, User } from '@ecommerce/database';
 import {
   EmailTemplateKey,
   OTP_MAX_ATTEMPTS,
@@ -20,6 +20,7 @@ import {
   VERIFY_EMAIL_TTL_HOURS,
   type AuthProviders,
   type AuthTokens,
+  type DeviceSession,
   type EmailJobPayload,
   type JwtPayload,
 } from '@ecommerce/types';
@@ -95,22 +96,91 @@ export class AuthService {
   async refresh(refreshToken: string): Promise<AuthTokens> {
     const record = await this.prisma.refreshToken.findUnique({
       where: { tokenHash: this.hash(refreshToken) },
+      include: { session: { select: { revokedAt: true } } },
     });
-    if (!record || record.revokedAt || record.expiresAt < new Date()) {
+    if (!record || record.expiresAt < new Date() || record.session?.revokedAt) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    if (record.revokedAt) {
+      // A rotated token was used again: likely stolen. End that whole device session.
+      if (record.sessionId) await this.endSessions({ id: record.sessionId });
       throw new UnauthorizedException('Invalid refresh token');
     }
     await this.prisma.refreshToken.update({
       where: { id: record.id },
       data: { revokedAt: new Date() },
     });
-    return this.issueTokens(record.userId);
+    return this.issueTokens(record.userId, record.sessionId ?? undefined);
   }
 
   async logout(refreshToken: string): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
-      where: { tokenHash: this.hash(refreshToken), revokedAt: null },
-      data: { revokedAt: new Date() },
+    const record = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash: this.hash(refreshToken) },
+      select: { id: true, sessionId: true },
     });
+    if (!record) return;
+    if (record.sessionId) await this.endSessions({ id: record.sessionId });
+    else
+      await this.prisma.refreshToken.update({
+        where: { id: record.id },
+        data: { revokedAt: new Date() },
+      });
+  }
+
+  // ================================================================ device sessions
+
+  /** Records which device a freshly issued token pair belongs to. */
+  async tagSession(refreshToken: string, userAgent?: string, ip?: string): Promise<void> {
+    const record = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash: this.hash(refreshToken) },
+      select: { sessionId: true },
+    });
+    if (!record?.sessionId) return;
+    await this.prisma.session.update({
+      where: { id: record.sessionId },
+      data: { userAgent: userAgent?.slice(0, 400) || undefined, ip: ip || undefined },
+    });
+  }
+
+  async listSessions(userId: string, currentSid?: string): Promise<DeviceSession[]> {
+    const rows = await this.prisma.session.findMany({
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { lastUsedAt: 'desc' },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      userAgent: r.userAgent,
+      ip: r.ip,
+      createdAt: r.createdAt.toISOString(),
+      lastUsedAt: r.lastUsedAt.toISOString(),
+      current: r.id === currentSid,
+    }));
+  }
+
+  async revokeSession(userId: string, sessionId: string): Promise<void> {
+    await this.endSessions({ id: sessionId, userId });
+  }
+
+  /** Signs out every device except the current one. */
+  async revokeOtherSessions(userId: string, currentSid?: string): Promise<void> {
+    await this.endSessions({ userId, ...(currentSid ? { id: { not: currentSid } } : {}) });
+  }
+
+  private async endSessions(where: Prisma.SessionWhereInput): Promise<void> {
+    const now = new Date();
+    const sessions = await this.prisma.session.findMany({
+      where: { ...where, revokedAt: null },
+      select: { id: true },
+    });
+    if (sessions.length === 0) return;
+    const ids = sessions.map((x) => x.id);
+    await this.prisma.$transaction([
+      this.prisma.session.updateMany({ where: { id: { in: ids } }, data: { revokedAt: now } }),
+      this.prisma.refreshToken.updateMany({
+        where: { sessionId: { in: ids }, revokedAt: null },
+        data: { revokedAt: now },
+      }),
+    ]);
   }
 
   // ================================================================ email verification
@@ -193,6 +263,10 @@ export class AuthService {
       }),
       // Sign out everywhere: a reset usually means the old password leaked.
       this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: now },
+      }),
+      this.prisma.session.updateMany({
         where: { userId: user.id, revokedAt: null },
         data: { revokedAt: now },
       }),
@@ -334,7 +408,7 @@ export class AuthService {
   // ================================================================ tokens
 
   /** Issues an access + refresh token pair (also used after a vendor application). */
-  async issueTokens(userId: string): Promise<AuthTokens> {
+  async issueTokens(userId: string, sessionId?: string): Promise<AuthTokens> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
       include: {
@@ -349,6 +423,16 @@ export class AuthService {
       roles: user.roles.map((r) => r.role.name as Role),
       vendorId: user.ownedVendors[0]?.id,
     };
+    const days = this.config.get<number>('JWT_REFRESH_TTL_DAYS', 30);
+    const sessionExpires = new Date(Date.now() + days * 24 * 60 * MINUTE);
+    // One Session per device: created at sign-in, kept (and extended) on every refresh.
+    const session = sessionId
+      ? await this.prisma.session.update({
+          where: { id: sessionId },
+          data: { lastUsedAt: new Date(), expiresAt: sessionExpires },
+        })
+      : await this.prisma.session.create({ data: { userId, expiresAt: sessionExpires } });
+    payload.sid = session.id;
     const expiresIn = this.config.get<number>('JWT_ACCESS_TTL_SECONDS', 900);
     const accessToken = await this.jwt.signAsync(payload, {
       secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
@@ -356,12 +440,12 @@ export class AuthService {
     });
 
     const refreshToken = randomBytes(48).toString('base64url');
-    const days = this.config.get<number>('JWT_REFRESH_TTL_DAYS', 30);
     await this.prisma.refreshToken.create({
       data: {
         userId: user.id,
+        sessionId: session.id,
         tokenHash: this.hash(refreshToken),
-        expiresAt: new Date(Date.now() + days * 24 * 60 * MINUTE),
+        expiresAt: sessionExpires,
       },
     });
     return { accessToken, refreshToken, expiresIn };
