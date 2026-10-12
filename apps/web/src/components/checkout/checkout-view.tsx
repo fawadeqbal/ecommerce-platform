@@ -138,7 +138,12 @@ export function CheckoutView() {
       setValue('paymentMethod', selected as CheckoutFormValues['paymentMethod']);
   }, [selected, paymentMethod, setValue]);
 
+  // The progress card stays at least this long, so placing an order never just flashes by.
+  const placeStartedAt = useRef(0);
   const place = useMutation({
+    onMutate: () => {
+      placeStartedAt.current = Date.now();
+    },
     mutationFn: (values: CheckoutFormValues) =>
       checkoutApi.place({
         ...checkoutFormToInput(values, idempotencyKey),
@@ -148,6 +153,8 @@ export function CheckoutView() {
         giftCardCode: q?.giftCard?.applied ? giftCardCode : null,
       }),
     onSuccess: async ({ order, payment }) => {
+      const left = 3000 - (Date.now() - placeStartedAt.current);
+      if (left > 0) await new Promise((r) => setTimeout(r, left));
       setPlaced(true);
       await queryClient.invalidateQueries({ queryKey: queryKeys.orders.all, refetchType: 'none' });
       queryClient.setQueryData(queryKeys.orders.detail(order.orderNumber), order);
