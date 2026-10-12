@@ -174,6 +174,17 @@ async function seedLocalization() {
     update: {},
     create: { code: 'en', name: 'English', isDefault: true },
   });
+  // Set up for later: activate it once the Urdu storefront text is added.
+  await prisma.language.upsert({
+    where: { code: 'ur' },
+    update: {},
+    create: { code: 'ur', name: 'اردو (Urdu)', isRtl: true, isActive: false },
+  });
+  if ((await prisma.taxRate.count()) === 0) {
+    await prisma.taxRate.create({
+      data: { name: 'GST', taxClass: 'standard', countryCode: 'PK', rate: 0.18, isInclusive: true },
+    });
+  }
   console.log('  ✓ currencies & languages');
 }
 
@@ -184,6 +195,8 @@ async function seedSettings() {
     { key: 'store.maintenanceMode', group: 'general', value: false },
     // IANA zone used for report day boundaries (e.g. 'UTC', 'Asia/Karachi', 'Europe/London').
     { key: 'store.timezone', group: 'general', value: 'Asia/Karachi' },
+    { key: 'tax.enabled', group: 'tax', value: true },
+    { key: 'tax.defaultCountry', group: 'tax', value: 'PK' },
     { key: 'store.logoUrl', group: 'general', value: '' },
     { key: 'store.phone', group: 'general', value: '' },
     { key: 'store.address', group: 'general', value: '' },

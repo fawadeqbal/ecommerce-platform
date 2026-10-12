@@ -73,7 +73,7 @@ export function ReturnDetail({ id }: { id: string }) {
     run.reset();
     setNote('');
     setReference('');
-    setAmount(r ? String(r.itemsTotal) : '');
+    setAmount(r ? String(r.suggestedRefund) : '');
     setLines(
       Object.fromEntries((r?.items ?? []).map((i) => [i.id, { condition: '', restock: true }])),
     );

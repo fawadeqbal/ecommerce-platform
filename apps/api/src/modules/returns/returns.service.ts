@@ -39,7 +39,7 @@ import type {
   ReturnQueryDto,
 } from './dto/return.dto';
 import {
-  itemsTotal,
+  refundableForItems,
   returnInclude,
   toReturnDto,
   toReturnListItem,
@@ -294,18 +294,16 @@ export class ReturnsService {
     const vo = current.vendorOrderId
       ? await this.prisma.vendorOrder.findUnique({
           where: { id: current.vendorOrderId },
-          select: { shippingTotal: true, subtotal: true, discountTotal: true },
+          select: { shippingTotal: true },
         })
       : null;
-    // Discounts on the sub-order reduce what can be refunded, in proportion to the returned items.
-    const sub = toCents(Number(vo?.subtotal ?? 0));
-    const items = toCents(itemsTotal(current));
-    const paidItems =
-      sub > 0 ? Math.round(items * (1 - toCents(Number(vo?.discountTotal ?? 0)) / sub)) : items;
-    const max = fromCents(Math.max(0, paidItems) + toCents(Number(vo?.shippingTotal ?? 0)));
+    // Paid for the items (after discounts, plus added tax) + the sub-order's shipping.
+    const max = fromCents(
+      toCents(refundableForItems(current)) + toCents(Number(vo?.shippingTotal ?? 0)),
+    );
     if (toCents(dto.amount) > toCents(max))
       throw new BadRequestException(
-        `At most ${formatMoney(max, current.order.currency)} (items + shipping)`,
+        `At most ${formatMoney(max, current.order.currency)} (items, tax + shipping)`,
       );
     if (current.order.paymentMethod === 'COD' && !dto.reference)
       throw new BadRequestException('Enter the reference of the bank transfer / cash refund');

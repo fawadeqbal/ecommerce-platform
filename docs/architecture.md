@@ -265,6 +265,25 @@ for 60 s, and falls back to built-in links/hero when the CMS is empty or unreach
 - Range up to 366 days, default last 30; buckets switch day → week (Mon) → month by length. Every KPI is compared
   with the equally long period right before. Aggregation runs in Postgres (`reports.service.ts`).
 
+### Taxes, currencies & languages
+
+- **Tax rates** (`TaxRate`): per tax class (`standard` / `reduced` / `zero`, chosen on each product) and country, optionally
+  a province / state (a region match beats the country-wide rate). Each rate is **inclusive** (already in the price,
+  shown as "includes") or **exclusive** (added at checkout). Settings `tax.enabled`, `tax.defaultCountry` (estimate before
+  an address is entered). Maths in `localization/tax-rules.ts`, integer cents.
+- Tax is computed per line on the price **after item discounts**; points / gift cards are payments and do not reduce it.
+  Order / VendorOrder `taxTotal` = all tax, `taxAdded` = the exclusive part (part of the total). OrderItem keeps the rate
+  snapshot (`taxRate`, `taxInclusive`, `taxName`).
+- **Tax belongs to the seller**: commission is charged on the price without tax; `VendorOrder.netAmount` includes it
+  (included tax is in the subtotal, added tax is added). Cancellation refunds include added tax; a return's default
+  refund (`suggestedRefund`) = paid for the items + their added tax; the cap adds shipping.
+- **Currencies**: display only. The default currency is the store currency (prices, orders, payments, payouts); other
+  active currencies have an exchange rate per 1 store unit, used by the storefront switcher. Checkout notes "you pay in
+  …". The store currency can change only before the first order (rates are re-based).
+- **Languages**: admin list (default, active, RTL). Storefront text goes through `t()` (`web/src/lib/i18n/messages.ts`,
+  English fallback); the switcher appears once more than one language is active; `<html lang dir>` follows the choice.
+  Urdu is seeded inactive until its text is added.
+
 ### Checkout totals
 
 Computed by the API only (`POST /checkout/quote`); the UI never calculates totals.

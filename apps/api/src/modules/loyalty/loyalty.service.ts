@@ -262,11 +262,21 @@ export class LoyaltyService {
     try {
       const order = await this.prisma.order.findUnique({
         where: { id: orderId },
-        include: { vendorOrders: { select: { id: true, subtotal: true, shippingTotal: true } } },
+        include: {
+          vendorOrders: {
+            select: { id: true, subtotal: true, shippingTotal: true, taxAdded: true },
+          },
+        },
       });
       if (!order) return;
-      const total = (v: { subtotal: Prisma.Decimal; shippingTotal: Prisma.Decimal }) =>
-        toCents(Number(v.subtotal)) + toCents(Number(v.shippingTotal));
+      const total = (v: {
+        subtotal: Prisma.Decimal;
+        shippingTotal: Prisma.Decimal;
+        taxAdded: Prisma.Decimal;
+      }) =>
+        toCents(Number(v.subtotal)) +
+        toCents(Number(v.shippingTotal)) +
+        toCents(Number(v.taxAdded));
       const whole = order.vendorOrders.reduce((s, v) => s + total(v), 0);
       const part = order.vendorOrders
         .filter((v) => vendorOrderIds.includes(v.id))

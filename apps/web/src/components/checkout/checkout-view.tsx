@@ -33,6 +33,7 @@ import {
 import { AddressInputs } from '@/components/account/address-inputs';
 import { useCart, useMe } from '@/hooks/use-cart';
 import { addressesApi, checkoutApi, queryKeys } from '@/lib/api-client';
+import { useLocale } from '@/components/locale/locale-provider';
 
 function newIdempotencyKey(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
@@ -43,6 +44,7 @@ const radioCard =
   'flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 text-sm hover:border-brand-300 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50';
 
 export function CheckoutView() {
+  const { t, currency: displayCurrency } = useLocale();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: cart, isLoading: cartLoading, error: cartError } = useCart();
@@ -451,8 +453,8 @@ export function CheckoutView() {
                       value={`−${formatMoney(q.giftCard.amount, q.currency)}`}
                     />
                   ) : null}
-                  {q.taxTotal > 0 ? (
-                    <Row label="Tax" value={formatMoney(q.taxTotal, q.currency)} />
+                  {q.taxAdded > 0 ? (
+                    <Row label={t('checkout.tax')} value={formatMoney(q.taxAdded, q.currency)} />
                   ) : null}
                   {q.codFee > 0 ? (
                     <Row label="Cash on delivery fee" value={formatMoney(q.codFee, q.currency)} />
@@ -461,7 +463,19 @@ export function CheckoutView() {
                     <dt>Total</dt>
                     <dd>{formatMoney(q.grandTotal, q.currency)}</dd>
                   </div>
+                  {q.taxIncluded > 0 ? (
+                    <p className="text-right text-xs text-gray-500">
+                      {t('checkout.includesTax', {
+                        amount: formatMoney(q.taxIncluded, q.currency),
+                      })}
+                    </p>
+                  ) : null}
                 </dl>
+                {displayCurrency !== q.currency ? (
+                  <p className="text-xs text-gray-500">
+                    {t('checkout.chargedIn', { display: displayCurrency, base: q.currency })}
+                  </p>
+                ) : null}
 
                 {q.shippingZone === null && q.freeShippingAbove > 0 ? (
                   <p className="text-xs text-gray-500">

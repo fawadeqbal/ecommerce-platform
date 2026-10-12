@@ -16,6 +16,7 @@ import {
 } from '@ecommerce/ui';
 import { useCart, useMe, useSetCart } from '@/hooks/use-cart';
 import { cartApi, queryKeys } from '@/lib/api-client';
+import { Money } from '@/components/locale/locale-provider';
 
 export function CartView() {
   const { data: cart, error, isLoading } = useCart();
@@ -130,10 +131,10 @@ export function CartView() {
                           </div>
                           <div className="text-right">
                             <p className="font-semibold text-gray-900">
-                              {formatMoney(item.lineTotal, cart.currency)}
+                              <Money amount={item.lineTotal} currency={cart.currency} />
                             </p>
                             <p className="text-xs text-gray-500">
-                              {formatMoney(item.unitPrice, cart.currency)} each
+                              <Money amount={item.unitPrice} currency={cart.currency} /> each
                             </p>
                           </div>
                         </div>
@@ -217,7 +218,7 @@ export function CartView() {
               <h2 className="text-lg font-semibold text-gray-900">Order summary</h2>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal ({cart.itemCount} items)</span>
-                <span className="font-semibold">{formatMoney(cart.subtotal, cart.currency)}</span>
+                <span className="font-semibold"><Money amount={cart.subtotal} currency={cart.currency} /></span>
               </div>
               <p className="text-xs text-gray-500">
                 Shipping, taxes and discounts are calculated at checkout.
@@ -271,7 +272,7 @@ export function CartView() {
                     {s.productName}
                   </Link>
                   {s.variantName ? <span className="text-gray-500">{s.variantName}</span> : null}
-                  <span className="font-semibold">{formatMoney(s.price, s.currency)}</span>
+                  <span className="font-semibold"><Money amount={s.price} currency={s.currency} /></span>
                   <div className="mt-2 flex gap-3">
                     <button
                       type="button"

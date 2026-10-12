@@ -1,3 +1,4 @@
+import type { CheckoutTaxLine } from '../localization/localization';
 import type { OrderStatus, PaymentMethod, PaymentStatus } from '../enums';
 import type { CartItemDto } from '../cart/cart';
 import type { ShippingAddress } from '../users/address';
@@ -107,6 +108,11 @@ export interface CheckoutGroup {
   sellerFundedDiscount: number;
   /** Share of points + gift card used for this seller's items (store-funded). */
   tenders: number;
+  /** All tax on this seller's items (included + added). */
+  tax: number;
+  /** Part of `tax` added on top of prices (exclusive rates). */
+  taxAdded: number;
+  taxLines: CheckoutTaxLine[];
 }
 
 export interface CheckoutQuoteDto {
@@ -115,7 +121,12 @@ export interface CheckoutQuoteDto {
   subtotal: number;
   shippingTotal: number;
   discountTotal: number;
+  /** All tax (included in prices + added). */
   taxTotal: number;
+  /** Tax added on top of prices; part of grandTotal. */
+  taxAdded: number;
+  /** Tax already included in prices (informational). */
+  taxIncluded: number;
   /** COD fee applied to this quote (0 unless the selected method is COD). */
   codFee: number;
   grandTotal: number;
@@ -202,6 +213,8 @@ export interface VendorOrderDto {
   status: OrderStatus;
   subtotal: number;
   shippingTotal: number;
+  taxTotal: number;
+  taxAdded: number;
   shippingMethod: string | null;
   items: OrderItemDto[];
   shipment: ShipmentDto | null;
@@ -222,6 +235,8 @@ export interface OrderDto {
   shippingTotal: number;
   discountTotal: number;
   taxTotal: number;
+  /** Part of taxTotal added on top of prices (the rest was included). */
+  taxAdded: number;
   grandTotal: number;
   couponCode: string | null;
   loyaltyDiscount: number;
@@ -285,6 +300,9 @@ export interface VendorOrderDetailDto {
   items: OrderItemDto[];
   subtotal: number;
   shippingTotal: number;
+  /** Tax on this sub-order; it belongs to the seller (included in netAmount). */
+  taxTotal: number;
+  taxAdded: number;
   commissionAmount: number;
   netAmount: number;
   /** Delivery option the customer chose, and its default courier. */

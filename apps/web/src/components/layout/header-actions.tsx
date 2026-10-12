@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart, useMe } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
+import { useLocale } from '@/components/locale/locale-provider';
 import { authApi } from '@/lib/api-client';
 
 export function HeaderActions() {
   const { data: cart } = useCart();
+  const { t } = useLocale();
   const { data: me } = useMe();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -24,7 +26,7 @@ export function HeaderActions() {
   return (
     <div className="flex items-center gap-4 text-sm">
       <Link href="/cart" className="relative font-medium hover:text-brand-700">
-        Cart
+        {t('header.cart')}
         {count > 0 ? (
           <span className="absolute -right-4 -top-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-brand-600 px-1 text-[11px] font-semibold text-white">
             {count}
@@ -34,22 +36,23 @@ export function HeaderActions() {
       {me ? (
         <>
           <Link href="/account/wishlist" className="hover:text-brand-700">
-            Wishlist{saved > 0 ? ` (${saved})` : ''}
+            {t('header.wishlist')}
+            {saved > 0 ? ` (${saved})` : ''}
           </Link>
           <Link href="/account/orders" className="ml-3 hover:text-brand-700">
-            Hi, {me.firstName}
+            {t('header.hi', { name: me.firstName })}
           </Link>
           <button type="button" onClick={signOut} className="text-gray-500 hover:text-gray-800">
-            Sign out
+            {t('header.signOut')}
           </button>
         </>
       ) : (
         <>
           <Link href="/track-order" className="ml-3 hover:text-brand-700">
-            Track order
+            {t('header.trackOrder')}
           </Link>
           <Link href="/login" className="font-medium text-brand-700">
-            Sign in
+            {t('header.signIn')}
           </Link>
         </>
       )}

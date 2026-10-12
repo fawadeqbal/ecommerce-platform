@@ -66,10 +66,12 @@ const subOrderTotal = (v: {
   subtotal: Prisma.Decimal;
   shippingTotal: Prisma.Decimal;
   discountTotal: Prisma.Decimal;
+  taxAdded: Prisma.Decimal;
 }) =>
   fromCents(
     toCents(Number(v.subtotal)) +
-      toCents(Number(v.shippingTotal)) -
+      toCents(Number(v.shippingTotal)) +
+      toCents(Number(v.taxAdded)) -
       toCents(Number(v.discountTotal)),
   );
 

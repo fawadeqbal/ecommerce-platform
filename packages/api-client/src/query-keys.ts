@@ -6,6 +6,13 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   checkoutQuote: (cartSignature: string) => ['checkout', 'quote', cartSignature] as const,
   wishlist: ['wishlist'] as const,
+  localization: {
+    all: ['localization'] as const,
+    public: ['localization', 'public'] as const,
+    taxRates: ['localization', 'tax-rates'] as const,
+    currencies: ['localization', 'currencies'] as const,
+    languages: ['localization', 'languages'] as const,
+  },
   payouts: {
     all: ['payouts'] as const,
     earnings: ['payouts', 'earnings'] as const,

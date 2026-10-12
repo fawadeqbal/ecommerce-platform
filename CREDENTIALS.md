@@ -137,6 +137,15 @@ Plus categories, brands, attributes, currencies (USD default, PKR) and the setti
    Mark transfer sent → Mark paid with a reference: the seller gets an email and sees it under Finance → Payouts.
 3. Cancel a payout that is still To pay: its orders are available again for the next run.
 
+**Taxes, currencies & languages**
+
+1. Admin → Settings → Taxes: the seed has **GST 18 %, Pakistan, included in prices**. Checkout shows "Includes … tax";
+   the seller's order shows the tax as theirs and commission is on the price without tax.
+2. Add a rate with **Prices include this tax** off (e.g. Punjab 16 %): checkout for a Punjab address adds a Tax line.
+3. Admin → Settings → Localization: PKR is shown in the storefront currency switcher (header); prices convert, checkout
+   says you pay in the store currency. Activate Urdu to see the language switcher (text falls back to English until
+   translated in `apps/web/src/lib/i18n/messages.ts`).
+
 **Shipping zones and couriers**
 Seeded: zones **Karachi** (same-city 3 USD, free over 40, or store pickup) and **Pakistan** (Standard 5, free over 50;
 Express 12, no COD; Heavy parcel 15 for 5–30 kg), couriers **Demo Courier** (tracking link) and **Own delivery**.

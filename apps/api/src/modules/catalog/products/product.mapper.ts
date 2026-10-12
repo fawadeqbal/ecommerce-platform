@@ -114,6 +114,7 @@ export function toProductDto(p: ProductWithDetail): ProductDto {
     currency: p.currency,
     sku: defaultVariant?.sku ?? '',
     weightGrams: p.weightGrams,
+    taxClass: p.taxClass,
     videoUrl: p.videoUrl,
     seoTitle: p.seoTitle,
     seoDescription: p.seoDescription,

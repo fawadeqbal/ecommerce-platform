@@ -24,7 +24,14 @@ export const returnInclude = {
     include: {
       orderItem: {
         include: {
-          vendorOrder: { select: { id: true, vendor: { select: { id: true, name: true } } } },
+          vendorOrder: {
+            select: {
+              id: true,
+              subtotal: true,
+              discountTotal: true,
+              vendor: { select: { id: true, name: true } },
+            },
+          },
           variant: {
             select: {
               product: {
@@ -45,6 +52,26 @@ export function itemsTotal(r: ReturnRow): number {
   return fromCents(
     r.items.reduce((sum, i) => sum + toCents(Number(i.orderItem.unitPrice)) * i.quantity, 0),
   );
+}
+
+/**
+ * What the customer paid for the returned items: price less the sub-order's discounts (in proportion),
+ * plus tax that was added on top. The default refund; shipping can be added on top of it.
+ */
+export function refundableForItems(r: ReturnRow): number {
+  const vo = r.items[0]?.orderItem.vendorOrder;
+  const sub = toCents(Number(vo?.subtotal ?? 0));
+  const items = toCents(itemsTotal(r));
+  const paid =
+    sub > 0 ? Math.round(items * (1 - toCents(Number(vo?.discountTotal ?? 0)) / sub)) : items;
+  const addedTax = r.items.reduce(
+    (s, i) =>
+      i.orderItem.taxInclusive || i.orderItem.quantity === 0
+        ? s
+        : s + Math.round((toCents(Number(i.orderItem.tax)) * i.quantity) / i.orderItem.quantity),
+    0,
+  );
+  return fromCents(Math.max(0, paid) + addedTax);
 }
 
 function vendorOf(r: ReturnRow) {
@@ -77,6 +104,7 @@ export function toReturnDto(r: ReturnRow): ReturnRequestDto {
       restocked: i.restocked,
     })),
     itemsTotal: itemsTotal(r),
+    suggestedRefund: refundableForItems(r),
     refundAmount: r.refundAmount === null ? null : Number(r.refundAmount),
     refundedAt: r.refundedAt?.toISOString() ?? null,
     currency: r.order.currency,

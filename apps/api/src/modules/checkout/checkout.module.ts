@@ -5,6 +5,7 @@ import { PaymentsModule } from '../payments/payments.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { PromotionsModule } from '../promotions/promotions.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { LocalizationModule } from '../localization/localization.module';
 import { CheckoutController } from './checkout.controller';
 import { CheckoutService } from './checkout.service';
 
@@ -16,6 +17,7 @@ import { CheckoutService } from './checkout.service';
     ShippingModule,
     PromotionsModule,
     LoyaltyModule,
+    LocalizationModule,
   ],
   controllers: [CheckoutController],
   providers: [CheckoutService],

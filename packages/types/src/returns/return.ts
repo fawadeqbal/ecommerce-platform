@@ -80,6 +80,8 @@ export interface ReturnRequestDto {
   items: ReturnItemDto[];
   /** Value of the returned items (the default refund). */
   itemsTotal: number;
+  /** Paid for the returned items (after discounts) + their added tax: the default refund. */
+  suggestedRefund: number;
   refundAmount: number | null;
   refundedAt: string | null;
   currency: string;

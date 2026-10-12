@@ -21,6 +21,8 @@ import {
   type FlatCategoryOption,
   type ProductDto,
   type ProductFormValues,
+  TAX_CLASSES,
+  TAX_CLASS_LABELS,
 } from '@ecommerce/types';
 import {
   Alert,
@@ -424,6 +426,12 @@ export function ProductForm({
                 error={errors.sku?.message}
               />
             )}
+            <Select
+              label="Tax class"
+              {...register('taxClass')}
+              options={TAX_CLASSES.map((c) => ({ value: c, label: TAX_CLASS_LABELS[c] }))}
+              hint="Decides the tax rate at checkout. Most products are standard rate."
+            />
             <Input
               label="Weight (grams)"
               inputMode="numeric"

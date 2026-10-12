@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TAX_CLASSES, type TaxClass } from '../localization/localization';
 import {
   MAX_PRODUCT_IMAGES,
   SKU_REGEX,
@@ -37,6 +38,7 @@ export const productFormSchema = z
       .string()
       .trim()
       .refine((v) => v === '' || /^\d{1,7}$/.test(v), 'Whole grams only'),
+    taxClass: z.enum(TAX_CLASSES),
     videoUrl: optionalUrlField,
     seoTitle: z.string().max(70, 'At most 70 characters'),
     seoDescription: z.string().max(160, 'At most 160 characters'),
@@ -80,6 +82,7 @@ export const emptyProductForm: ProductFormValues = {
   compareAtPrice: '',
   sku: '',
   weightGrams: '',
+  taxClass: 'standard',
   videoUrl: '',
   seoTitle: '',
   seoDescription: '',
@@ -99,6 +102,9 @@ export function productToForm(p: ProductDto): ProductFormValues {
     compareAtPrice: p.compareAtPrice === null ? '' : p.compareAtPrice.toFixed(2),
     sku: p.sku,
     weightGrams: p.weightGrams === null ? '' : String(p.weightGrams),
+    taxClass: (TAX_CLASSES as readonly string[]).includes(p.taxClass ?? '')
+      ? (p.taxClass as TaxClass)
+      : 'standard',
     videoUrl: p.videoUrl ?? '',
     seoTitle: p.seoTitle ?? '',
     seoDescription: p.seoDescription ?? '',
@@ -119,6 +125,7 @@ export function productFormToInput(f: ProductFormValues): ProductInput {
     compareAtPrice: f.compareAtPrice === '' ? null : Number(f.compareAtPrice),
     sku: f.sku.trim(),
     weightGrams: f.weightGrams === '' ? null : Number(f.weightGrams),
+    taxClass: f.taxClass,
     videoUrl: emptyToNull(f.videoUrl),
     seoTitle: emptyToNull(f.seoTitle),
     seoDescription: emptyToNull(f.seoDescription),

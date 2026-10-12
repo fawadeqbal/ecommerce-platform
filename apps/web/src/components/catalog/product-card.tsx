@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- images are served from object storage */
 import Link from 'next/link';
 import type { StorefrontProductCard } from '@ecommerce/types';
-import { formatMoney } from '@ecommerce/ui';
+import { Money } from '@/components/locale/locale-provider';
 
 export function ProductCard({ product: p }: { product: StorefrontProductCard }) {
   const discount = p.compareAtPrice ? Math.round((1 - p.price / p.compareAtPrice) * 100) : 0;
@@ -44,11 +44,11 @@ export function ProductCard({ product: p }: { product: StorefrontProductCard }) 
         <div className="mt-auto pt-2">
           <span className="text-base font-semibold text-gray-900">
             {p.hasOptions ? 'From ' : ''}
-            {formatMoney(p.price, p.currency)}
+            <Money amount={p.price} currency={p.currency} />
           </span>
           {p.compareAtPrice ? (
             <span className="ml-2 text-xs text-gray-400 line-through">
-              {formatMoney(p.compareAtPrice, p.currency)}
+              <Money amount={p.compareAtPrice} currency={p.currency} />
             </span>
           ) : null}
         </div>

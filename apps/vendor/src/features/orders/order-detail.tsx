@@ -211,6 +211,11 @@ export function VendorOrderDetail({ id }: { id: string }) {
                 { label: 'Status', value: PAYMENT_STATUS_LABELS[o.paymentStatus] },
                 { label: 'Items', value: money(o.subtotal) },
                 { label: 'Shipping', value: money(o.shippingTotal) },
+                {
+                  label:
+                    o.taxAdded > 0 ? 'Tax (paid by the customer, yours)' : 'Tax (included, yours)',
+                  value: o.taxTotal > 0 ? money(o.taxTotal) : null,
+                },
                 { label: 'Commission', value: `−${money(o.commissionAmount)}` },
                 {
                   label: 'You earn',

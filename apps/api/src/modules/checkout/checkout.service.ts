@@ -33,6 +33,8 @@ import { PromotionsService } from '../promotions/promotions.service';
 import { allocate } from '../promotions/discount-engine';
 import { GiftCardsService } from '../loyalty/gift-cards.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { lineTaxCents, pickRate } from '../localization/tax-rules';
+import { TaxesService } from '../localization/taxes.service';
 import { shippingMethodLabel } from '../shipping/shipping-rules';
 import { ShippingService } from '../shipping/shipping.service';
 import type { PlaceOrderDto } from './dto/checkout.dto';
@@ -59,6 +61,7 @@ export class CheckoutService {
     private readonly promotions: PromotionsService,
     private readonly loyalty: LoyaltyService,
     private readonly giftCards: GiftCardsService,
+    private readonly taxes: TaxesService,
   ) {}
 
   async quote(ctx: CartContext, input: CheckoutQuoteInput = {}): Promise<CheckoutQuoteDto> {
@@ -100,12 +103,15 @@ export class CheckoutService {
         discount: 0,
         sellerFundedDiscount: 0,
         tenders: 0,
+        tax: 0,
+        taxAdded: 0,
+        taxLines: [],
       };
     });
     const subtotal = cart.subtotal;
     const shippingTotal = fromCents(groups.reduce((sum, g) => sum + toCents(g.shipping), 0));
     // Discounts: automatic promotions + coupon (engine works in cents, per seller).
-    const categories = await this.productCategories(
+    const products = await this.productInfo(
       cart.groups.flatMap((g) => g.items.map((i) => i.productId)),
     );
     const deals = await this.promotions.evaluate({
@@ -114,7 +120,7 @@ export class CheckoutService {
           key: i.id,
           vendorId: g.vendor.id,
           productId: i.productId,
-          categoryId: categories.get(i.productId) ?? null,
+          categoryId: products.get(i.productId)?.categoryId ?? null,
           unitCents: toCents(i.unitPrice),
           quantity: i.quantity,
         })),
@@ -130,7 +136,47 @@ export class CheckoutService {
       g.sellerFundedDiscount = d ? fromCents(d.vendorFundedCents) : 0;
     }
     const discountTotal = fromCents(deals.totalCents);
-    const afterDiscountCents = toCents(subtotal) + toCents(shippingTotal) - deals.totalCents;
+    // Tax per line on the price after item discounts (the seller's item discount is spread over their lines).
+    // Inclusive rates: the tax is part of the price. Exclusive rates: added on top (part of the total).
+    const taxCtx = await this.taxes.checkoutContext();
+    const taxDest = destination?.countryCode ? destination : { countryCode: taxCtx.defaultCountry };
+    for (const g of groups) {
+      if (!taxCtx.enabled) break;
+      const itemDiscount = allocate(
+        deals.byVendor.get(g.vendor.id)?.itemsCents ?? 0,
+        new Map(g.items.map((i) => [i.id, toCents(i.unitPrice) * i.quantity])),
+      );
+      let taxCents = 0;
+      let addedCents = 0;
+      for (const i of g.items) {
+        const rate = pickRate(
+          taxCtx.rates,
+          products.get(i.productId)?.taxClass ?? 'standard',
+          taxDest,
+        );
+        if (!rate) continue;
+        const cents = lineTaxCents(
+          toCents(i.unitPrice) * i.quantity - (itemDiscount.get(i.id) ?? 0),
+          rate.rate,
+          rate.isInclusive,
+        );
+        taxCents += cents;
+        if (!rate.isInclusive) addedCents += cents;
+        g.taxLines.push({
+          itemId: i.id,
+          name: rate.name,
+          rate: Math.round(rate.rate * 10000) / 100,
+          inclusive: rate.isInclusive,
+          amount: fromCents(cents),
+        });
+      }
+      g.tax = fromCents(taxCents);
+      g.taxAdded = fromCents(addedCents);
+    }
+    const taxTotal = fromCents(groups.reduce((s, g) => s + toCents(g.tax), 0));
+    const taxAdded = fromCents(groups.reduce((s, g) => s + toCents(g.taxAdded), 0));
+    const afterDiscountCents =
+      toCents(subtotal) + toCents(shippingTotal) - deals.totalCents + toCents(taxAdded);
     // Points, then the gift card, pay part (or all) of what is left. Store-funded; split across sellers so
     // refunds on cancellation / returns never exceed the money actually paid.
     const loyalty = ctx.userId
@@ -154,7 +200,7 @@ export class CheckoutService {
       new Map(
         groups.map((g) => [
           g.vendor.id,
-          toCents(g.subtotal) + toCents(g.shipping) - toCents(g.discount),
+          toCents(g.subtotal) + toCents(g.shipping) - toCents(g.discount) + toCents(g.taxAdded),
         ]),
       ),
     );
@@ -219,7 +265,9 @@ export class CheckoutService {
       subtotal,
       shippingTotal,
       discountTotal,
-      taxTotal: 0,
+      taxTotal,
+      taxAdded,
+      taxIncluded: fromCents(toCents(taxTotal) - toCents(taxAdded)),
       codFee,
       grandTotal,
       paymentMethods,
@@ -364,14 +412,18 @@ export class CheckoutService {
     return input.destination?.countryCode ? input.destination : null;
   }
 
-  /** Product → category, for category-scoped discounts. */
-  private async productCategories(productIds: string[]): Promise<Map<string, string>> {
+  /** Product → category (category-scoped discounts) and tax class. */
+  private async productInfo(
+    productIds: string[],
+  ): Promise<Map<string, { categoryId: string; taxClass: string }>> {
     if (productIds.length === 0) return new Map();
     const rows = await this.prisma.product.findMany({
       where: { id: { in: [...new Set(productIds)] } },
-      select: { id: true, categoryId: true },
+      select: { id: true, categoryId: true, taxClass: true },
     });
-    return new Map(rows.map((r) => [r.id, r.categoryId]));
+    return new Map(
+      rows.map((r) => [r.id, { categoryId: r.categoryId, taxClass: r.taxClass ?? 'standard' }]),
+    );
   }
 
   /** Grams per variant (variant weight, else product weight, else 0). */
@@ -455,7 +507,8 @@ export class CheckoutService {
                 couponCode: quote.coupon?.applied ? quote.coupon.code : null,
                 loyaltyDiscount: quote.loyalty?.amount ?? 0,
                 giftCardTotal: quote.giftCard?.applied ? quote.giftCard.amount : 0,
-                taxTotal: 0,
+                taxTotal: quote.taxTotal,
+                taxAdded: quote.taxAdded,
                 grandTotal: quote.grandTotal,
                 shippingAddress: address as unknown as Prisma.InputJsonValue,
                 paymentMethod: dto.paymentMethod,
@@ -477,12 +530,17 @@ export class CheckoutService {
             );
 
             for (const group of quote.groups) {
+              const taxOf = new Map(group.taxLines.map((t) => [t.itemId, t]));
               // Each item gets the most specific rule (seller+category → seller → category → global).
+              // Commission is charged on the price without tax (tax belongs to the seller).
               const commission = commissionForLines(
                 cartRow.items
                   .filter((i) => i.variant.product.vendorId === group.vendor.id)
                   .map((i) => ({
-                    amount: fromCents(toCents(Number(i.variant.price)) * i.quantity),
+                    amount: preTaxAmount(
+                      toCents(Number(i.variant.price)) * i.quantity,
+                      taxOf.get(i.id),
+                    ),
                     rate: commissionRate({
                       vendorId: i.variant.product.vendorId,
                       categoryId: i.variant.product.categoryId,
@@ -500,9 +558,13 @@ export class CheckoutService {
                   subtotal: group.subtotal,
                   shippingTotal: group.shipping,
                   commissionAmount: commission,
+                  taxTotal: group.tax,
+                  taxAdded: group.taxAdded,
+                  // Seller keeps the tax (included tax is already in subtotal; added tax on top).
                   netAmount: fromCents(
                     toCents(group.subtotal) +
-                      toCents(group.shipping) -
+                      toCents(group.shipping) +
+                      toCents(group.taxAdded) -
                       toCents(commission) -
                       toCents(group.sellerFundedDiscount),
                   ),
@@ -521,6 +583,10 @@ export class CheckoutService {
                     quantity: i.quantity,
                     unitPrice: i.variant.price,
                     total: fromCents(toCents(Number(i.variant.price)) * i.quantity),
+                    tax: taxOf.get(i.id)?.amount ?? 0,
+                    taxRate: taxOf.has(i.id) ? taxOf.get(i.id)!.rate / 100 : null,
+                    taxInclusive: taxOf.get(i.id)?.inclusive ?? false,
+                    taxName: taxOf.get(i.id)?.name ?? null,
                   })),
               });
               await tx.orderStatusHistory.create({
@@ -595,4 +661,13 @@ export class CheckoutService {
     }
     throw new BadRequestException('Could not create the order, please try again');
   }
+}
+
+/** Line amount without its included tax (for commission). Exclusive tax is not part of the price. */
+function preTaxAmount(
+  cents: number,
+  tax: { rate: number; inclusive: boolean } | undefined,
+): number {
+  if (!tax?.inclusive) return fromCents(cents);
+  return fromCents(cents - lineTaxCents(cents, tax.rate / 100, true));
 }

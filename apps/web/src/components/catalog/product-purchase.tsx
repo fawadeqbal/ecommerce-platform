@@ -4,11 +4,12 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { MAX_LINE_QUANTITY, findVariant, type StorefrontProductDetail } from '@ecommerce/types';
-import { Alert, Button, buttonStyles, cn, formatMoney } from '@ecommerce/ui';
+import { Alert, Button, buttonStyles, cn } from '@ecommerce/ui';
 import { useSetCart } from '@/hooks/use-cart';
 import { NotifyMe } from '@/components/wishlist/notify-me';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { cartApi } from '@/lib/api-client';
+import { Money } from '@/components/locale/locale-provider';
 
 /** Option picker + quantity + add to cart. Stock and price follow the selected variant. */
 export function ProductPurchase({ product }: { product: StorefrontProductDetail }) {
@@ -52,11 +53,11 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
     <div className="space-y-6">
       <div>
         <span className="text-3xl font-bold text-gray-900">
-          {formatMoney(price, product.currency)}
+          <Money amount={price} currency={product.currency} />
         </span>
         {compareAt ? (
           <span className="ml-3 text-lg text-gray-400 line-through">
-            {formatMoney(compareAt, product.currency)}
+            <Money amount={compareAt} currency={product.currency} />
           </span>
         ) : null}
       </div>

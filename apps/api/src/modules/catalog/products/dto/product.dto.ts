@@ -33,6 +33,7 @@ import {
   type ProductStatus,
   type ProductVariantInput,
   type ProductVariantsInput,
+  TAX_CLASSES,
 } from '@ecommerce/types';
 import { PaginationQueryDto } from '../../../../common/dto/pagination.dto';
 
@@ -52,8 +53,7 @@ export class ProductSpecDto implements ProductSpec {
 export class ProductImageInputDto implements ProductImageInput {
   @ApiProperty() @IsUrl(URL_OPTIONS) url: string;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() @MaxLength(200) altText?:
-    | string
-    | null;
+    string | null;
 }
 
 /** Mirrors productFormSchema in @ecommerce/types. */
@@ -120,12 +120,15 @@ export class CreateProductDto implements ProductInput {
   @Min(0)
   @Max(9_999_999)
   weightGrams?: number | null;
+
+  @ApiPropertyOptional({ enum: TAX_CLASSES, nullable: true, description: 'Null = standard' })
+  @IsOptional()
+  @IsIn(TAX_CLASSES)
+  taxClass?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsUrl(URL_OPTIONS) videoUrl?:
-    | string
-    | null;
+    string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() @MaxLength(70) seoTitle?:
-    | string
-    | null;
+    string | null;
   @ApiPropertyOptional({ nullable: true })
   @IsOptional()
   @IsString()

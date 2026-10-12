@@ -34,6 +34,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { MarketingModule } from './modules/marketing/marketing.module';
 import { SupportModule } from './modules/support/support.module';
 import { PayoutsModule } from './modules/payouts/payouts.module';
+import { LocalizationModule } from './modules/localization/localization.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SeoModule } from './modules/seo/seo.module';
 import { SettingsModule } from './modules/settings/settings.module';
@@ -76,6 +77,7 @@ import { AuditModule } from './modules/audit/audit.module';
     MarketingModule,
     SupportModule,
     PayoutsModule,
+    LocalizationModule,
     AnalyticsModule,
     SeoModule,
     SettingsModule,

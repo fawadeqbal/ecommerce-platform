@@ -128,6 +128,8 @@ export interface ProductDto {
   /** SKU of the default variant. */
   sku: string;
   weightGrams: number | null;
+  /** TaxClass; null = standard. */
+  taxClass: string | null;
   videoUrl: string | null;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -181,6 +183,7 @@ export interface ProductInput {
   compareAtPrice?: number | null;
   sku: string;
   weightGrams?: number | null;
+  taxClass?: string | null;
   videoUrl?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;

@@ -275,6 +275,7 @@ export interface SettingDefinition {
 export const SETTING_GROUP_LABELS: Record<string, string> = {
   general: 'Store',
   checkout: 'Checkout',
+  tax: 'Taxes',
   shipping: 'Shipping',
   payments: 'Payments',
   vendors: 'Sellers & payouts',
@@ -324,6 +325,20 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     type: 'number',
     min: 5,
     max: 1440,
+  },
+  {
+    key: 'tax.enabled',
+    group: 'tax',
+    label: 'Charge tax',
+    type: 'boolean',
+    hint: 'Off = no tax at checkout (rates are kept).',
+  },
+  {
+    key: 'tax.defaultCountry',
+    group: 'tax',
+    label: 'Tax country before an address is entered',
+    type: 'string',
+    hint: 'Two-letter code, e.g. PK. Used for the estimate on the checkout page.',
   },
   {
     key: 'checkout.codFee',

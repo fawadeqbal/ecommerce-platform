@@ -185,7 +185,10 @@ export function AdminOrderDetail({ id }: { id: string }) {
                   label: 'Discount',
                   value: o.discountTotal > 0 ? `−${money(o.discountTotal)}` : null,
                 },
-                { label: 'Tax', value: o.taxTotal > 0 ? money(o.taxTotal) : null },
+                {
+                  label: o.taxAdded > 0 ? 'Tax' : 'Tax (included in prices)',
+                  value: o.taxTotal > 0 ? money(o.taxTotal) : null,
+                },
                 {
                   label: 'Total',
                   value: <span className="font-semibold">{money(o.grandTotal)}</span>,

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { SearchBox } from '@/components/search/search-box';
 import { getMenu } from '@/lib/cms';
+import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { HeaderActions } from './header-actions';
 
 /** Used until the header menu is set up in Admin → Content → Menus. */
@@ -35,6 +36,7 @@ export async function SiteHeader() {
         <Suspense fallback={<div className="ml-auto hidden flex-1 md:block md:max-w-md" />}>
           <SearchBox />
         </Suspense>
+        <LocaleSwitcher />
         <HeaderActions />
       </div>
     </header>
