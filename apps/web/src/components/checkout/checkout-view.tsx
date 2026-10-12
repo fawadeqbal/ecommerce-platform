@@ -15,33 +15,18 @@ import {
   formatAddress,
   type CheckoutFormValues,
 } from '@ecommerce/types';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  CardTitle,
-  Checkbox,
-  EmptyState,
-  Input,
-  Spinner,
-  Textarea,
-  buttonStyles,
-  cn,
-  formatMoney,
-} from '@ecommerce/ui';
+import { Alert, Button, Checkbox, Input, Spinner, Textarea, cn, formatMoney } from '@ecommerce/ui';
 import { AddressInputs } from '@/components/account/address-inputs';
 import { useCart, useMe } from '@/hooks/use-cart';
 import { addressesApi, checkoutApi, queryKeys } from '@/lib/api-client';
 import { useLocale } from '@/components/locale/locale-provider';
+import { container } from '@/components/layout/container';
+import { Panel, RadioDot, SummaryRow, codeInput, darkButton, optionCard } from './ui';
 
 function newIdempotencyKey(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
-
-const radioCard =
-  'flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 text-sm hover:border-brand-300 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50';
 
 export function CheckoutView() {
   const { t, currency: displayCurrency } = useLocale();
@@ -103,6 +88,13 @@ export function CheckoutView() {
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [redeemPoints, setRedeemPoints] = useState(false);
   const [giftInput, setGiftInput] = useState('');
+  useEffect(() => {
+    const fromCart = new URLSearchParams(window.location.search).get('coupon');
+    if (fromCart) {
+      setCouponInput(fromCart);
+      setCouponCode(fromCart);
+    }
+  }, []);
   const [giftCardCode, setGiftCardCode] = useState<string | null>(null);
   const guestEmail = useDeferredValue(watch('email'));
   // Where the parcel goes decides the shipping zone: saved address, or the typed one (debounced).
@@ -174,10 +166,11 @@ export function CheckoutView() {
 
   const onSubmit = handleSubmit((values) => place.mutate(values));
 
-  if (cartLoading || me.isPending || placed) return <Spinner className="mx-auto max-w-5xl p-8" />;
+  const wrap = `${container} flex max-w-[1240px] flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`;
+  if (cartLoading || me.isPending || placed) return <Spinner className="mx-auto p-8" />;
   if (cartError) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className={wrap}>
         <Alert tone="error" title="Could not load your cart">
           {cartError.message}
         </Alert>
@@ -186,46 +179,93 @@ export function CheckoutView() {
   }
   if (!cart || cart.itemCount === 0) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <Card>
-          <EmptyState
-            title="Your cart is empty"
-            description="Add something to your cart before checking out."
-            action={
-              <Link href="/products" className={buttonStyles()}>
-                Browse products
-              </Link>
-            }
-          />
-        </Card>
+      <div className={wrap}>
+        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-6 py-14 text-center">
+          <h2 className="text-2xl font-extrabold">Your cart is empty</h2>
+          <p className="text-gray-500">Add something to your cart before checking out.</p>
+          <Link
+            href="/products"
+            className="mt-1.5 rounded-2xl bg-brand-600 px-6 py-3.5 font-bold text-white hover:text-white"
+          >
+            Browse products
+          </Link>
+        </div>
       </div>
     );
   }
 
   const q = quote.data;
   const savedAddresses = signedIn ? (addresses.data ?? []) : [];
+  const online = isOnlinePayment(paymentMethod);
+  const steps = [
+    { id: 'step-address', label: 'Address', done: Boolean(addressId) || Boolean(countryCode) },
+    { id: 'step-delivery', label: 'Delivery', done: Boolean(q) },
+    { id: 'step-payment', label: 'Payment', done: Boolean(paymentMethod) },
+    {
+      id: 'step-savings',
+      label: 'Savings',
+      done: Boolean(couponCode || redeemPoints || giftCardCode),
+    },
+  ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
-        <Link href="/cart" className="text-sm text-brand-700 hover:underline">
+    <div className={wrap}>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-none tracking-display">
+          Checkout
+        </h1>
+        <Link href="/cart" className="text-sm font-semibold text-brand-700">
           ← Back to cart
         </Link>
       </div>
+      <nav aria-label="Checkout steps" className="scrollbar-none flex gap-2 overflow-x-auto">
+        {steps.map((s, i) => (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className={cn(
+              'flex flex-[1_0_auto] items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-sm font-bold',
+              s.done ? 'bg-brand-600 text-white hover:text-white' : 'bg-white text-gray-900',
+            )}
+          >
+            <span
+              className={cn(
+                'flex h-[26px] w-[26px] items-center justify-center rounded-full text-[13px]',
+                s.done ? 'bg-white text-brand-700' : 'bg-gray-100 text-gray-600',
+              )}
+            >
+              {s.done ? '✓' : i + 1}
+            </span>
+            {s.label}
+          </a>
+        ))}
+      </nav>
 
       <form
         id="checkout-form"
         onSubmit={onSubmit}
         noValidate
-        className="grid gap-8 lg:grid-cols-[1fr_360px]"
+        className="flex flex-wrap items-start gap-5"
       >
-        <div className="space-y-6">
-          <Card className="space-y-4">
-            <CardTitle>Contact</CardTitle>
+        <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-3.5">
+          <Panel
+            id="step-address"
+            title="1. Delivery address"
+            action={
+              savedAddresses.length > 0 && addressId !== '' ? (
+                <button
+                  type="button"
+                  onClick={() => setValue('addressId', '')}
+                  className="text-sm font-bold text-brand-700"
+                >
+                  + New address
+                </button>
+              ) : null
+            }
+          >
             {signedIn && me.data ? (
-              <p className="text-sm text-gray-700">
-                Signed in as <span className="font-medium">{me.data.email}</span>
+              <p className="text-sm text-gray-600">
+                Signed in as <span className="font-semibold text-gray-900">{me.data.email}</span>
               </p>
             ) : (
               <>
@@ -239,45 +279,47 @@ export function CheckoutView() {
                 />
                 <p className="text-sm text-gray-600">
                   Have an account?{' '}
-                  <Link
-                    href="/login?next=/checkout"
-                    className="font-medium text-brand-700 hover:underline"
-                  >
+                  <Link href="/login?next=/checkout" className="font-semibold text-brand-700">
                     Sign in
                   </Link>{' '}
-                  to use saved addresses and see your orders.
+                  to use saved addresses and earn points.
                 </p>
               </>
             )}
-          </Card>
-
-          <Card className="space-y-4">
-            <CardTitle>Shipping address</CardTitle>
             {savedAddresses.length > 0 ? (
-              <div className="space-y-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-2.5">
                 {savedAddresses.map((a) => (
-                  <label key={a.id} className={radioCard}>
-                    <input type="radio" value={a.id} className="mt-1" {...register('addressId')} />
-                    <span>
-                      <span className="font-medium text-gray-900">{a.fullName}</span>
-                      {a.label ? <Badge className="ml-2">{a.label}</Badge> : null}
-                      {a.isDefault ? (
-                        <Badge tone="blue" className="ml-2">
-                          Default
-                        </Badge>
-                      ) : null}
-                      <span className="block text-gray-600">{formatAddress(a)}</span>
-                      <span className="block text-gray-500">{a.phone}</span>
+                  <label key={a.id} className={cn(optionCard, 'flex-col gap-1 px-4 py-3.5')}>
+                    <input
+                      type="radio"
+                      value={a.id}
+                      className="sr-only"
+                      {...register('addressId')}
+                    />
+                    <span className="flex justify-between gap-2 font-bold">
+                      <span>
+                        {a.label || a.fullName}
+                        {a.isDefault ? (
+                          <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] text-brand-700">
+                            Default
+                          </span>
+                        ) : null}
+                      </span>
+                      <RadioDot />
                     </span>
+                    <span className="text-sm text-gray-600">
+                      {a.fullName} · {a.phone}
+                    </span>
+                    <span className="text-sm text-gray-600">{formatAddress(a)}</span>
                   </label>
                 ))}
-                <label className={radioCard}>
-                  <input type="radio" value="" className="mt-1" {...register('addressId')} />
-                  <span className="font-medium text-gray-900">Use a new address</span>
+                <label className={cn(optionCard, 'items-center justify-between gap-2 px-4 py-3.5')}>
+                  <input type="radio" value="" className="sr-only" {...register('addressId')} />
+                  <span className="font-bold">Use a new address</span>
+                  <RadioDot />
                 </label>
               </div>
             ) : null}
-
             {addressId === '' ? (
               <div className="space-y-4">
                 <AddressInputs
@@ -288,51 +330,262 @@ export function CheckoutView() {
                 ) : null}
               </div>
             ) : null}
-          </Card>
+          </Panel>
 
-          <Card className="space-y-4">
-            <CardTitle>Payment</CardTitle>
-            {q ? (
-              <div className="space-y-2">
-                {q.paymentOptions.map((option) => (
-                  <label
-                    key={option.method}
-                    className={cn(radioCard, !option.available && 'cursor-not-allowed opacity-60')}
-                  >
-                    <input
-                      type="radio"
-                      value={option.method}
-                      className="mt-1"
-                      disabled={!option.available}
-                      {...register('paymentMethod')}
-                    />
+          <Panel id="step-delivery" title="2. Delivery, per seller">
+            {!q ? (
+              quote.error ? (
+                <Alert tone="error">{quote.error.message}</Alert>
+              ) : (
+                <Spinner />
+              )
+            ) : (
+              q.groups.map((g) => (
+                <div
+                  key={g.vendor.id}
+                  className="flex flex-col gap-2.5 rounded-[18px] bg-gray-50 p-3.5"
+                >
+                  <div className="flex flex-wrap justify-between gap-2 text-sm">
                     <span>
-                      <span className="font-medium text-gray-900">{option.label}</span>
-                      <span className="block text-gray-600">
-                        {option.description}
-                        {option.fee > 0
-                          ? ` A ${formatMoney(option.fee, q.currency)} fee applies.`
-                          : ''}
-                      </span>
-                      {option.reason ? (
-                        <span className="block text-xs text-amber-700">{option.reason}</span>
-                      ) : null}
+                      Sold by <b>{g.vendor.name}</b> · {g.items.length} item
+                      {g.items.length === 1 ? '' : 's'}
                     </span>
-                  </label>
-                ))}
+                    <span className="text-gray-500">
+                      Subtotal {formatMoney(g.subtotal, q.currency)}
+                    </span>
+                  </div>
+                  {g.shippingOptions.length === 0 ? (
+                    <p className="text-sm font-semibold text-red-600">
+                      This seller doesn’t deliver to this address.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-2">
+                      {g.shippingOptions.map((opt) => (
+                        <label
+                          key={opt.rateId ?? 'default'}
+                          className={cn(
+                            optionCard,
+                            'items-center justify-between gap-2 rounded-[14px] px-3 py-2.5 has-[:checked]:bg-white',
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name={`ship-${g.vendor.id}`}
+                            className="sr-only"
+                            checked={
+                              opt.rateId === g.shippingRateId || g.shippingOptions.length === 1
+                            }
+                            onChange={() =>
+                              opt.rateId &&
+                              setShippingRateIds((s) => ({ ...s, [g.vendor.id]: opt.rateId! }))
+                            }
+                          />
+                          <span className="flex flex-col">
+                            <b className="text-sm">{opt.name}</b>
+                            {opt.estimatedDays ? (
+                              <span className="text-xs text-gray-500">{opt.estimatedDays}</span>
+                            ) : null}
+                          </span>
+                          <b className="text-sm">
+                            {opt.price === 0 ? 'Free' : formatMoney(opt.price, q.currency)}
+                          </b>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            {q && q.shippingZone === null && q.freeShippingAbove > 0 ? (
+              <p className="text-xs text-gray-500">
+                Free delivery on orders over {formatMoney(q.freeShippingAbove, q.currency)} per
+                seller.
+              </p>
+            ) : null}
+          </Panel>
+
+          <Panel id="step-payment" title="3. Payment">
+            {q ? (
+              <div className="flex flex-col gap-2">
+                {q.paymentOptions.map((option) => {
+                  const look = PAYMENT_LOOK[option.method] ?? { k: '•', tint: 'bg-tint-violet' };
+                  return (
+                    <label
+                      key={option.method}
+                      className={cn(
+                        optionCard,
+                        'items-center gap-3.5 px-4 py-3.5',
+                        !option.available && 'cursor-not-allowed opacity-60',
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        value={option.method}
+                        className="sr-only"
+                        disabled={!option.available}
+                        {...register('paymentMethod')}
+                      />
+                      <span
+                        className={cn(
+                          'flex h-10 w-10 flex-none items-center justify-center rounded-xl font-extrabold',
+                          look.tint,
+                        )}
+                      >
+                        {look.k}
+                      </span>
+                      <span className="flex flex-1 flex-col">
+                        <b>{option.label}</b>
+                        <span className="text-[13px] text-gray-500">
+                          {option.description}
+                          {option.fee > 0
+                            ? ` A ${formatMoney(option.fee, q.currency)} fee applies.`
+                            : ''}
+                        </span>
+                        {option.reason ? (
+                          <span className="text-xs text-amber-700">{option.reason}</span>
+                        ) : null}
+                      </span>
+                      <RadioDot size={22} />
+                    </label>
+                  );
+                })}
               </div>
             ) : (
               <Spinner />
             )}
-            {isOnlinePayment(paymentMethod) ? (
-              <p className="text-xs text-gray-500">
-                You will be taken to a secure payment page. Items are held for you while you pay.
+            {online ? (
+              <p className="text-[13px] text-gray-500">
+                You’ll pay on a secure payment page. Your items are held while you pay.
               </p>
             ) : null}
-          </Card>
+          </Panel>
 
-          <Card className="space-y-2">
-            <CardTitle>Order note (optional)</CardTitle>
+          <Panel id="step-savings" title="4. Savings">
+            {q?.loyalty && q.loyalty.balance > 0 ? (
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-brand-100 px-4 py-3.5">
+                <span className="flex flex-col">
+                  <b>Use my points</b>
+                  <span className="text-[13px] text-gray-600">
+                    {q.loyalty.balance.toLocaleString()} available · up to{' '}
+                    {Math.min(q.loyalty.balance, q.loyalty.maxPoints).toLocaleString()} on this
+                    order
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={redeemPoints}
+                  onChange={(e) => setRedeemPoints(e.target.checked)}
+                />
+                <span
+                  aria-hidden
+                  className="relative h-[26px] w-11 flex-none rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[21px]"
+                />
+              </label>
+            ) : null}
+
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-2">
+                <input
+                  aria-label="Coupon code"
+                  placeholder="Coupon code"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      setCouponCode(couponInput.trim() || null);
+                    }
+                  }}
+                  className={codeInput}
+                />
+                {couponCode ? (
+                  <button
+                    type="button"
+                    className={darkButton}
+                    onClick={() => {
+                      setCouponCode(null);
+                      setCouponInput('');
+                    }}
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={darkButton}
+                    disabled={!couponInput.trim()}
+                    onClick={() => setCouponCode(couponInput.trim())}
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
+              {q?.coupon ? (
+                <p
+                  className={cn(
+                    'rounded-xl px-3 py-2 text-[13px] font-semibold',
+                    q.coupon.applied
+                      ? 'bg-tint-mint text-emerald-800'
+                      : 'bg-tint-rose text-red-700',
+                  )}
+                >
+                  {q.coupon.applied
+                    ? `${q.coupon.code} applied${q.coupon.message ? ` — ${q.coupon.message}` : ''}`
+                    : q.coupon.message}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-2">
+                <input
+                  aria-label="Gift card code"
+                  placeholder="Gift card code"
+                  value={giftInput}
+                  onChange={(e) => setGiftInput(e.target.value)}
+                  className={codeInput}
+                />
+                {giftCardCode ? (
+                  <button
+                    type="button"
+                    className={darkButton}
+                    onClick={() => {
+                      setGiftCardCode(null);
+                      setGiftInput('');
+                    }}
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={darkButton}
+                    disabled={!giftInput.trim()}
+                    onClick={() => setGiftCardCode(giftInput.trim())}
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
+              {q?.giftCard ? (
+                <p
+                  className={cn(
+                    'rounded-xl px-3 py-2 text-[13px] font-semibold',
+                    q.giftCard.applied
+                      ? 'bg-tint-mint text-emerald-800'
+                      : 'bg-tint-rose text-red-700',
+                  )}
+                >
+                  {q.giftCard.applied
+                    ? `${formatMoney(q.giftCard.amount, q.currency)} from ${q.giftCard.code} · ${formatMoney(q.giftCard.remainingBalance, q.currency)} left on the card`
+                    : q.giftCard.message}
+                </p>
+              ) : null}
+            </div>
+          </Panel>
+
+          <Panel title="Order note (optional)">
             <Textarea
               aria-label="Order note"
               placeholder="Delivery instructions, landmarks…"
@@ -340,252 +593,100 @@ export function CheckoutView() {
               {...register('customerNote')}
               error={errors.customerNote?.message}
             />
-          </Card>
+          </Panel>
         </div>
 
-        <aside>
-          <Card className="sticky top-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Order summary</h2>
+        <aside className="flex-[1_1_320px] lg:sticky lg:top-24">
+          <Panel title="Order review">
             {quote.isPending ? <Spinner /> : null}
-            {quote.error ? <Alert tone="error">{quote.error.message}</Alert> : null}
             {q ? (
               <>
-                <div className="space-y-4">
-                  {q.groups.map((g) => (
-                    <div key={g.vendor.id} className="space-y-2 border-b border-gray-100 pb-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        {g.vendor.name}
-                      </p>
-                      {g.items.map((item) => (
-                        <div key={item.id} className="flex gap-3 text-sm">
-                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
-                            {item.imageUrl ? (
-                              <img
-                                src={item.imageUrl}
-                                alt=""
-                                className="h-full w-full object-contain p-0.5"
-                              />
-                            ) : null}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900">{item.productName}</p>
-                            <p className="text-xs text-gray-500">
-                              {item.variantName ? `${item.variantName} · ` : ''}Qty {item.quantity}
-                            </p>
-                          </div>
-                          <span className="font-medium">
-                            {formatMoney(item.lineTotal, q.currency)}
+                <div className="flex flex-col gap-2.5">
+                  {q.groups.flatMap((g) =>
+                    g.items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-2.5">
+                        <div className="relative h-[52px] w-[52px] flex-none overflow-hidden rounded-xl bg-gray-50">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt=""
+                              className="h-full w-full object-contain p-1 mix-blend-multiply"
+                            />
+                          ) : null}
+                          <span className="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gray-900 px-1 text-[11px] font-bold text-white">
+                            {item.quantity}
                           </span>
                         </div>
-                      ))}
-                      {g.shippingOptions.length > 1 ? (
-                        <fieldset className="space-y-1 pt-1">
-                          <legend className="text-xs font-medium text-gray-700">Delivery</legend>
-                          {g.shippingOptions.map((opt) => (
-                            <label
-                              key={opt.rateId ?? 'default'}
-                              className="flex cursor-pointer items-center justify-between gap-2 text-xs text-gray-700"
-                            >
-                              <span className="flex items-center gap-2">
-                                <input
-                                  type="radio"
-                                  name={`ship-${g.vendor.id}`}
-                                  checked={opt.rateId === g.shippingRateId}
-                                  onChange={() =>
-                                    opt.rateId &&
-                                    setShippingRateIds((s) => ({
-                                      ...s,
-                                      [g.vendor.id]: opt.rateId!,
-                                    }))
-                                  }
-                                />
-                                {opt.name}
-                                {opt.estimatedDays ? (
-                                  <span className="text-gray-400">{opt.estimatedDays}</span>
-                                ) : null}
-                              </span>
-                              <span>
-                                {opt.price === 0 ? 'Free' : formatMoney(opt.price, q.currency)}
-                              </span>
-                            </label>
-                          ))}
-                        </fieldset>
-                      ) : (
-                        <div className="flex justify-between text-xs text-gray-600">
-                          <span>
-                            {g.shippingOptions.length === 0
-                              ? 'No delivery to this address'
-                              : g.shippingMethod}
-                          </span>
-                          <span>
-                            {g.shipping === 0 ? 'Free' : formatMoney(g.shipping, q.currency)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        <span className="min-w-0 flex-1 truncate text-sm" title={item.productName}>
+                          {item.productName}
+                          {item.variantName ? (
+                            <span className="text-gray-500"> · {item.variantName}</span>
+                          ) : null}
+                        </span>
+                        <b className="whitespace-nowrap text-sm">
+                          {formatMoney(item.lineTotal, q.currency)}
+                        </b>
+                      </div>
+                    )),
+                  )}
                 </div>
 
-                <dl className="space-y-1.5 text-sm">
-                  <Row label="Subtotal" value={formatMoney(q.subtotal, q.currency)} />
-                  <Row
-                    label="Shipping"
+                <dl className="flex flex-col gap-2 border-t border-gray-200 pt-3.5 text-sm">
+                  <SummaryRow label="Subtotal" value={formatMoney(q.subtotal, q.currency)} />
+                  <SummaryRow
+                    label="Delivery"
                     value={
                       q.shippingTotal === 0 ? 'Free' : formatMoney(q.shippingTotal, q.currency)
                     }
                   />
                   {q.discounts.map((d) => (
-                    <Row
+                    <SummaryRow
                       key={`${d.source}-${d.label}`}
                       label={d.label}
                       value={`−${formatMoney(d.amount, q.currency)}`}
+                      tone="saving"
                     />
                   ))}
                   {q.loyalty && q.loyalty.pointsUsed > 0 ? (
-                    <Row
+                    <SummaryRow
                       label={`Points (${q.loyalty.pointsUsed})`}
                       value={`−${formatMoney(q.loyalty.amount, q.currency)}`}
+                      tone="saving"
                     />
                   ) : null}
                   {q.giftCard?.applied ? (
-                    <Row
+                    <SummaryRow
                       label={`Gift card ${q.giftCard.code}`}
                       value={`−${formatMoney(q.giftCard.amount, q.currency)}`}
+                      tone="saving"
                     />
                   ) : null}
                   {q.taxAdded > 0 ? (
-                    <Row label={t('checkout.tax')} value={formatMoney(q.taxAdded, q.currency)} />
+                    <SummaryRow
+                      label={t('checkout.tax')}
+                      value={formatMoney(q.taxAdded, q.currency)}
+                    />
                   ) : null}
-                  {q.codFee > 0 ? (
-                    <Row label="Cash on delivery fee" value={formatMoney(q.codFee, q.currency)} />
-                  ) : null}
-                  <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-semibold text-gray-900">
-                    <dt>Total</dt>
-                    <dd>{formatMoney(q.grandTotal, q.currency)}</dd>
-                  </div>
-                  {q.taxIncluded > 0 ? (
-                    <p className="text-right text-xs text-gray-500">
-                      {t('checkout.includesTax', {
-                        amount: formatMoney(q.taxIncluded, q.currency),
-                      })}
-                    </p>
+                  {paymentMethod === 'COD' ? (
+                    <SummaryRow label="COD fee" value={formatMoney(q.codFee, q.currency)} />
                   ) : null}
                 </dl>
+                <div className="flex items-baseline justify-between border-t border-gray-200 pt-3.5">
+                  <span className="font-bold">Total</span>
+                  <span className="text-[26px] font-extrabold tracking-[-0.02em]">
+                    {formatMoney(q.grandTotal, q.currency)}
+                  </span>
+                </div>
+                {q.taxIncluded > 0 ? (
+                  <p className="-mt-2 text-right text-xs text-gray-500">
+                    {t('checkout.includesTax', { amount: formatMoney(q.taxIncluded, q.currency) })}
+                  </p>
+                ) : null}
                 {displayCurrency !== q.currency ? (
                   <p className="text-xs text-gray-500">
                     {t('checkout.chargedIn', { display: displayCurrency, base: q.currency })}
                   </p>
                 ) : null}
-
-                {q.shippingZone === null && q.freeShippingAbove > 0 ? (
-                  <p className="text-xs text-gray-500">
-                    Free shipping on orders over {formatMoney(q.freeShippingAbove, q.currency)} per
-                    seller.
-                  </p>
-                ) : null}
-
-                <div className="space-y-1">
-                  <div className="flex gap-2">
-                    <Input
-                      aria-label="Coupon code"
-                      placeholder="Coupon code"
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          setCouponCode(couponInput.trim() || null);
-                        }
-                      }}
-                    />
-                    {couponCode ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setCouponCode(null);
-                          setCouponInput('');
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={!couponInput.trim()}
-                        onClick={() => setCouponCode(couponInput.trim())}
-                      >
-                        Apply
-                      </Button>
-                    )}
-                  </div>
-                  {q.coupon ? (
-                    <p
-                      className={cn(
-                        'text-xs',
-                        q.coupon.applied ? 'text-green-700' : 'text-red-600',
-                      )}
-                    >
-                      {q.coupon.applied
-                        ? `${q.coupon.code} applied${q.coupon.message ? ` — ${q.coupon.message}` : ''}`
-                        : q.coupon.message}
-                    </p>
-                  ) : null}
-                </div>
-
-                {q.loyalty && q.loyalty.balance > 0 ? (
-                  <Checkbox
-                    label={`Use my points (${q.loyalty.balance} available, up to ${Math.min(q.loyalty.balance, q.loyalty.maxPoints)} on this order)`}
-                    checked={redeemPoints}
-                    onChange={(e) => setRedeemPoints(e.target.checked)}
-                  />
-                ) : null}
-
-                <div className="space-y-1">
-                  <div className="flex gap-2">
-                    <Input
-                      aria-label="Gift card code"
-                      placeholder="Gift card code"
-                      value={giftInput}
-                      onChange={(e) => setGiftInput(e.target.value)}
-                    />
-                    {giftCardCode ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setGiftCardCode(null);
-                          setGiftInput('');
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={!giftInput.trim()}
-                        onClick={() => setGiftCardCode(giftInput.trim())}
-                      >
-                        Apply
-                      </Button>
-                    )}
-                  </div>
-                  {q.giftCard ? (
-                    <p
-                      className={cn(
-                        'text-xs',
-                        q.giftCard.applied ? 'text-green-700' : 'text-red-600',
-                      )}
-                    >
-                      {q.giftCard.applied
-                        ? `${formatMoney(q.giftCard.amount, q.currency)} from ${q.giftCard.code} · ${formatMoney(q.giftCard.remainingBalance, q.currency)} left on the card`
-                        : q.giftCard.message}
-                    </p>
-                  ) : null}
-                </div>
-
                 {q.problems.length > 0 ? (
                   <Alert tone="warning">
                     <ul className="list-disc space-y-1 pl-4">
@@ -606,28 +707,26 @@ export function CheckoutView() {
             <Button
               type="submit"
               form="checkout-form"
-              size="lg"
-              className={cn('w-full')}
+              className="h-[54px] w-full rounded-2xl text-base font-bold"
               loading={place.isPending}
               disabled={!q?.canPlace}
             >
-              {isOnlinePayment(paymentMethod) ? 'Continue to payment' : 'Place order'}
+              {online ? 'Continue to payment' : 'Place order'}
             </Button>
             <p className="text-center text-xs text-gray-500">
               By placing your order you agree to our terms and returns policy.
+              {online ? ' Your items are held for a few minutes while you pay.' : ''}
             </p>
-          </Card>
+          </Panel>
         </aside>
       </form>
     </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between">
-      <dt className="text-gray-600">{label}</dt>
-      <dd className="text-gray-900">{value}</dd>
-    </div>
-  );
-}
+const PAYMENT_LOOK: Partial<Record<string, { k: string; tint: string }>> = {
+  COD: { k: 'C', tint: 'bg-tint-yellow' },
+  CARD: { k: '▭', tint: 'bg-tint-violet' },
+  WALLET: { k: 'W', tint: 'bg-tint-mint' },
+  BANK_TRANSFER: { k: 'B', tint: 'bg-tint-sky' },
+};

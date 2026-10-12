@@ -3,26 +3,24 @@
 /* eslint-disable @next/next/no-img-element -- images are served from object storage */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useState } from 'react';
 import { CART_PROBLEM_LABELS, type CartItemDto } from '@ecommerce/types';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  Spinner,
-  buttonStyles,
-  formatMoney,
-} from '@ecommerce/ui';
+import { Alert, Spinner, cn, formatMoney } from '@ecommerce/ui';
 import { useCart, useMe, useSetCart } from '@/hooks/use-cart';
 import { cartApi, queryKeys } from '@/lib/api-client';
 import { Money } from '@/components/locale/locale-provider';
+import { container } from '@/components/layout/container';
+import { Panel, SummaryRow, codeInput, darkButton } from '@/components/checkout/ui';
+
+const TINTS = ['bg-tint-yellow', 'bg-tint-pink', 'bg-tint-mint', 'bg-tint-sky'];
 
 export function CartView() {
   const { data: cart, error, isLoading } = useCart();
   const { data: me } = useMe();
   const setCart = useSetCart();
   const queryClient = useQueryClient();
+  const [code, setCode] = useState('');
+  const [savedCode, setSavedCode] = useState<string | null>(null);
 
   const saved = useQuery({
     queryKey: queryKeys.savedItems,
@@ -56,10 +54,11 @@ export function CartView() {
     },
   });
 
-  if (isLoading) return <Spinner className="mx-auto max-w-5xl p-8" />;
+  const wrap = `${container} flex max-w-[1240px] flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`;
+  if (isLoading) return <Spinner className="mx-auto p-8" />;
   if (error) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className={wrap}>
         <Alert tone="error" title="Could not load your cart">
           {error.message}
         </Alert>
@@ -68,232 +67,317 @@ export function CartView() {
   }
 
   const empty = !cart || cart.itemCount === 0;
+  const sellers = cart?.groups.length ?? 0;
+  const checkoutHref = savedCode
+    ? `/checkout?coupon=${encodeURIComponent(savedCode)}`
+    : '/checkout';
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Your cart</h1>
-      {mutate.error ? (
-        <Alert tone="error" className="mb-4">
-          {mutate.error.message}
-        </Alert>
-      ) : null}
+    <div className={wrap}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2.5">
+        <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-none tracking-display">
+          Your cart
+        </h1>
+        {!empty ? (
+          <span className="text-sm text-gray-500">
+            {cart.itemCount} item{cart.itemCount === 1 ? '' : 's'} from {sellers} seller
+            {sellers === 1 ? '' : 's'}
+            {sellers > 1 ? ' · each seller ships separately' : ''}
+          </span>
+        ) : null}
+      </div>
+      {mutate.error ? <Alert tone="error">{mutate.error.message}</Alert> : null}
 
       {empty ? (
-        <Card>
-          <EmptyState
-            title="Your cart is empty"
-            description="Find something you love and add it here."
-            action={
-              <Link href="/products" className={buttonStyles()}>
-                Start shopping
-              </Link>
-            }
-          />
-        </Card>
+        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-6 py-14 text-center">
+          <span className="flex h-[72px] w-[72px] items-center justify-center rounded-3xl bg-brand-100 text-3xl font-extrabold text-brand-700">
+            0
+          </span>
+          <h2 className="text-2xl font-extrabold">Your cart is empty</h2>
+          <p className="text-gray-500">Find something you love and add it here.</p>
+          <Link
+            href="/products"
+            className="mt-1.5 rounded-2xl bg-brand-600 px-6 py-3.5 font-bold text-white hover:bg-brand-700 hover:text-white"
+          >
+            Start shopping
+          </Link>
+        </div>
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-6">
-            {cart.groups.map((group) => (
-              <Card key={group.vendor.id} className="p-0">
-                <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 text-sm">
-                  <span>
-                    Sold by <span className="font-semibold text-gray-900">{group.vendor.name}</span>
+        <div className="flex flex-wrap items-start gap-5">
+          <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-3.5">
+            {cart.groups.map((group, gi) => (
+              <div key={group.vendor.id} className="overflow-hidden rounded-3xl bg-white">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-[18px] py-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={cn(
+                        'flex h-[34px] w-[34px] items-center justify-center rounded-full font-extrabold',
+                        TINTS[gi % TINTS.length],
+                      )}
+                    >
+                      {group.vendor.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="text-sm">
+                      Sold by <b>{group.vendor.name}</b>
+                    </span>
+                  </div>
+                  <span className="text-[13px] text-gray-500">
+                    {sellers > 1 ? 'Ships separately' : 'Delivery options at checkout'}
                   </span>
-                  <span className="text-gray-500">Shipped separately</span>
                 </div>
-                <ul className="divide-y divide-gray-100">
-                  {group.items.map((item) => (
-                    <li key={item.id} className="flex gap-4 px-5 py-4">
-                      <Link
-                        href={`/products/${item.productSlug}`}
-                        className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-white"
-                      >
-                        {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt=""
-                            className="h-full w-full object-contain p-1"
-                          />
-                        ) : null}
-                      </Link>
-                      <div className="flex flex-1 flex-col gap-1">
-                        <div className="flex justify-between gap-4">
-                          <div>
-                            <Link
-                              href={`/products/${item.productSlug}`}
-                              className="font-medium text-gray-900 hover:text-brand-700"
-                            >
-                              {item.productName}
-                            </Link>
-                            {item.variantName ? (
-                              <p className="text-sm text-gray-500">{item.variantName}</p>
-                            ) : null}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">
-                              <Money amount={item.lineTotal} currency={cart.currency} />
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              <Money amount={item.unitPrice} currency={cart.currency} /> each
-                            </p>
-                          </div>
-                        </div>
-                        {item.problems.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {item.problems.map((p) => (
-                              <Badge key={p} tone={p === 'PRICE_CHANGED' ? 'yellow' : 'red'}>
-                                {p === 'PRICE_CHANGED' && item.previousUnitPrice !== null
-                                  ? `Price changed from ${formatMoney(item.previousUnitPrice, cart.currency)}`
-                                  : p === 'INSUFFICIENT_STOCK'
-                                    ? `Only ${item.available} available`
-                                    : CART_PROBLEM_LABELS[p]}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : null}
-                        <div className="mt-auto flex flex-wrap items-center gap-3 pt-2 text-sm">
-                          <div className="flex items-center rounded-lg border border-gray-300">
-                            <button
-                              type="button"
-                              aria-label="Decrease quantity"
-                              className="px-3 py-1 disabled:opacity-40"
-                              disabled={mutate.isPending}
-                              onClick={() =>
-                                mutate.mutate({ kind: 'qty', item, quantity: item.quantity - 1 })
-                              }
-                            >
-                              −
-                            </button>
-                            <span className="w-8 text-center">{item.quantity}</span>
-                            <button
-                              type="button"
-                              aria-label="Increase quantity"
-                              className="px-3 py-1 disabled:opacity-40"
-                              disabled={mutate.isPending || item.quantity >= item.available}
-                              onClick={() =>
-                                mutate.mutate({ kind: 'qty', item, quantity: item.quantity + 1 })
-                              }
-                            >
-                              +
-                            </button>
-                          </div>
-                          {item.problems.includes('INSUFFICIENT_STOCK') && item.available > 0 ? (
-                            <button
-                              type="button"
-                              className="text-brand-700 hover:underline"
-                              onClick={() =>
-                                mutate.mutate({ kind: 'qty', item, quantity: item.available })
-                              }
-                            >
-                              Set to {item.available}
-                            </button>
-                          ) : null}
-                          {me ? (
-                            <button
-                              type="button"
-                              className="text-gray-600 hover:text-gray-900"
-                              onClick={() => mutate.mutate({ kind: 'save', item })}
-                            >
-                              Save for later
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="text-red-600 hover:underline"
-                            onClick={() => mutate.mutate({ kind: 'remove', item })}
+                {group.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex gap-3.5 border-b border-gray-100 px-[18px] py-4 last:border-b-0"
+                  >
+                    <Link
+                      href={`/products/${item.productSlug}`}
+                      className="aspect-square w-[clamp(76px,10vw,100px)] flex-none overflow-hidden rounded-xl bg-gray-50"
+                    >
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          className="h-full w-full object-contain p-1.5 mix-blend-multiply"
+                        />
+                      ) : null}
+                    </Link>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
+                        <div className="min-w-0 flex-[1_1_200px]">
+                          <Link
+                            href={`/products/${item.productSlug}`}
+                            className="font-semibold hover:text-brand-600"
                           >
-                            Remove
-                          </button>
+                            {item.productName}
+                          </Link>
+                          {item.variantName ? (
+                            <p className="text-[13px] text-gray-500">{item.variantName}</p>
+                          ) : null}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[17px] font-extrabold">
+                            <Money amount={item.lineTotal} currency={cart.currency} />
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            <Money amount={item.unitPrice} currency={cart.currency} /> each
+                          </p>
                         </div>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+                      {item.problems.map((p) => (
+                        <span
+                          key={p}
+                          className={cn(
+                            'self-start rounded-full px-2.5 py-[3px] text-xs font-bold',
+                            p === 'PRICE_CHANGED'
+                              ? 'bg-tint-mint text-emerald-800'
+                              : 'bg-accent-soft text-amber-800',
+                          )}
+                        >
+                          {p === 'PRICE_CHANGED' && item.previousUnitPrice !== null
+                            ? `Price changed from ${formatMoney(item.previousUnitPrice, cart.currency)}`
+                            : p === 'INSUFFICIENT_STOCK'
+                              ? `Only ${item.available} left`
+                              : CART_PROBLEM_LABELS[p]}
+                        </span>
+                      ))}
+                      {item.problems.length === 0 && item.available > 0 && item.available <= 3 ? (
+                        <span className="self-start rounded-full bg-accent-soft px-2.5 py-[3px] text-xs font-bold text-amber-800">
+                          Only {item.available} left
+                        </span>
+                      ) : null}
+                      <div className="mt-auto flex flex-wrap items-center gap-x-3.5 gap-y-1.5 pt-1.5 text-sm">
+                        <div className="flex items-center rounded-xl bg-gray-50">
+                          <button
+                            type="button"
+                            aria-label="Decrease quantity"
+                            className="h-9 w-9 text-lg disabled:opacity-40"
+                            disabled={mutate.isPending || item.quantity <= 1}
+                            onClick={() =>
+                              mutate.mutate({ kind: 'qty', item, quantity: item.quantity - 1 })
+                            }
+                          >
+                            −
+                          </button>
+                          <span className="w-6 text-center font-bold">{item.quantity}</span>
+                          <button
+                            type="button"
+                            aria-label="Increase quantity"
+                            className="h-9 w-9 text-lg disabled:opacity-40"
+                            disabled={mutate.isPending || item.quantity >= item.available}
+                            onClick={() =>
+                              mutate.mutate({ kind: 'qty', item, quantity: item.quantity + 1 })
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                        {item.problems.includes('INSUFFICIENT_STOCK') && item.available > 0 ? (
+                          <button
+                            type="button"
+                            className="font-semibold text-brand-700 hover:underline"
+                            onClick={() =>
+                              mutate.mutate({ kind: 'qty', item, quantity: item.available })
+                            }
+                          >
+                            Set to {item.available}
+                          </button>
+                        ) : null}
+                        {me ? (
+                          <button
+                            type="button"
+                            className="font-semibold text-gray-600 hover:text-gray-900"
+                            onClick={() => mutate.mutate({ kind: 'save', item })}
+                          >
+                            Save for later
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="font-semibold text-red-600 hover:text-red-700"
+                          onClick={() => mutate.mutate({ kind: 'remove', item })}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ))}
+
+            {me && saved.data && saved.data.length > 0 ? (
+              <div className="mt-2 flex flex-col gap-2.5">
+                <h2 className="text-xl font-extrabold">Saved for later ({saved.data.length})</h2>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-2.5">
+                  {saved.data.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center gap-3 rounded-[20px] bg-white p-2.5"
+                    >
+                      <div className="h-16 w-16 flex-none overflow-hidden rounded-[14px] bg-gray-50">
+                        {s.imageUrl ? (
+                          <img
+                            src={s.imageUrl}
+                            alt=""
+                            className="h-full w-full object-contain p-1 mix-blend-multiply"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <Link
+                          href={`/products/${s.productSlug}`}
+                          className="truncate text-sm font-semibold hover:text-brand-600"
+                        >
+                          {s.productName}
+                        </Link>
+                        <span className="font-extrabold">
+                          <Money amount={s.price} currency={s.currency} />
+                        </span>
+                        <button
+                          type="button"
+                          className="self-start text-[13px] font-bold text-brand-700 disabled:text-gray-400"
+                          disabled={s.available <= 0 || moveToCart.isPending}
+                          onClick={() => moveToCart.mutate(s.id)}
+                        >
+                          {s.available > 0 ? 'Move to cart' : 'Out of stock'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {moveToCart.error ? <Alert tone="error">{moveToCart.error.message}</Alert> : null}
+              </div>
+            ) : null}
           </div>
 
-          <aside>
-            <Card className="sticky top-6 space-y-4">
-              <h2 className="text-lg font-semibold text-gray-900">Order summary</h2>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal ({cart.itemCount} items)</span>
-                <span className="font-semibold"><Money amount={cart.subtotal} currency={cart.currency} /></span>
+          <aside className="flex-[1_1_320px] lg:sticky lg:top-24">
+            <Panel title="Order summary">
+              <form
+                className="flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setSavedCode(code.trim().toUpperCase() || null);
+                }}
+              >
+                <input
+                  aria-label="Coupon code"
+                  placeholder="Coupon code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className={codeInput}
+                />
+                <button type="submit" className={darkButton} disabled={!code.trim()}>
+                  Apply
+                </button>
+              </form>
+              {savedCode ? (
+                <span className="rounded-xl bg-tint-mint px-3 py-2 text-[13px] font-semibold text-emerald-800">
+                  {savedCode} will be checked and applied at checkout
+                </span>
+              ) : null}
+              <dl className="flex flex-col gap-2.5 text-sm">
+                <SummaryRow
+                  label={`Subtotal (${cart.itemCount} item${cart.itemCount === 1 ? '' : 's'})`}
+                  value={<Money amount={cart.subtotal} currency={cart.currency} />}
+                />
+                <SummaryRow
+                  label={`Shipping (${sellers} seller${sellers === 1 ? '' : 's'})`}
+                  value={<span className="font-normal text-gray-500">At checkout</span>}
+                />
+              </dl>
+              <div className="flex items-baseline justify-between border-t border-gray-200 pt-3.5">
+                <span className="font-bold">Total so far</span>
+                <span className="text-[26px] font-extrabold tracking-[-0.02em]">
+                  <Money amount={cart.subtotal} currency={cart.currency} />
+                </span>
               </div>
-              <p className="text-xs text-gray-500">
-                Shipping, taxes and discounts are calculated at checkout.
-              </p>
+              <span className="text-[13px] text-gray-500">
+                {me ? (
+                  <>
+                    You’ll earn <b className="text-brand-700">loyalty points</b> on this order.
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login?next=/cart" className="font-semibold text-brand-700">
+                      Sign in
+                    </Link>{' '}
+                    to earn points and save items for later. Your cart is kept.
+                  </>
+                )}
+              </span>
               {!cart.canCheckout ? (
                 <Alert tone="warning">Fix the highlighted items to continue.</Alert>
               ) : null}
               {cart.canCheckout ? (
                 <Link
-                  href="/checkout"
-                  className={buttonStyles({ size: 'lg', className: 'w-full' })}
+                  href={checkoutHref}
+                  className="flex h-[54px] items-center justify-center rounded-2xl bg-brand-600 text-base font-bold text-white hover:bg-brand-700 hover:text-white"
                 >
                   Proceed to checkout
                 </Link>
               ) : (
-                <Button className="w-full" size="lg" disabled>
+                <button
+                  type="button"
+                  disabled
+                  className="h-[54px] rounded-2xl bg-brand-600 text-base font-bold text-white opacity-50"
+                >
                   Proceed to checkout
-                </Button>
+                </button>
               )}
-              {!me ? (
-                <p className="text-center text-xs text-gray-500">
-                  <Link href="/login?next=/cart" className="text-brand-700 hover:underline">
-                    Sign in
-                  </Link>{' '}
-                  to save items for later. Your cart is kept.
-                </p>
-              ) : null}
-            </Card>
+              <div className="flex flex-wrap justify-center gap-1.5 text-xs text-gray-500">
+                <span>Cash on delivery</span>
+                <span>·</span>
+                <span>Card</span>
+                <span>·</span>
+                <span>Wallet</span>
+                <span>·</span>
+                <span>Easy returns</span>
+              </div>
+            </Panel>
           </aside>
         </div>
       )}
-
-      {me && saved.data && saved.data.length > 0 ? (
-        <section className="mt-10">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Saved for later ({saved.data.length})
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {saved.data.map((s) => (
-              <Card key={s.id} className="flex gap-3 p-4">
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-white">
-                  {s.imageUrl ? (
-                    <img src={s.imageUrl} alt="" className="h-full w-full object-contain p-1" />
-                  ) : null}
-                </div>
-                <div className="flex flex-1 flex-col text-sm">
-                  <Link
-                    href={`/products/${s.productSlug}`}
-                    className="font-medium text-gray-900 hover:text-brand-700"
-                  >
-                    {s.productName}
-                  </Link>
-                  {s.variantName ? <span className="text-gray-500">{s.variantName}</span> : null}
-                  <span className="font-semibold"><Money amount={s.price} currency={s.currency} /></span>
-                  <div className="mt-2 flex gap-3">
-                    <button
-                      type="button"
-                      className="text-brand-700 hover:underline disabled:text-gray-400"
-                      disabled={s.available <= 0 || moveToCart.isPending}
-                      onClick={() => moveToCart.mutate(s.id)}
-                    >
-                      {s.available > 0 ? 'Move to cart' : 'Out of stock'}
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-          {moveToCart.error ? (
-            <Alert tone="error" className="mt-3">
-              {moveToCart.error.message}
-            </Alert>
-          ) : null}
-        </section>
-      ) : null}
     </div>
   );
 }
