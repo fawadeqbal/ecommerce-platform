@@ -1,7 +1,7 @@
 """
-The lookup_order tool: live order status from the store database.
+The lookup_order tool: everything about one order (or the customer's order list), live from the store database.
 
-Signed-in customers: their own orders (a number is optional: without one they get their recent orders).
+Signed-in customers: their own orders; without a number they get their recent orders.
 Guests: the order number AND the email used at checkout, so nobody can read a stranger's order.
 """
 import json
@@ -15,8 +15,11 @@ ORDER_NUMBER = re.compile(r"\bORD-\d{6}-[A-Z0-9]{4,8}\b", re.I)
 SPEC = {
     "name": "lookup_order",
     "description": (
-        "Look up the customer's orders: status, payment, items, totals, shipping method, courier, tracking number "
-        "and delivery dates. Signed-in customers: call it without an order number to list their recent orders. "
+        "Everything about the customer's orders. With an order number: status, each seller's part with its own status, "
+        "shipments (courier, tracking number and tracking link, shipped / delivered dates), items, price breakdown "
+        "(subtotal, discount, coupon, shipping, tax, gift card, points, total), payments and their status, refunds, "
+        "returns, invoices, the status timeline, whether it can still be cancelled, the delivery address and the order "
+        "page link. Without a number (signed-in customers only): their 10 most recent orders. "
         "Guests must give the order number and the email they used at checkout."
     ),
     "parameters": {

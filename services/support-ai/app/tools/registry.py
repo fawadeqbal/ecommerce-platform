@@ -6,9 +6,9 @@ JSON-schema parameters), run(arguments) and optionally prefetch(question), then 
 """
 import json
 
-from app.tools import orders, products, support
+from app.tools import account, activity, coupons, orders, platform, product_detail, products, support
 
-_TOOLS = [orders, products, support]
+_TOOLS = [account, orders, activity, products, product_detail, platform, coupons, support]
 
 TOOLS = [t.SPEC for t in _TOOLS]                 # given to the model
 _BY_NAME = {t.SPEC["name"]: t for t in _TOOLS}

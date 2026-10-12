@@ -15,10 +15,38 @@ Customers register with their name, email and a password, or sign in with Google
 After registering, a verification email is sent; open the link in it to verify the email address.
 An account keeps orders, returns, addresses, wishlist, loyalty points and email preferences in one place.
 
+## Profile and Password
+
+Under Account, then Profile, customers can change their name and phone number and change their password
+(the current password is needed). Accounts created with Google can sign in with Google at any time.
+
+## Email Verification
+
+A verification link is emailed after registering. If it did not arrive, check the spam folder; the link can be sent
+again from Account, then Profile.
+
+## Addresses
+
+Save several delivery addresses under Account, then Addresses, and choose a default one. At checkout any saved
+address can be picked or a new one entered. The address of an order that is already placed cannot be changed by
+the customer; if it is wrong, talk to the support team quickly, before the order ships.
+
 ## Forgot Password
 
 On the sign-in page choose "Forgot password", enter the account email and open the reset link that is emailed.
 The link expires after a while; request a new one if it no longer works. Still locked out? Talk to the support team.
+
+## Browsing and Searching
+
+Search from the top of every page, or browse by category, by brand and by seller (each seller has a store page
+with their products, rating and policies). Product pages show the price, variants (size, colour, storage …),
+stock, the seller, reviews and questions. Prices can be shown in other currencies and the site language can be
+changed with the switcher in the header.
+
+## Out of Stock and Notify Me
+
+When a product or variant is out of stock, the product page offers "Notify me": enter an email and an email is sent
+when it is back in stock. Stock is shared across the seller's warehouses and updates in real time.
 
 ## Placing an Order
 
@@ -91,10 +119,20 @@ If a refund has not arrived, talk to the support team with the order or return n
 
 The invoice of an order can be downloaded as a PDF from the order page.
 
+## Buy Again
+
+From a past order, "Buy again" puts the same items back in the cart (items that are no longer sold or out of stock
+are skipped and listed).
+
 ## Loyalty Points
 
 Points are earned on orders and with bonuses (signing up, reviewing products, referring friends) and can pay for part of
 an order at checkout. See them under Account, then Loyalty, together with the referral link. Points expire after a while.
+
+## Referring Friends
+
+Every account has a referral code (Account, then Loyalty). A friend enters it when registering; when they order,
+both can receive bonus points as set by the store.
 
 ## Reviews and Questions
 
@@ -106,6 +144,22 @@ may be checked before they appear.
 Save products to the wishlist with the heart button. Manage delivery addresses under Account, then Addresses.
 Choose which emails to receive (offers, newsletter) under Account, then Preferences; every marketing email also has
 an unsubscribe link.
+
+## Seller Policies
+
+Each seller can publish their own policies (returns, warranty, delivery) on their store page. The store's return
+window and rules apply to every order; a seller's policy can add details for their products.
+
+## Problems with a Delivered Order
+
+Item damaged, wrong, or parts missing: request a return from the order page within the return window and choose the
+matching reason and describe the problem in the comments. The seller reviews it. If the seller rejects a return the
+customer disagrees with, or a seller does not respond, talk to the support team.
+
+## Privacy and Your Data
+
+The store only uses personal data to run orders, accounts and (if allowed) emails. To change what you receive use
+Account, then Preferences. For a copy of your data or to close your account, talk to the support team.
 
 ## Selling on the Marketplace
 

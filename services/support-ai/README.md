@@ -11,7 +11,7 @@ widget (`apps/web/src/components/support`). Models are replaceable: Claude, Olla
 | --- | --- | --- |
 | `data/store_handbook.md` | How the store works: accounts, ordering, payments, statuses, tracking, cancelling, returns, refunds, points … | Edit the file, re-run ingest |
 | Store database (read at ingest) | Admin settings (contact, payment limits, shipping, return window, points), published CMS pages, active FAQs | Re-run ingest after changing them |
-| Tools (live, per question) | `lookup_order` (signed in: own orders; guest: order number + checkout email), `search_products` | Always current |
+| Tools (live, per question) | `get_my_account` (profile, addresses, points, cart, wishlist, preferences), `lookup_order` (everything about an order; guests: number + checkout email), `get_my_activity` (returns, refunds, points, reviews, questions, gift cards, coupons used, stock alerts, tickets, disputes), `search_products`, `get_product`, `store_info` (categories, brands, sellers, shipping options, currencies, promotions), `check_coupon` | Always current |
 
 Store data is only read: fixed, customer-scoped queries over a read-only connection (`app/db/store.py`).
 Any `.pdf` or `.md` file added to `data/` is ingested too.
@@ -34,7 +34,7 @@ services/support-ai/
 │   │   ├── state.py · deps.py · events.py · edges.py · graph.py · studio.py
 │   │   └── nodes/              memory · router · retrieval · generation · handoff
 │   ├── prompts/                system.md · rewrite_query.md · summarize.md · handoff_reply.md
-│   ├── tools/                  registry.py · orders.py (lookup_order) · products.py (search_products) · support.py
+│   ├── tools/                  registry.py · account · orders · activity · products · product_detail · platform · coupons · support
 │   ├── rag/
 │   │   ├── ingestion/          loaders (PDF, Markdown) · cleaning · chunking · store_docs (live store facts) · pipeline
 │   │   ├── retrieval.py        embed -> hybrid search -> filter -> rerank

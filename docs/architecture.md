@@ -372,7 +372,9 @@ Computed by the API only (`POST /checkout/quote`); the UI never calculates total
 - Owner of a chat: signed-in customer → a stable UUID derived from the user id; guest → `X-Visitor-Id` (browser UUID).
 - Own tables (chats, messages, knowledge chunks) live in a separate database (`SUPPORT_AI_DATABASE_URL`), so Prisma
   never sees them. Store data is read with fixed, customer-scoped queries (`app/db/store.py`) over a read-only connection:
-  `lookup_order` (signed in: own orders; guest: order number + checkout email), `search_products` (published only).
+  everything about the signed-in customer (`get_my_account`, `lookup_order`, `get_my_activity`), the public catalog
+  (`search_products`, `get_product`), platform data (`store_info`) and `check_coupon`. Guests: an order by number + checkout
+  email only. The model never writes SQL and has no write access; for actions it links the customer to the right page.
 - Knowledge: PDFs in `services/support-ai/data/` → `python -m scripts.ingest`.
 
 ## Conventions
