@@ -20,15 +20,17 @@ export function StoreLogo({
     <span
       className={cn(
         'flex items-center gap-1.5 font-extrabold leading-none tracking-display',
-        tone === 'light' ? 'text-[28px] text-white' : 'text-[26px] text-gray-900',
+        tone === 'light' ? 'text-[27px] tracking-[-0.8px] text-white' : 'text-[26px] text-gray-900',
       )}
     >
       {/* Mark: a shopping bag in the accent colour. */}
       <span
         aria-hidden
         className={cn(
-          'mr-1 flex h-9 w-9 flex-none -rotate-6 items-center justify-center rounded-xl shadow-sm transition-transform duration-300 hover:rotate-0',
-          tone === 'light' ? 'bg-accent text-gray-900' : 'bg-brand-600 text-white',
+          'mr-1.5 flex h-[42px] w-[42px] flex-none -rotate-6 items-center justify-center rounded-[13px] transition-transform duration-300 hover:rotate-0',
+          tone === 'light'
+            ? 'bg-gradient-to-br from-[#ffe066] to-[#ffc61a] text-gray-900 shadow-[0_6px_14px_-4px_rgba(255,198,26,.6),inset_0_1px_0_rgba(255,255,255,.6)]'
+            : 'bg-brand-600 text-white',
         )}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-5 w-5">
@@ -37,13 +39,9 @@ export function StoreLogo({
         </svg>
       </span>
       {name}
-      <span
-        aria-hidden
-        className={cn(
-          'inline-block rounded-full',
-          tone === 'light' ? 'h-2.5 w-2.5 bg-accent' : 'h-[9px] w-[9px] bg-brand-600',
-        )}
-      />
+      <span aria-hidden className={cn('-ml-1.5', tone === 'light' ? 'text-accent' : 'text-brand-600')}>
+        .
+      </span>
     </span>
   );
   return href ? (

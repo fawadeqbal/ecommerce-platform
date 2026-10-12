@@ -19,6 +19,15 @@ export interface NavItem {
 
 const SHOW_GRANDCHILDREN = 6;
 
+/** Tinted initial tiles for the category rail. */
+const HUES = [
+  'bg-[#eee9fe] text-[#5b3fd9]',
+  'bg-[#fff4cc] text-[#9a6b00]',
+  'bg-[#e6f6ee] text-[#13804b]',
+  'bg-[#fdebef] text-[#c2304a]',
+  'bg-[#e6f1fd] text-[#1f5fb8]',
+];
+
 /**
  * White bar under the header. Categories with sub-categories open a mega menu on hover
  * (or keyboard focus): every sub-category as a column with its own children listed below.
@@ -94,57 +103,86 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
           '@keyframes menu-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
           '@media (prefers-reduced-motion:reduce){.menu-in{animation:none}}'}
       </style>
-      {items.map((item, i) => {
-        const active =
-          item.href === here || (item.href !== '/' && here.startsWith(`${item.href}/`));
-        const hasMenu = Boolean(item.children?.length);
-        return (
-          <Link
-            key={item.href + item.label}
-            href={item.href}
-            aria-current={active ? 'page' : undefined}
-            aria-haspopup={hasMenu ? 'true' : undefined}
-            aria-expanded={hasMenu ? open === i : undefined}
-            onMouseEnter={(e) => show(i, e.currentTarget)}
-            onMouseLeave={scheduleClose}
-            onFocus={(e) => show(i, e.currentTarget)}
-            className={cn(
-              'relative flex items-center gap-1.5 whitespace-nowrap px-3 py-3 text-sm font-medium transition-colors',
-              active || open === i ? 'text-brand-700' : 'text-gray-600 hover:text-brand-600',
-            )}
-          >
-            {i === 0 ? <GridIcon size={16} /> : null}
-            {item.label}
-            {hasMenu ? (
-              <svg
-                viewBox="0 0 20 20"
-                fill="currentColor"
+      {(() => {
+        const renderLink = (item: NavItem, i: number) => {
+          const active =
+            item.href === here || (item.href !== '/' && here.startsWith(`${item.href}/`));
+          const hasMenu = Boolean(item.children?.length);
+          const isAll = item.kind === 'all';
+          const on = active || open === i;
+          return (
+            <Link
+              key={item.href + item.label}
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              aria-haspopup={hasMenu ? 'true' : undefined}
+              aria-expanded={hasMenu ? open === i : undefined}
+              onMouseEnter={(e) => show(i, e.currentTarget)}
+              onMouseLeave={scheduleClose}
+              onFocus={(e) => show(i, e.currentTarget)}
+              className={cn(
+                'relative flex h-14 flex-none items-center whitespace-nowrap text-[15px] transition-colors hover:text-brand-600',
+                isAll ? 'gap-[9px] px-1 font-semibold' : 'gap-[5px] px-3',
+                on ? 'font-semibold text-brand-600' : isAll ? 'text-gray-900' : 'font-medium text-[#3d3955]',
+              )}
+            >
+              {isAll ? <GridIcon size={18} /> : null}
+              {item.label}
+              {hasMenu ? (
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden
+                  className={cn(
+                    'hidden h-3.5 w-3.5 opacity-60 transition-transform duration-200 md:block',
+                    open === i && 'rotate-180',
+                  )}
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : null}
+              <span
                 aria-hidden
                 className={cn(
-                  'hidden h-3.5 w-3.5 opacity-60 transition-transform duration-200 md:block',
-                  open === i && 'rotate-180',
+                  'absolute bottom-0 h-[3px] rounded-t-[3px] bg-brand-600 transition-opacity duration-150',
+                  isAll ? 'inset-x-0' : 'inset-x-3',
+                  on ? 'opacity-100' : 'opacity-0',
                 )}
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              />
+            </Link>
+          );
+        };
+        const allIndex = items.findIndex((x) => x.kind === 'all');
+        return (
+          <>
+            {allIndex >= 0 ? (
+              <>
+                {renderLink(items[allIndex]!, allIndex)}
+                <span aria-hidden className="mx-2 h-6 w-px flex-none bg-[#eceaf3]" />
+              </>
             ) : null}
-            <span
-              aria-hidden
-              className={cn(
-                'absolute inset-x-3 bottom-0 h-[3px] rounded-full bg-brand-600 transition-transform duration-200',
-                active || open === i ? 'scale-x-100' : 'scale-x-0',
-              )}
-            />
-          </Link>
+            <div className="scrollbar-none flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+              {items.map((item, i) => (i === allIndex ? null : renderLink(item, i)))}
+            </div>
+          </>
         );
-      })}
+      })()}
 
       {current?.kind === 'all' && current.children?.length ? (
         <Portal>
+          <div
+            aria-hidden
+            onClick={() => setOpen(null)}
+            className={cn(
+              'fixed inset-x-0 bottom-0 z-[59] bg-[rgba(30,26,51,.28)] transition-opacity duration-300',
+              visible ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+            style={{ top }}
+          />
           <div
             className={cn(
               'fixed inset-x-0 z-[60] origin-top transition-[opacity,transform] duration-200 ease-out',
@@ -160,6 +198,15 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
       ) : current?.children?.length ? (
         <Portal>
           <div
+            aria-hidden
+            onClick={() => setOpen(null)}
+            className={cn(
+              'fixed inset-x-0 bottom-0 z-[59] bg-[rgba(30,26,51,.28)] transition-opacity duration-300',
+              visible ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+            style={{ top }}
+          />
+          <div
             className={cn(
               'fixed inset-x-0 z-[60] origin-top transition-[opacity,transform] duration-200 ease-out',
               visible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0',
@@ -168,8 +215,11 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
             onMouseEnter={cancelClose}
             onMouseLeave={scheduleClose}
           >
-            <div className="border-y border-gray-200 bg-white shadow-[0_24px_48px_-12px_rgba(27,24,48,0.18)]">
-              <div key={current.href} className={cn(container, 'menu-in flex gap-8 py-6')}>
+            <div className={container}>
+              <div
+                key={current.href}
+                className="menu-in mt-2.5 flex gap-8 overflow-hidden rounded-[20px] bg-white p-6 shadow-[0_0_0_1px_rgba(30,26,51,.05),0_30px_70px_-16px_rgba(30,26,51,.35)]"
+              >
                 {/* Category card */}
                 <Link
                   href={current.href}
@@ -272,10 +322,13 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
   const kids = root.children ?? [];
 
   return (
-    <div className="border-y border-gray-200 bg-white shadow-[0_24px_48px_-12px_rgba(27,24,48,0.18)]">
-      <div className={cn(container, 'flex max-h-[min(70vh,560px)] gap-0 py-0')}>
+    <div className={container}>
+      <div className="mt-2.5 flex max-h-[min(72vh,580px)] overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_rgba(30,26,51,.05),0_30px_70px_-16px_rgba(30,26,51,.35)]">
         {/* Top-level list */}
-        <ul className="scrollbar-none w-64 flex-none overflow-y-auto border-r border-gray-100 py-3 pr-3">
+        <ul className="scrollbar-none flex w-60 flex-none flex-col gap-0.5 overflow-y-auto border-r border-[#efedf5] bg-[#f8f7fc] p-3 xl:w-[290px]">
+          <li className="px-3 pb-2.5 pt-2 text-[11.5px] font-bold tracking-[1px] text-[#9894ae]">
+            BROWSE CATEGORIES
+          </li>
           {roots.map((r, i) => (
             <li key={r.href}>
               <Link
@@ -283,18 +336,20 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
                 onMouseEnter={() => setHover(i)}
                 onFocus={() => setHover(i)}
                 className={cn(
-                  'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all duration-200',
-                  i === hover ? 'bg-brand-50 text-brand-700' : 'text-gray-700 hover:bg-gray-50',
+                  'flex items-center gap-3 rounded-xl px-2.5 py-2 text-[15px] transition-all duration-150 hover:text-brand-600',
+                  i === hover
+                    ? 'bg-white font-semibold text-brand-600 shadow-[0_1px_2px_rgba(30,26,51,.06),0_4px_12px_-4px_rgba(30,26,51,.1)]'
+                    : 'font-medium text-[#3d3955]',
                 )}
               >
                 {r.image ? (
-                  <img src={r.image} alt="" className="h-8 w-8 flex-none rounded-lg object-cover" />
+                  <img src={r.image} alt="" className="h-9 w-9 flex-none rounded-[11px] object-cover" />
                 ) : (
                   <span
                     aria-hidden
                     className={cn(
-                      'flex h-8 w-8 flex-none items-center justify-center rounded-lg text-xs font-extrabold',
-                      i === hover ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-500',
+                      'flex h-9 w-9 flex-none items-center justify-center rounded-[11px] text-sm font-extrabold',
+                      HUES[i % HUES.length],
                     )}
                   >
                     {r.label.charAt(0)}
@@ -312,14 +367,21 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
         </ul>
 
         {/* Hovered category */}
-        <div key={root.href} className="menu-in min-w-0 flex-1 overflow-y-auto py-5 pl-8">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-xl font-extrabold tracking-heading text-gray-900">{root.label}</h3>
+        <div key={root.href} className="menu-in min-w-0 flex-1 overflow-y-auto px-7 pb-7 pt-[26px]">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[#efedf5] pb-[18px]">
+            <div className="flex min-w-0 items-baseline gap-3">
+              <h3 className="truncate text-2xl font-extrabold tracking-[-0.5px] text-gray-900">{root.label}</h3>
+              {kids.length > 0 ? (
+                <span className="whitespace-nowrap text-sm text-[#8c88a3]">
+                  {kids.length} sub-categories
+                </span>
+              ) : null}
+            </div>
             <Link
               href={root.href}
-              className="flex-none rounded-full bg-gray-900 px-3.5 py-1.5 text-sm font-bold text-white hover:bg-brand-700"
+              className="flex h-[38px] flex-none items-center gap-2 rounded-[11px] bg-gray-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-600 hover:text-white"
             >
-              Shop all →
+              Shop all <span aria-hidden>→</span>
             </Link>
           </div>
           {kids.length === 0 ? (
@@ -336,16 +398,16 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
               </span>
             </Link>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-x-8 gap-y-6">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-7 gap-y-6 pt-[22px]">
               {kids.map((child, k) => (
                 <div
                   key={child.href}
-                  className="menu-in flex min-w-0 flex-col gap-1.5"
+                  className="menu-in flex min-w-0 flex-col gap-2.5"
                   style={{ animationDelay: `${30 + k * 30}ms` }}
                 >
                   <Link
                     href={child.href}
-                    className="truncate font-bold text-gray-900 hover:text-brand-700"
+                    className="truncate text-[15px] font-bold text-gray-900 hover:text-brand-600"
                   >
                     {child.label}
                   </Link>
@@ -353,7 +415,7 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
                     <Link
                       key={g.href}
                       href={g.href}
-                      className="truncate text-sm text-gray-500 transition-colors hover:text-brand-700"
+                      className="truncate text-[14.5px] text-[#6e6a85] transition-colors hover:text-brand-600"
                     >
                       {g.label}
                     </Link>
@@ -368,6 +430,29 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
             </div>
           )}
         </div>
+
+        {/* Promo card (wide screens) */}
+        <Link
+          href={root.href}
+          className="relative m-6 ml-0 hidden w-[260px] flex-none flex-col overflow-hidden rounded-2xl bg-[radial-gradient(240px_160px_at_90%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-5 text-white hover:text-white xl:flex"
+        >
+          <span className="text-[11.5px] font-bold tracking-[1.2px] text-accent">THIS WEEK</span>
+          <span className="mt-1.5 text-2xl font-extrabold leading-[1.1] tracking-[-0.5px]">
+            Best of {root.label}
+          </span>
+          <span className="my-4 grid min-h-[110px] flex-1 place-items-center overflow-hidden rounded-xl bg-white/[.08] shadow-[inset_0_0_0_1px_rgba(255,255,255,.15)]">
+            {root.image ? (
+              <img src={root.image} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span aria-hidden className="text-5xl">
+                🛍️
+              </span>
+            )}
+          </span>
+          <span className="flex h-9 items-center gap-1.5 self-start rounded-[10px] bg-accent px-3.5 text-sm font-bold text-gray-900">
+            Shop the deal <span aria-hidden>→</span>
+          </span>
+        </Link>
       </div>
     </div>
   );

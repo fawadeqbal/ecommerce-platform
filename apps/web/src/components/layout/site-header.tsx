@@ -8,6 +8,7 @@ import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { container } from './container';
 import { HeaderActions } from './header-actions';
 import { CategoryNav, type NavItem } from './category-nav';
+import { FlashDeals } from './flash-deals';
 import { HeaderShell } from './header-shell';
 import { StoreLogo } from './store-logo';
 
@@ -50,35 +51,39 @@ export async function SiteHeader() {
   });
   return (
     <>
-      {/* Utility strip: promises on the left, quick links on the right. */}
-      <div className="bg-brand-800 text-[12.5px] text-white/80">
-        <div className={`${container} flex h-9 items-center justify-between gap-4`}>
-          <p className="flex min-w-0 items-center gap-2 truncate">
-            <span aria-hidden className="h-1.5 w-1.5 flex-none rounded-full bg-accent" />
-            <span className="truncate">
-              <b className="font-semibold text-white">Cash on delivery</b> everywhere ·{' '}
-              Easy returns · Verified sellers
+      {/* Utility strip (Header.dc design). */}
+      <div className="border-b border-white/[.06] bg-brand-900 text-[13px] text-[#c9bfff]">
+        <div className={`${container} flex h-[38px] items-center justify-between gap-4`}>
+          <div className="flex min-w-0 items-center gap-[22px] overflow-hidden whitespace-nowrap">
+            <span className="flex items-center gap-[7px]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-3.5 w-3.5 text-accent"><path d="M3 7h18v10H3zM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" /></svg>
+              <span>
+                <b className="font-semibold text-white">Cash on delivery</b> everywhere
+              </span>
             </span>
-          </p>
-          <nav aria-label="Quick links" className="hidden flex-none items-center gap-5 md:flex">
-            <Link href="/track-order" className="transition-colors hover:text-white">
+            <span className="hidden items-center gap-[7px] sm:flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-3.5 w-3.5 text-accent"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" /></svg>Easy 7‑day returns</span>
+            <span className="hidden items-center gap-[7px] xl:flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-3.5 w-3.5 text-accent"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3ZM9 12l2 2 4-4" /></svg>Verified sellers</span>
+          </div>
+          <div className="hidden items-center gap-1.5 whitespace-nowrap md:flex">
+            <Link href="/track-order" className="rounded-lg px-2.5 py-1 text-[#c9bfff] transition-colors hover:bg-white/[.08] hover:text-white">
               Track order
             </Link>
-            <Link href="/faq" className="transition-colors hover:text-white">
+            <Link href="/faq" className="rounded-lg px-2.5 py-1 text-[#c9bfff] transition-colors hover:bg-white/[.08] hover:text-white">
               Help center
             </Link>
+            <span aria-hidden className="mx-1.5 h-3.5 w-px bg-white/[.18]" />
             <a
               href={process.env.NEXT_PUBLIC_VENDOR_URL || '#'}
-              className="rounded-full bg-white/10 px-3 py-1 font-semibold text-white transition-colors hover:bg-accent hover:text-gray-900"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold text-accent transition-colors hover:bg-accent/10 hover:text-[#ffe27a]"
             >
-              Sell with us
+              Sell with us <span aria-hidden>→</span>
             </a>
-          </nav>
+          </div>
         </div>
       </div>
       <HeaderShell>
         <div
-          className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,1.8vw,28px)] gap-y-3 py-3 md:flex-nowrap md:py-4`}
+          className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,2vw,28px)] gap-y-3 py-3 md:flex-nowrap md:py-[18px]`}
         >
           <StoreLogo name={storeName(settings)} logoUrl={settings?.logoUrl} />
           <Suspense
@@ -94,10 +99,10 @@ export async function SiteHeader() {
           </div>
         </div>
       </HeaderShell>
-      <div className="border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(27,24,48,0.02)]">
+      <div className="relative z-20 bg-white shadow-[0_1px_0_#eceaf3,0_8px_20px_-14px_rgba(30,26,51,.25)]">
         <nav
           aria-label="Categories"
-          className={`${container} scrollbar-none flex items-center gap-0.5 overflow-x-auto`}
+          className={`${container} flex h-14 items-center gap-2`}
         >
           <Suspense
             fallback={nav.map((item) => (
@@ -112,6 +117,7 @@ export async function SiteHeader() {
           >
             <CategoryNav items={nav} />
           </Suspense>
+          <FlashDeals />
         </nav>
       </div>
     </>

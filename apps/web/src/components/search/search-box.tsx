@@ -113,13 +113,13 @@ export function SearchBox() {
   return (
     <div
       ref={boxRef}
-      className="relative order-last w-full min-w-0 md:order-none md:w-auto md:min-w-[200px] md:max-w-[720px] md:flex-1"
+      className="relative order-last w-full min-w-0 md:order-none md:w-auto md:min-w-[200px] md:flex-1"
     >
       <form
         action="/search"
         onSubmit={submit}
         role="search"
-        className="flex h-11 items-center gap-2 rounded-2xl bg-white pl-4 pr-1.5 shadow-[0_6px_18px_-10px_rgba(27,15,73,.7)] transition-shadow focus-within:shadow-[0_0_0_3px_rgba(255,255,255,.35),0_8px_22px_-10px_rgba(27,15,73,.7)]"
+        className="flex h-[50px] items-center gap-2 rounded-2xl bg-white p-[5px] pl-4 shadow-[0_10px_24px_-10px_rgba(20,8,70,.5)] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(255,209,46,.7),0_10px_24px_-10px_rgba(20,8,70,.5)]"
       >
         <SearchIcon size={18} className="flex-none text-gray-400" />
         <input
@@ -138,7 +138,7 @@ export function SearchBox() {
           aria-controls={listId}
           aria-expanded={open && (showHistory || showSuggest)}
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-gray-900 placeholder:text-gray-500 focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-[15.5px] text-gray-900 placeholder:text-[#9894ae] focus:outline-none"
         />
         {value ? (
           <button
@@ -154,13 +154,13 @@ export function SearchBox() {
             ×
           </button>
         ) : (
-          <kbd className="hidden rounded-md border border-gray-200 px-1.5 py-0.5 font-sans text-[11px] font-semibold text-gray-400 lg:block">
+          <kbd className="mr-1.5 hidden rounded-md border border-b-2 border-gray-200 bg-[#f7f6fb] px-[7px] py-0.5 font-sans text-[11px] font-semibold text-[#8c88a3] xl:block">
             /
           </kbd>
         )}
         <button
           type="submit"
-          className="h-8 rounded-xl bg-accent px-4 text-sm font-bold text-gray-900 hover:bg-accent-strong"
+          className="h-10 flex-none rounded-[11px] bg-gradient-to-b from-[#ffda3d] to-[#ffc61a] px-5 text-[15px] font-bold text-gray-900 shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_2px_6px_-2px_rgba(200,140,0,.5)] hover:from-[#ffd21f] hover:to-[#ffb800]"
         >
           {t('header.search')}
         </button>
@@ -169,7 +169,7 @@ export function SearchBox() {
       {open && (showHistory || showSuggest) ? (
         <div
           id={listId}
-          className="absolute left-0 right-0 top-[50px] z-40 max-h-[70vh] animate-pop-in overflow-y-auto rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
+          className="absolute left-0 right-0 top-[56px] z-40 max-h-[70vh] animate-pop-in overflow-y-auto rounded-2xl border border-gray-200 bg-white p-2 text-sm text-gray-900 shadow-card"
         >
           {showHistory ? (
             <>

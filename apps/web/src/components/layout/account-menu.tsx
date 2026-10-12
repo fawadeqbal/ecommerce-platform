@@ -16,7 +16,6 @@ import {
 } from '@/components/icons';
 import { authApi } from '@/lib/api-client';
 import { toast } from '@/lib/toast';
-import { headerChip } from './header-chip';
 
 const ITEMS = [
   { href: '/account/orders', label: 'My orders', icon: BoxIcon },
@@ -79,10 +78,17 @@ export function AccountMenu({
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
           aria-label={greeting}
-          className={cn(headerChip, 'gap-1 pl-1 pr-2', open && 'bg-white/25')}
+          className={cn(
+            'flex h-12 items-center gap-2.5 rounded-[14px] border border-transparent pl-1.5 pr-2 text-white transition-colors hover:border-white/15 hover:bg-white/10',
+            open && 'border-white/15 bg-white/10',
+          )}
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-xs font-extrabold text-gray-900">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-gray-900 shadow-[inset_0_1px_0_rgba(255,255,255,.6)]">
             {initials}
+          </span>
+          <span className="hidden flex-col text-left leading-[1.15] lg:flex">
+            <span className="hidden text-xs text-brand-100 xl:inline">Hello, {firstName}</span>
+            <span className="text-[15px] font-semibold">Account</span>
           </span>
           <ChevronDownIcon size={16} className={cn('transition-transform', open && 'rotate-180')} />
         </button>

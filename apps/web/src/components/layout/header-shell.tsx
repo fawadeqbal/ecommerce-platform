@@ -50,8 +50,8 @@ export function HeaderShell({ children }: { children: ReactNode }) {
         'group/header sticky top-0 z-30 text-white transition-[background-color,box-shadow] duration-300',
         // Solid at the top; frosted glass once the page scrolls under it (content shows through).
         scrolled
-          ? 'bg-brand-600/75 shadow-[0_10px_30px_-12px_rgba(46,27,114,0.55)] backdrop-blur-xl backdrop-saturate-150 supports-[not(backdrop-filter:blur(1px))]:bg-brand-600'
-          : 'bg-brand-600',
+          ? 'bg-[#5a3ddb]/80 shadow-[0_10px_30px_-12px_rgba(46,27,114,0.55)] backdrop-blur-xl backdrop-saturate-150 supports-[not(backdrop-filter:blur(1px))]:bg-brand-600'
+          : 'bg-[radial-gradient(900px_180px_at_18%_-40%,rgba(255,255,255,.16),transparent_70%),linear-gradient(180deg,#6447e6_0%,#5236cf_100%)] shadow-[inset_0_-1px_0_rgba(0,0,0,.12)]',
       )}
     >
       <div className="relative">{children}</div>
