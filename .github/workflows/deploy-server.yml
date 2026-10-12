@@ -49,8 +49,8 @@ jobs:
       - name: Upload settings (optional)
         env:
           ENV_SERVER_FILE: ${{ secrets.ENV_SERVER_FILE }}
-        if: ${{ env.ENV_SERVER_FILE != '' }}
         run: |
+          [ -n "$ENV_SERVER_FILE" ] || { echo "No ENV_SERVER_FILE secret - keeping the server's .env.server"; exit 0; }
           printf '%s\n' "$ENV_SERVER_FILE" > /tmp/env.server
           scp -q /tmp/env.server server:~/ecommerce/.env.server.new
           ssh server "chmod 600 ~/ecommerce/.env.server.new"
