@@ -31,12 +31,6 @@ export async function SiteHeader() {
           className={`${container} flex flex-wrap items-center gap-x-[clamp(12px,1.8vw,28px)] gap-y-3 py-3 md:flex-nowrap`}
         >
           <StoreLogo name={storeName(settings)} logoUrl={settings?.logoUrl} />
-          <Link
-            href="/products"
-            className="hidden items-center gap-1.5 rounded-[14px] bg-white/[.14] px-3.5 py-[9px] text-sm font-semibold text-white hover:bg-white/20 hover:text-white lg:flex"
-          >
-            Categories <span aria-hidden>▾</span>
-          </Link>
           <Suspense
             fallback={
               <div className="order-last h-11 w-full rounded-2xl bg-white md:order-none md:w-auto md:min-w-[200px] md:flex-1" />

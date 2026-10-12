@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 import { formatMoney } from '@ecommerce/ui';
 import { useLocale } from '@/components/locale/locale-provider';
+import { SearchIcon } from '@/components/icons';
 import { queryKeys, searchApi } from '@/lib/api-client';
 
 /** Header search with typo-tolerant suggestions (products, categories, brands). */
@@ -61,6 +62,7 @@ export function SearchBox() {
         role="search"
         className="flex h-11 items-center gap-2 rounded-2xl bg-white pl-4 pr-1.5"
       >
+        <SearchIcon size={18} className="flex-none text-gray-400" />
         <input
           name="q"
           value={value}

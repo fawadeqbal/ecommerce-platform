@@ -7,8 +7,10 @@ import { useCart, useMe } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useLocale } from '@/components/locale/locale-provider';
 import { authApi } from '@/lib/api-client';
+import { CartIcon, HeartIcon, LogoutIcon, TruckIcon, UserIcon } from '@/components/icons';
 
-const link = 'whitespace-nowrap rounded-lg px-2.5 py-[9px] text-white hover:text-white/80';
+const link =
+  'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-[9px] text-white hover:bg-white/10 hover:text-white';
 
 export function HeaderActions() {
   const { data: cart } = useCart();
@@ -26,40 +28,59 @@ export function HeaderActions() {
   };
 
   return (
-    <div className="flex items-center gap-1.5 text-sm font-semibold">
-      <Link href="/track-order" className={`${link} hidden xl:inline`}>
-        {t('header.trackOrder')}
+    <div className="flex items-center gap-1 text-sm font-semibold">
+      <Link
+        href="/track-order"
+        title={t('header.trackOrder')}
+        aria-label={t('header.trackOrder')}
+        className={`${link} hidden lg:flex`}
+      >
+        <TruckIcon />
+        <span className="hidden xl:inline">{t('header.trackOrder')}</span>
       </Link>
       <Link
         href={me ? '/account/wishlist' : '/login?next=/account/wishlist'}
-        className={`${link} hidden lg:inline`}
+        title={t('header.wishlist')}
+        aria-label={`${t('header.wishlist')}${saved > 0 ? ` (${saved})` : ''}`}
+        className={`${link} relative hidden sm:flex`}
       >
-        {t('header.wishlist')}
-        {saved > 0 ? ` (${saved})` : ''}
+        <HeartIcon />
+        <span className="hidden xl:inline">{t('header.wishlist')}</span>
+        {saved > 0 ? (
+          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-extrabold text-gray-900 xl:static xl:h-5 xl:min-w-5 xl:text-[11px]">
+            {saved}
+          </span>
+        ) : null}
       </Link>
       {me ? (
         <>
-          <Link href="/account/orders" className={link}>
-            {t('header.hi', { name: me.firstName })}
+          <Link href="/account/orders" title="My account" className={link}>
+            <UserIcon />
+            <span className="hidden md:inline">{t('header.hi', { name: me.firstName })}</span>
           </Link>
           <button
             type="button"
             onClick={signOut}
-            className="hidden px-2 py-[9px] text-[13px] font-medium text-white/70 hover:text-white xl:inline"
+            title={t('header.signOut')}
+            aria-label={t('header.signOut')}
+            className="hidden rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white xl:flex"
           >
-            {t('header.signOut')}
+            <LogoutIcon size={18} />
           </button>
         </>
       ) : (
         <Link href="/login" className={link}>
-          {t('header.signIn')}
+          <UserIcon />
+          <span className="hidden sm:inline">{t('header.signIn')}</span>
         </Link>
       )}
       <Link
         href="/cart"
-        className="flex items-center gap-2 rounded-[14px] bg-white px-3.5 py-[9px] text-gray-900 hover:text-brand-600"
+        aria-label={`${t('header.cart')} (${count})`}
+        className="ml-1 flex items-center gap-2 rounded-[14px] bg-white px-3 py-[9px] text-gray-900 hover:text-brand-600"
       >
-        {t('header.cart')}
+        <CartIcon />
+        <span className="hidden sm:inline">{t('header.cart')}</span>
         <span
           key={count}
           className="inline-flex h-5 min-w-5 animate-bump items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-bold text-white"
