@@ -80,7 +80,7 @@ export async function AuthCard({
 
         {/* Form */}
       <div className="flex flex-1 items-center justify-center px-[clamp(20px,3.4vw,48px)] py-[clamp(24px,3.6vw,48px)]">
-        <div className="flex w-full max-w-[420px] flex-col gap-4">
+        <div className="flex w-full max-w-[420px] animate-fade-in flex-col gap-4">
           <Link
             href="/"
             className="self-start text-sm font-semibold text-gray-500 hover:text-brand-600"
