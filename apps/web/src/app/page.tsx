@@ -34,8 +34,8 @@ const SLIDES: HeroSlide[] = [
     title: 'Top brands, up to 25% off',
     sub: 'Phones, laptops and gadgets from verified sellers.',
     cta: 'Shop deals',
-    href: '/products?sort=popular',
-    bg: 'bg-brand-600',
+    href: '/products?onSale=true',
+    bg: 'bg-gradient-to-br from-brand-600 to-brand-800',
   },
   {
     tag: 'Just in',
@@ -43,7 +43,7 @@ const SLIDES: HeroSlide[] = [
     sub: 'Fresh arrivals from our stores every day. Pay on delivery.',
     cta: 'See new arrivals',
     href: '/products?sort=newest',
-    bg: 'bg-gray-900',
+    bg: 'bg-gradient-to-br from-gray-900 to-[#2a2450]',
   },
   {
     tag: 'Featured',
@@ -51,7 +51,7 @@ const SLIDES: HeroSlide[] = [
     sub: 'Our team’s favourite products, all in one place.',
     cta: 'Shop featured',
     href: '/products?featured=true',
-    bg: 'bg-[#0055a9]',
+    bg: 'bg-gradient-to-br from-[#0055a9] to-[#0a2f66]',
   },
 ];
 
@@ -159,7 +159,14 @@ export default async function HomePage() {
       className={`${container} flex flex-col gap-[clamp(30px,4vw,56px)] pt-[clamp(14px,2vw,24px)]`}
     >
       <section className="flex flex-col gap-3">
-        <HeroCarousel banners={hero} slides={SLIDES} />
+        <HeroCarousel
+          banners={hero}
+          slides={SLIDES.map((slide, i) => ({
+            ...slide,
+            // Live products on each slide: deals, new arrivals, featured.
+            products: [deals.length ? deals : popular, latest, featured.length ? featured : popular][i] ?? [],
+          }))}
+        />
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-2.5">
           {TRUST.map((t) => (
             <div
