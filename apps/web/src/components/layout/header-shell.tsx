@@ -47,8 +47,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
       ref={ref}
       data-scrolled={scrolled}
       className={cn(
-        // Soft light spots are plain gradients (no blur filter): cheap to repaint while scrolling.
-        'group/header sticky top-0 z-30 bg-brand-600 text-white transition-shadow duration-300 [background-image:radial-gradient(circle_at_8%_-40%,rgba(255,255,255,.14),transparent_45%),radial-gradient(circle_at_70%_-60%,rgba(255,211,46,.16),transparent_40%),linear-gradient(90deg,#6445df,#6445df_55%,#532bc7)]',
+        'group/header sticky top-0 z-30 bg-brand-600 text-white transition-shadow duration-300',
         scrolled && 'shadow-[0_10px_30px_-12px_rgba(46,27,114,0.55)]',
       )}
     >
