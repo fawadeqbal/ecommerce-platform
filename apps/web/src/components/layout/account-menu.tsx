@@ -79,7 +79,7 @@ export function AccountMenu({
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
           aria-label={greeting}
-          className={cn(headerChip, 'gap-1 pl-1 pr-2', open && 'bg-white/[.26] ring-white/50')}
+          className={cn(headerChip, 'gap-1 pl-1 pr-2', open && 'bg-white/25')}
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-xs font-extrabold text-gray-900">
             {initials}
