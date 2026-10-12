@@ -506,7 +506,7 @@ export function SupportWidget() {
       <div className="flex max-w-[90%] flex-col gap-1.5">
         {!done && !m.content && <Trace m={m} />}
         {m.content && (
-          <div className="prose prose-sm max-w-none rounded-2xl rounded-bl-sm bg-gray-100 px-3 py-2 text-sm text-gray-900 [&_a]:text-brand-700 [&_p]:my-1">
+          <div className="prose prose-sm max-w-none rounded-2xl rounded-bl-md border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 [&_a]:text-brand-700 [&_p]:my-1">
             <ReactMarkdown components={markdown}>{nameBareLinks(m.content)}</ReactMarkdown>
           </div>
         )}
@@ -575,42 +575,47 @@ export function SupportWidget() {
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="support-panel"
-        className={`fixed bottom-24 right-0 z-40 flex items-center gap-2 rounded-l-xl bg-brand-600 px-3 py-2.5 text-sm font-medium text-white shadow-lg transition hover:bg-brand-700 ${
-          open ? 'pointer-events-none translate-x-full opacity-0' : ''
+        aria-label="Open support chat"
+        className={`fixed bottom-[88px] right-4 z-40 flex h-14 items-center gap-2 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 pl-4 pr-4 text-sm font-bold text-white shadow-[0_14px_30px_-10px_rgba(83,43,199,.7)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-10px_rgba(83,43,199,.8)] md:bottom-6 md:right-6 md:pr-5 ${
+          open ? 'pointer-events-none scale-75 opacity-0' : 'scale-100 opacity-100'
         }`}
       >
-        {Icon.chat}
-        <span>Support</span>
+        <span className="flex h-6 w-6 items-center justify-center [&_svg]:h-[22px] [&_svg]:w-[22px]">
+          {Icon.chat}
+        </span>
+        <span className="hidden md:inline">Need help?</span>
       </button>
 
       <aside
         id="support-panel"
         aria-label="Customer support chat"
         aria-hidden={!open}
-        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 ${
-          open ? 'translate-x-0' : 'pointer-events-none translate-x-full'
+        className={`fixed inset-x-2 bottom-2 z-50 flex h-[min(78vh,640px)] origin-bottom-right flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_24px_60px_-20px_rgba(27,15,73,.45)] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] md:inset-x-auto md:bottom-6 md:right-6 md:h-[min(640px,calc(100vh-var(--header-h)-48px))] md:w-[390px] ${
+          open
+            ? 'translate-y-0 scale-100 opacity-100'
+            : 'pointer-events-none translate-y-4 scale-95 opacity-0'
         }`}
       >
-        <header className="flex items-center gap-2 border-b border-gray-200 px-4 py-3">
+        <header className="flex items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3.5 text-white [&_button]:text-white/80 [&_button:hover]:bg-white/15 [&_button:hover]:text-white">
           {view === 'history' ? (
             <IconButton label="Back to chat" onClick={() => setView('chat')}>
               {Icon.back}
             </IconButton>
           ) : (
             <span
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-extrabold text-gray-900"
               aria-hidden
             >
               ?
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-[15px] font-bold text-white">
               {view === 'history' ? 'Your chats' : 'Customer support'}
             </h2>
             {view === 'chat' && (
-              <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
+              <p className="flex items-center gap-1.5 truncate text-xs text-brand-100">
+                <span className="h-1.5 w-1.5 flex-none rounded-full bg-emerald-400" aria-hidden />
                 {me ? `Signed in as ${me.email}` : 'Online assistant'}
               </p>
             )}
@@ -671,7 +676,7 @@ export function SupportWidget() {
           <>
             <div
               ref={threadRef}
-              className="flex-1 space-y-3 overflow-y-auto p-4"
+              className="flex-1 space-y-3 overflow-y-auto overscroll-contain bg-gray-50/60 p-4"
               aria-live="polite"
             >
               {opening ? (
@@ -692,7 +697,7 @@ export function SupportWidget() {
                         key={q}
                         type="button"
                         onClick={() => void send(q)}
-                        className="rounded-full border border-gray-200 px-3 py-1.5 text-left text-sm text-gray-700 hover:border-brand-600 hover:text-brand-700"
+                        className="rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-left text-sm font-medium text-gray-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
                       >
                         {q}
                       </button>
@@ -707,7 +712,7 @@ export function SupportWidget() {
                   >
                     {m.role === 'user' && (
                       <>
-                        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-brand-600 px-3 py-2 text-sm text-white">
+                        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-brand-600 px-3.5 py-2 text-sm text-white">
                           {m.content}
                         </div>
                         {m.at && <span className="mt-1 text-xs text-gray-400">{clock(m.at)}</span>}
@@ -743,7 +748,7 @@ export function SupportWidget() {
               )}
             </div>
             <form
-              className="flex items-center gap-2 border-t border-gray-200 p-3"
+              className="flex items-center gap-2 border-t border-gray-100 bg-white p-3"
               onSubmit={(e) => {
                 e.preventDefault();
                 void send();
@@ -756,18 +761,18 @@ export function SupportWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={busy ? 'Waiting for the answer…' : 'Type your question'}
                 aria-label="Your question"
-                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
+                className="h-11 min-w-0 flex-1 rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm focus:border-brand-500 focus:bg-white focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={busy || !input.trim()}
                 aria-label="Send"
-                className="rounded-lg bg-brand-600 p-2 text-white hover:bg-brand-700 disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-40"
               >
                 {Icon.send}
               </button>
             </form>
-            <div className="flex justify-between px-4 pb-3 text-xs text-gray-500">
+            <div className="flex justify-between bg-white px-4 pb-3 text-xs text-gray-500">
               <span>AI assistant: answers can be wrong.</span>
               <button
                 type="button"

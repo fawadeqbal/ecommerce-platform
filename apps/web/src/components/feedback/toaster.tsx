@@ -15,8 +15,8 @@ const TILE = {
 const BAR = { success: 'bg-emerald-500', error: 'bg-red-500', info: 'bg-brand-600' } as const;
 
 /**
- * Light toast cards in the store style. Desktop: top-right, just under the header.
- * Phones: bottom, above the tab bar.
+ * Light toast cards in the store style. Top-right just under the header
+ * (full width on phones), clear of the support button and the tab bar.
  */
 export function Toaster() {
   const [list, setList] = useState<ToastItem[]>([]);
@@ -25,7 +25,7 @@ export function Toaster() {
     <Portal>
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-3 bottom-[84px] z-[70] flex flex-col items-stretch gap-2 md:inset-x-auto md:bottom-auto md:right-6 md:top-[calc(var(--header-h)+12px)] md:w-[380px]"
+        className="pointer-events-none fixed inset-x-3 top-[calc(var(--header-h)+8px)] z-[70] flex flex-col items-stretch gap-2 md:inset-x-auto md:right-6 md:top-[calc(var(--header-h)+12px)] md:w-[380px]"
       >
         {list.map((t) => (
           <div
