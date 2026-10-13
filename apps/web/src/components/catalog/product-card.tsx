@@ -102,8 +102,6 @@ export function ProductCard({
             ) : null}
           </div>
         ) : null}
-          </p>
-        ) : null}
         <Link
           href={href}
           className="line-clamp-2 min-h-[40px] text-[14px] font-medium leading-snug text-gray-900 hover:text-brand-600"
