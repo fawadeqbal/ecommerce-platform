@@ -44,10 +44,9 @@ html {
     transition-duration: 150ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
-  button:not(:disabled):active,
-  a[class*='bg-']:active,
-  label[class*='has-[:checked]']:active {
-    transform: scale(0.97);
+  /* Light press feel: only real buttons dip, very slightly. Cards and links stay still. */
+  button:not(:disabled):active {
+    transform: scale(0.985);
   }
   button:disabled {
     cursor: not-allowed;
