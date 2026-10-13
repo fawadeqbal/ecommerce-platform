@@ -34,7 +34,8 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts",
-    "seed:catalog": "tsx prisma/seed-catalog.ts"
+    "seed:catalog": "tsx prisma/seed-catalog.ts",
+    "seed:flow": "tsx prisma/seed-flow.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1"
