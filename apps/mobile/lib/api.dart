@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
@@ -24,6 +25,26 @@ class Api {
   static const _storage = FlutterSecureStorage();
   String? _access;
   String? _refresh;
+  String? _cart; // guest cart id → X-Cart-Session (cookies are unreliable on web / LAN)
+
+  static String _uuid() {
+    final r = Random.secure();
+    final b = List<int>.generate(16, (_) => r.nextInt(256));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    final h = b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+    return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-${h.substring(16, 20)}-${h.substring(20)}';
+  }
+
+  Future<String> _cartId() async {
+    if (_cart != null) return _cart!;
+    _cart = await _storage.read(key: 'cart');
+    if (_cart == null) {
+      _cart = _uuid();
+      await _storage.write(key: 'cart', value: _cart);
+    }
+    return _cart!;
+  }
 
   static Future<Api> create() async {
     final dio = Dio(BaseOptions(
@@ -52,7 +73,7 @@ class Api {
   }
 
   Future<void> clearTokens() async {
-    _access = _refresh = null;
+    _access = _refresh = _cart = null; // signed out → fresh guest cart
     await _storage.deleteAll();
   }
 
@@ -67,7 +88,10 @@ class Api {
         path,
         data: body,
         queryParameters: query?..removeWhere((_, v) => v == null),
-        options: Options(method: method, headers: {if (_access != null) 'Authorization': 'Bearer $_access'}),
+        options: Options(method: method, headers: {
+          if (_access != null) 'Authorization': 'Bearer $_access',
+          'X-Cart-Session': await _cartId(),
+        }),
       );
       final data = res.data;
       return data is Map && data.containsKey('data') ? data['data'] : data;

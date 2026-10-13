@@ -21,6 +21,15 @@ import { CartService, type CartContext } from './cart.service';
 import { AddToCartDto, UpdateCartItemDto } from './dto/cart.dto';
 
 export const CART_COOKIE = 'cart_session';
+export const CART_HEADER = 'x-cart-session';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Guest cart id: the app sends it as a header (no cookies in Flutter web / cross-site); the web uses the cookie. */
+export function cartSessionId(req: Request): string | undefined {
+  const header = req.headers[CART_HEADER];
+  if (typeof header === 'string' && UUID_RE.test(header)) return header.toLowerCase();
+  return (req.cookies as Record<string, string> | undefined)?.[CART_COOKIE];
+}
 
 const cookieOptions = (): CookieOptions => ({
   httpOnly: true,
@@ -113,7 +122,7 @@ export class CartController {
   private context(req: CartRequest): CartContext {
     return {
       userId: req.user?.sub,
-      sessionId: (req.cookies as Record<string, string> | undefined)?.[CART_COOKIE],
+      sessionId: cartSessionId(req),
     };
   }
 

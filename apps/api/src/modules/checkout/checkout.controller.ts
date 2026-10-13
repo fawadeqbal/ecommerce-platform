@@ -4,7 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { CheckoutQuoteDto, JwtPayload, PlaceOrderResultDto } from '@ecommerce/types';
 import { Public } from '../../common/decorators/public.decorator';
-import { CART_COOKIE } from '../cart/cart.controller';
+import { CART_COOKIE, cartSessionId } from '../cart/cart.controller';
 import type { CartContext } from '../cart/cart.service';
 import { CheckoutService } from './checkout.service';
 import { PlaceOrderDto, QuoteRequestDto } from './dto/checkout.dto';
@@ -41,7 +41,7 @@ export class CheckoutController {
   private context(req: CheckoutRequest): CartContext {
     return {
       userId: req.user?.sub,
-      sessionId: (req.cookies as Record<string, string> | undefined)?.[CART_COOKIE],
+      sessionId: cartSessionId(req),
     };
   }
 }
