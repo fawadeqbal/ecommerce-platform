@@ -41,6 +41,7 @@ export function FilterPanel({
     const submit = () => apply(form);
     form.addEventListener('change', submit);
     return () => form.removeEventListener('change', submit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (!open) return;
