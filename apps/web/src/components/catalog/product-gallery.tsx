@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element -- images are served from object storage */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type TouchEvent } from 'react';
 import { Portal, cn } from '@ecommerce/ui';
 
 type Img = { url: string; altText: string | null };
@@ -45,8 +45,8 @@ export function ProductGallery({
   }, [full, i, go]);
 
   const swipe = {
-    onTouchStart: (e: React.TouchEvent) => (touchX.current = e.touches[0]?.clientX ?? null),
-    onTouchEnd: (e: React.TouchEvent) => {
+    onTouchStart: (e: TouchEvent) => (touchX.current = e.touches[0]?.clientX ?? null),
+    onTouchEnd: (e: TouchEvent) => {
       const s = touchX.current;
       const end = e.changedTouches[0]?.clientX;
       touchX.current = null;
