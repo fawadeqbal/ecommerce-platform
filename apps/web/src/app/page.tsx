@@ -241,16 +241,11 @@ export default async function HomePage() {
                   key={c.id}
                   href={`/categories/${c.slug}`}
                   className={cn(
-                    'group relative flex w-[132px] flex-none snap-start flex-col overflow-hidden rounded-[24px] p-2.5 transition-shadow duration-300 hover:shadow-[0_14px_30px_-18px_rgba(30,26,51,.45)] sm:w-[150px] md:w-auto',
+                    'group relative flex w-[112px] flex-none snap-start flex-col overflow-hidden rounded-[22px] p-2 transition-shadow duration-300 hover:shadow-[0_12px_26px_-18px_rgba(30,26,51,.4)] sm:w-[130px] md:w-auto',
                     TINTS[i % TINTS.length],
                   )}
                 >
-                  {/* Picture on a soft white disc, so any photo or icon looks intentional */}
                   <span className="relative grid aspect-square w-full place-items-center">
-                    <span
-                      aria-hidden
-                      className="absolute inset-[10%] rounded-full bg-white/70 transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-                    />
                     {img ? (
                       <img
                         src={img}
@@ -259,8 +254,8 @@ export default async function HomePage() {
                         className={cn(
                           'relative transition-transform duration-500 ease-out group-hover:scale-[1.05]',
                           c.imageUrl
-                            ? 'h-[78%] w-[78%] rounded-full object-cover'
-                            : 'h-[80%] w-[80%] object-contain mix-blend-multiply drop-shadow-[0_8px_10px_rgba(30,26,51,.12)]',
+                            ? 'h-full w-full rounded-[18px] object-cover'
+                            : 'h-[82%] w-[82%] object-contain mix-blend-multiply',
                         )}
                       />
                     ) : (
@@ -272,19 +267,8 @@ export default async function HomePage() {
                       </span>
                     )}
                   </span>
-                  <span className="mt-1.5 flex items-center justify-between gap-1.5 px-1 pb-0.5">
-                    <span className="min-w-0">
-                      <span className="block truncate text-[14px] font-bold text-gray-900">{c.name}</span>
-                      <span className="block text-[11.5px] font-medium text-gray-500">
-                        {c.children.length > 0 ? `${c.children.length} sub-categories` : 'Shop now'}
-                      </span>
-                    </span>
-                    <span
-                      aria-hidden
-                      className="grid h-7 w-7 flex-none place-items-center rounded-full bg-white/80 text-sm text-gray-700 transition-colors duration-300 group-hover:bg-gray-900 group-hover:text-white"
-                    >
-                      →
-                    </span>
+                  <span className="mt-2 truncate px-1 pb-1 text-center text-[13.5px] font-semibold text-gray-800 transition-colors group-hover:text-brand-700">
+                    {c.name}
                   </span>
                 </Link>
               );
