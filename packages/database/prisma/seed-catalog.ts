@@ -250,7 +250,6 @@ async function main() {
     });
 
     for (const [i, c] of combos.entries()) {
-      void vendor;
       const variant = await prisma.productVariant.create({
         data: {
           productId: product.id,
