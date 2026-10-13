@@ -29,7 +29,7 @@ class HomeScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: GestureDetector(
-                  onTap: () => context.push('/products?title=Search'),
+                  onTap: () => context.push('/search'),
                   child: Container(
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 14),

@@ -5,6 +5,7 @@ import '../models.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'product_extras.dart';
 
 class ProductScreen extends ConsumerStatefulWidget {
   const ProductScreen({super.key, required this.slug});
@@ -149,6 +150,7 @@ class _ProductState extends ConsumerState<ProductScreen> {
                       const SizedBox(height: 6),
                       Text(p.description!, style: const TextStyle(color: Brand.muted, height: 1.45)),
                     ],
+                    ProductExtras(productId: p.id),
                   ]),
                 ),
               ]),

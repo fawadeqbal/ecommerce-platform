@@ -10,6 +10,7 @@ import 'screens/checkout.dart';
 import 'screens/home.dart';
 import 'screens/order.dart';
 import 'screens/me.dart';
+import 'screens/search.dart';
 import 'screens/order_actions.dart';
 import 'screens/product.dart';
 import 'theme.dart';
@@ -44,6 +45,7 @@ final _router = GoRouter(routes: [
   GoRoute(path: '/account/points', builder: (_, __) => const PointsScreen()),
   GoRoute(path: '/account/addresses', builder: (_, __) => const AddressesScreen()),
   GoRoute(path: '/account/profile', builder: (_, __) => const ProfileScreen()),
+  GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
   GoRoute(path: '/checkout', builder: (_, __) => const CheckoutScreen()),
   GoRoute(
     path: '/order/:number',
