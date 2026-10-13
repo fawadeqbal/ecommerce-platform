@@ -44,10 +44,10 @@ class AccountScreen extends ConsumerWidget {
         if (me == null)
           FilledButton(onPressed: () => context.push('/login'), child: const Text('Sign in'))
         else ...[
-          _Item(Icons.inventory_2_outlined, 'Orders'),
-          _Item(Icons.favorite_border, 'Wishlist'),
-          _Item(Icons.star_border_rounded, 'Points & rewards'),
-          _Item(Icons.place_outlined, 'Addresses'),
+          _Item(Icons.inventory_2_outlined, 'My orders', '/account/orders'),
+          _Item(Icons.favorite_border, 'Wishlist', '/account/wishlist'),
+          _Item(Icons.star_border_rounded, 'Points & rewards', '/account/points'),
+          _Item(Icons.place_outlined, 'Addresses', '/account/addresses'),
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () => ref.read(sessionProvider.notifier).logout(),
@@ -61,9 +61,10 @@ class AccountScreen extends ConsumerWidget {
 }
 
 class _Item extends StatelessWidget {
-  const _Item(this.icon, this.label);
+  const _Item(this.icon, this.label, this.to);
   final IconData icon;
   final String label;
+  final String to;
   @override
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -72,7 +73,8 @@ class _Item extends StatelessWidget {
           leading: Icon(icon, color: Brand.violet),
           title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           trailing: const Icon(Icons.chevron_right, color: Brand.muted),
-          subtitle: const Text('Coming in the next phase', style: TextStyle(fontSize: 12, color: Brand.muted)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Brand.r16)),
+          onTap: () => GoRouter.of(context).push(to),
         ),
       );
 }
