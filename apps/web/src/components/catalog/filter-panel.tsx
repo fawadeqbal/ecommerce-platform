@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState, useTransition, type ReactNode } from 'react';
 import { Portal, cn } from '@ecommerce/ui';
 
 /**
@@ -21,10 +22,23 @@ export function FilterPanel({
 }) {
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const [, startTransition] = useTransition();
+
+  // Apply filters without reloading the page: only the results (and counts) refresh.
+  const apply = (form: HTMLFormElement) => {
+    const params = new URLSearchParams();
+    new FormData(form).forEach((value, key) => {
+      if (typeof value === 'string' && value.trim() !== '') params.append(key, value);
+    });
+    const qs = params.toString();
+    startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
+  };
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
-    const submit = () => form.requestSubmit();
+    const submit = () => apply(form);
     form.addEventListener('change', submit);
     return () => form.removeEventListener('change', submit);
   }, []);
@@ -107,6 +121,10 @@ export function FilterPanel({
         <form
           ref={formRef}
           method="get"
+          onSubmit={(e) => {
+            e.preventDefault();
+            apply(e.currentTarget);
+          }}
           className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-2 [scrollbar-width:thin]"
         >
           {children}
