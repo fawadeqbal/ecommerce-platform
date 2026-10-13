@@ -6,7 +6,9 @@ import 'providers.dart';
 import 'screens/account.dart';
 import 'screens/cart.dart';
 import 'screens/catalog.dart';
+import 'screens/checkout.dart';
 import 'screens/home.dart';
+import 'screens/order.dart';
 import 'screens/product.dart';
 import 'theme.dart';
 
@@ -35,6 +37,15 @@ final _router = GoRouter(routes: [
     }),
   ),
   GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+  GoRoute(path: '/checkout', builder: (_, __) => const CheckoutScreen()),
+  GoRoute(
+    path: '/order/:number',
+    builder: (_, s) => OrderScreen(
+      number: s.pathParameters['number']!,
+      email: s.uri.queryParameters['email'],
+      paying: s.uri.queryParameters['paying'] == '1',
+    ),
+  ),
 ]);
 
 class App extends StatelessWidget {

@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets.dart';
-
-/// Web store address used for checkout until native checkout is built (phase 2).
-const storeUrl = String.fromEnvironment('STORE_URL', defaultValue: 'https://shop.fawadiqbal.dev');
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
@@ -97,9 +93,7 @@ class CartScreen extends ConsumerWidget {
                   ]),
                   const SizedBox(height: 10),
                   FilledButton(
-                    onPressed: c['canCheckout'] == true
-                        ? () => launchUrl(Uri.parse('$storeUrl/checkout'), mode: LaunchMode.externalApplication)
-                        : null,
+                    onPressed: c['canCheckout'] == true ? () => context.push('/checkout') : null,
                     child: const Text('Checkout'),
                   ),
                   const SizedBox(height: 6),
