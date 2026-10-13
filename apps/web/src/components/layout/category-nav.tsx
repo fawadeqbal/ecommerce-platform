@@ -246,7 +246,16 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
 /** Amazon-style browser: top-level categories on the left, the hovered one's tree on the right. */
 function AllCategoriesPanel({ item }: { item: NavItem }) {
   const roots = item.children ?? [];
-  const [hover, setHover] = useState(0);
+  const [hover, setHoverNow] = useState(0);
+  // Small delay so moving the mouse diagonally to the right side doesn't flip categories.
+  const intent = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setHover = (i: number) => {
+    if (intent.current) clearTimeout(intent.current);
+    intent.current = setTimeout(() => setHoverNow(i), 90);
+  };
+  useEffect(() => () => {
+    if (intent.current) clearTimeout(intent.current);
+  }, []);
   const root = roots[hover] ?? roots[0];
   if (!root) return null;
 
@@ -263,6 +272,7 @@ function AllCategoriesPanel({ item }: { item: NavItem }) {
               <Link
                 href={r.href}
                 onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => intent.current && clearTimeout(intent.current)}
                 onFocus={() => setHover(i)}
                 className={cn(
                   'flex items-center gap-3 rounded-xl px-2.5 py-2 text-[15px] transition-all duration-150 hover:text-brand-600',
@@ -338,32 +348,55 @@ function CategoryDetail({ root }: { root: NavItem }) {
             </span>
           </Link>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-7 gap-y-6 pt-[22px]">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3 pt-5">
             {kids.map((child, k) => (
               <div
                 key={child.href}
-                className="menu-in flex min-w-0 flex-col gap-2.5"
-                style={{ animationDelay: `${30 + k * 30}ms` }}
+                className="menu-in group/sub flex min-w-0 flex-col gap-2 rounded-2xl p-3 transition-colors duration-200 hover:bg-[#f8f7fc]"
+                style={{ animationDelay: `${30 + k * 35}ms` }}
               >
-                <Link
-                  href={child.href}
-                  className="truncate text-[15px] font-bold text-gray-900 hover:text-brand-600"
-                >
-                  {child.label}
+                <Link href={child.href} className="flex items-center gap-3 text-gray-900 hover:text-brand-600">
+                  {child.image ? (
+                    <img
+                      src={child.image}
+                      alt=""
+                      className="h-11 w-11 flex-none rounded-xl bg-white object-cover ring-1 ring-black/5"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'grid h-11 w-11 flex-none place-items-center rounded-xl text-sm font-extrabold',
+                        HUES[k % HUES.length],
+                      )}
+                    >
+                      {child.label.charAt(0)}
+                    </span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="block truncate text-[15px] font-bold">{child.label}</span>
+                    <span className="block text-xs text-[#9894ae] transition-colors group-hover/sub:text-brand-600">
+                      {child.children?.length ? `${child.children.length} more inside` : 'Shop now →'}
+                    </span>
+                  </span>
                 </Link>
-                {child.children?.slice(0, SHOW_GRANDCHILDREN).map((g) => (
-                  <Link
-                    key={g.href}
-                    href={g.href}
-                    className="truncate text-[14.5px] text-[#6e6a85] transition-colors hover:text-brand-600"
-                  >
-                    {g.label}
-                  </Link>
-                ))}
-                {(child.children?.length ?? 0) > SHOW_GRANDCHILDREN ? (
-                  <Link href={child.href} className="text-sm font-semibold text-brand-700 hover:underline">
-                    View all →
-                  </Link>
+                {child.children?.length ? (
+                  <div className="flex flex-wrap gap-1.5 pl-14">
+                    {child.children.slice(0, SHOW_GRANDCHILDREN).map((g) => (
+                      <Link
+                        key={g.href}
+                        href={g.href}
+                        className="rounded-lg bg-white px-2.5 py-1 text-[13px] text-[#6e6a85] ring-1 ring-[#e6e3f0] transition-colors hover:text-brand-600 hover:ring-brand-300"
+                      >
+                        {g.label}
+                      </Link>
+                    ))}
+                    {child.children.length > SHOW_GRANDCHILDREN ? (
+                      <Link href={child.href} className="px-1 py-1 text-[13px] font-semibold text-brand-700 hover:underline">
+                        +{child.children.length - SHOW_GRANDCHILDREN}
+                      </Link>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             ))}
