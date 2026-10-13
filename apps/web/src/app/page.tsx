@@ -311,7 +311,7 @@ export default async function HomePage() {
           <div className="scrollbar-none relative -mx-[clamp(18px,3vw,32px)] flex snap-x scroll-px-[clamp(18px,3vw,32px)] gap-3 overflow-x-auto px-[clamp(18px,3vw,32px)] pb-1 text-gray-900 md:mx-0 md:px-0">
             {deals.map((p) => (
               <div key={p.id} className="w-[46%] flex-none snap-start sm:w-[220px]">
-                <ProductCard product={p} dealPrice />
+                <ProductCard product={p} dealPrice quickAdd="icon" />
               </div>
             ))}
             <Link

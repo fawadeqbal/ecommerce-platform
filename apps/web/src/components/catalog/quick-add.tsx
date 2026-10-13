@@ -2,7 +2,8 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { cn } from '@ecommerce/ui';
+import { Tooltip, cn } from '@ecommerce/ui';
+import { CartIcon } from '@/components/icons';
 import { useSetCart } from '@/hooks/use-cart';
 import { cartApi, storefrontApi } from '@/lib/api-client';
 import { haptic, toast } from '@/lib/toast';
@@ -14,6 +15,7 @@ export function QuickAdd({
   inStock,
   name,
   imageUrl,
+  compact,
 }: {
   slug: string;
   hasOptions: boolean;
@@ -21,6 +23,8 @@ export function QuickAdd({
   /** For the confirmation toast. */
   name?: string;
   imageUrl?: string | null;
+  /** Small round cart icon (home rows) instead of the full-width button. */
+  compact?: boolean;
 }) {
   const router = useRouter();
   const setCart = useSetCart();
@@ -45,6 +49,35 @@ export function QuickAdd({
     },
     onError: (e) => toast.error(e.message),
   });
+  if (compact) {
+    const done = add.isSuccess;
+    return (
+      <Tooltip content={!inStock ? 'Out of stock' : hasOptions ? 'Choose options' : done ? 'Added' : 'Add to cart'}>
+        <button
+          type="button"
+          aria-label={hasOptions ? `Choose options for ${name}` : `Add ${name} to cart`}
+          disabled={!inStock || add.isPending}
+          onClick={(e) => {
+            e.preventDefault();
+            if (hasOptions) router.push(`/products/${slug}`);
+            else add.mutate();
+          }}
+          className={cn(
+            'grid h-9 w-9 flex-none place-items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40',
+            done ? 'bg-emerald-500 text-white' : 'bg-brand-600 text-white hover:bg-brand-700',
+          )}
+        >
+          {add.isPending ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          ) : done ? (
+            <span className="text-sm font-bold">✓</span>
+          ) : (
+            <CartIcon size={17} />
+          )}
+        </button>
+      </Tooltip>
+    );
+  }
   const label = !inStock
     ? 'Out of stock'
     : hasOptions

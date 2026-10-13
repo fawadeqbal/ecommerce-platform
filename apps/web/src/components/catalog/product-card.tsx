@@ -13,7 +13,7 @@ export interface ProductCardProps {
   /** Best-seller rank shown in the top-left corner. */
   rank?: number;
   /** Shows an "Add to cart" button under the card. */
-  quickAdd?: boolean;
+  quickAdd?: boolean | 'icon';
   /** Price in violet (deal rows). */
   dealPrice?: boolean;
   /** "Sold by …" line (listings). */
@@ -103,7 +103,8 @@ export function ProductCard({
         >
           {p.name}
         </Link>
-        <div className="mt-auto flex flex-wrap items-baseline gap-1.5">
+        <div className="mt-auto flex items-end justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
           <span className={cn('text-[17px] font-extrabold', dealPrice && 'text-brand-600')}>
             {p.hasOptions ? (
               <span className="text-xs font-semibold text-gray-500">From </span>
@@ -116,9 +117,20 @@ export function ProductCard({
             </span>
           ) : null}
         </div>
+        {quickAdd === 'icon' ? (
+          <QuickAdd
+            compact
+            slug={p.slug}
+            hasOptions={p.hasOptions}
+            inStock={p.inStock}
+            name={p.name}
+            imageUrl={p.imageUrl}
+          />
+        ) : null}
+        </div>
         {showVendor ? <p className="text-xs text-gray-500">Sold by {p.vendor.name}</p> : null}
       </div>
-      {quickAdd ? (
+      {quickAdd === true ? (
         <QuickAdd
           slug={p.slug}
           hasOptions={p.hasOptions}

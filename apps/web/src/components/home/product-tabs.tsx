@@ -74,6 +74,7 @@ export function ProductTabs({ tabs }: { tabs: Tab[] }) {
             product={p}
             rank={tab.ranked ? i + 1 : undefined}
             badge={tab.badge}
+            quickAdd="icon"
           />
         ))}
       </div>
