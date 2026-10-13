@@ -70,4 +70,4 @@ export function SectionHead({
  * a responsive grid from tablets up.
  */
 export const productGrid =
-  'scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:snap-none md:grid-cols-4 md:gap-4 md:overflow-visible lg:grid-cols-5 md:px-0 [&>*]:w-[46%] [&>*]:flex-none [&>*]:snap-start sm:[&>*]:w-[31%] md:[&>*]:w-auto';
+  'scrollbar-none -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:snap-none md:grid-cols-4 md:gap-4 md:overflow-visible lg:grid-cols-5 md:px-0 [&>*]:w-[46%] [&>*]:flex-none [&>*]:snap-start sm:[&>*]:w-[31%] md:[&>*]:w-auto';

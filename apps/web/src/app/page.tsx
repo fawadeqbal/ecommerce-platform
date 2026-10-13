@@ -179,7 +179,7 @@ export default async function HomePage() {
             products: [deals.length ? deals : popular, latest, featured.length ? featured : popular][i] ?? [],
           }))}
         />
-        <div className="scrollbar-none -mx-4 flex snap-x gap-2.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
+        <div className="scrollbar-none -mx-4 flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
           {TRUST.map((t) => (
             <div
               key={t.title}
@@ -241,7 +241,7 @@ export default async function HomePage() {
             </Link>
           </div>
           {/* Phone: one swipeable row with every category. Desktop: a full grid. */}
-          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] md:gap-4 md:overflow-visible md:px-0">
+          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] md:gap-4 md:overflow-visible md:px-0">
             {cats.map((c, i) => {
               const img = catImages[c.id];
               return (
@@ -319,7 +319,7 @@ export default async function HomePage() {
           </div>
 
           {/* Right: the products, in a swipeable row */}
-          <div className="scrollbar-none relative -mx-[clamp(18px,3vw,32px)] flex snap-x gap-3 overflow-x-auto px-[clamp(18px,3vw,32px)] pb-1 text-gray-900 md:mx-0 md:px-0">
+          <div className="scrollbar-none relative -mx-[clamp(18px,3vw,32px)] flex snap-x scroll-px-[clamp(18px,3vw,32px)] gap-3 overflow-x-auto px-[clamp(18px,3vw,32px)] pb-1 text-gray-900 md:mx-0 md:px-0">
             {deals.map((p) => (
               <div key={p.id} className="w-[46%] flex-none snap-start sm:w-[220px]">
                 <ProductCard product={p} dealPrice />
@@ -357,15 +357,11 @@ export default async function HomePage() {
 
       {brands.length > 0 ? (
         <Reveal>
-        <section className="relative flex flex-col gap-5 overflow-hidden rounded-4xl bg-white py-[clamp(16px,2.6vw,32px)] shadow-card">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-brand-200/50 blur-3xl"
-          />
-          <div className="relative px-[clamp(16px,2.6vw,32px)]">
-            <SectionHead eyebrow="Shop the brands" title="Official brand stores" />
+        <section className="flex flex-col gap-5">
+          <SectionHead eyebrow="Shop the brands" title="Official brand stores" />
+          <div className="-mx-4 sm:-mx-6 md:mx-0">
+            <BrandMarquee brands={brands.slice(0, 24)} />
           </div>
-          <BrandMarquee brands={brands.slice(0, 24)} />
         </section>
         </Reveal>
       ) : null}

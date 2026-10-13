@@ -21,7 +21,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
         aria-hidden={copy > 0 ? true : undefined}
         tabIndex={copy > 0 ? -1 : undefined}
         title={b.name}
-        className="group/brand mr-3 flex h-20 w-[150px] flex-none items-center justify-center rounded-2xl bg-gray-50 px-5 ring-1 ring-black/[.04] transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-card sm:h-24 sm:w-[180px]"
+        className="group/brand mr-3 flex h-20 w-[150px] flex-none items-center justify-center rounded-2xl bg-white px-5 ring-1 ring-black/[.05] transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-card sm:h-24 sm:w-[180px]"
       >
         {b.logoUrl ? (
           <img
@@ -39,7 +39,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
     ));
 
   return (
-    <div className="brand-marquee group/marquee relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_8%,#000_92%,transparent)]">
+    <div className="brand-marquee group/marquee relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_6%,#000_94%,transparent)]">
       <style>
         {'.brand-marquee__track{animation:brand-marquee var(--brand-speed) linear infinite}' +
           '.brand-marquee:hover .brand-marquee__track{animation-play-state:paused}' +
