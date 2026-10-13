@@ -1,6 +1,7 @@
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -25,9 +26,16 @@ class Api {
   String? _refresh;
 
   static Future<Api> create() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final dio = Dio(BaseOptions(baseUrl: apiUrl, connectTimeout: const Duration(seconds: 15)));
-    dio.interceptors.add(CookieManager(PersistCookieJar(storage: FileStorage('${dir.path}/.cookies/'))));
+    final dio = Dio(BaseOptions(
+      baseUrl: apiUrl,
+      connectTimeout: const Duration(seconds: 15),
+      // Web: the browser keeps the cart cookie itself; it just has to be sent cross-origin.
+      extra: kIsWeb ? {'withCredentials': true} : null,
+    ));
+    if (!kIsWeb) {
+      final dir = await getApplicationDocumentsDirectory();
+      dio.interceptors.add(CookieManager(PersistCookieJar(storage: FileStorage('${dir.path}/.cookies/'))));
+    }
     final api = Api._(dio);
     api._access = await _storage.read(key: 'access');
     api._refresh = await _storage.read(key: 'refresh');
