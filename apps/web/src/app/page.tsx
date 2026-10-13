@@ -233,41 +233,41 @@ export default async function HomePage() {
             </Link>
           </div>
           {/* Phone: one swipeable row with every category. Desktop: a full grid. */}
-          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] md:gap-4 md:overflow-visible md:px-0">
+          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(110px,1fr))] md:gap-x-4 md:gap-y-6 md:overflow-visible md:px-0">
             {cats.map((c, i) => {
               const img = catImages[c.id];
               return (
                 <Link
                   key={c.id}
                   href={`/categories/${c.slug}`}
-                  className={cn(
-                    'group relative flex w-[112px] flex-none snap-start flex-col overflow-hidden rounded-[22px] p-2 transition-shadow duration-300 hover:shadow-[0_12px_26px_-18px_rgba(30,26,51,.4)] sm:w-[130px] md:w-auto',
-                    TINTS[i % TINTS.length],
-                  )}
+                  className="group flex w-[88px] flex-none snap-start flex-col items-center gap-2.5 text-center sm:w-[104px] md:w-auto"
                 >
-                  <span className="relative grid aspect-square w-full place-items-center">
-                    {img ? (
-                      <img
-                        src={img}
-                        alt=""
-                        loading="lazy"
-                        className={cn(
-                          'relative transition-transform duration-500 ease-out group-hover:scale-[1.05]',
-                          c.imageUrl
-                            ? 'h-full w-full rounded-[18px] object-cover'
-                            : 'h-[82%] w-[82%] object-contain mix-blend-multiply',
-                        )}
-                      />
-                    ) : (
-                      <span
-                        aria-hidden
-                        className="relative text-[44px] transition-transform duration-500 ease-out group-hover:scale-[1.06] md:text-5xl"
-                      >
-                        {iconFor(c.name)}
-                      </span>
+                  {/* Round tile: tinted ring, white face, picture centred (clean with any photo) */}
+                  <span
+                    className={cn(
+                      'grid aspect-square w-full max-w-[120px] place-items-center rounded-full p-[5px] transition-transform duration-300 ease-out group-hover:-translate-y-0.5',
+                      TINTS[i % TINTS.length],
                     )}
+                  >
+                    <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-white ring-1 ring-black/[.04] transition-shadow duration-300 group-hover:shadow-[0_10px_22px_-12px_rgba(30,26,51,.35)]">
+                      {img ? (
+                        <img
+                          src={img}
+                          alt=""
+                          loading="lazy"
+                          className={cn(
+                            'transition-transform duration-500 ease-out group-hover:scale-[1.06]',
+                            c.imageUrl ? 'h-full w-full object-cover' : 'h-[68%] w-[68%] object-contain',
+                          )}
+                        />
+                      ) : (
+                        <span aria-hidden className="text-[34px] md:text-[40px]">
+                          {iconFor(c.name)}
+                        </span>
+                      )}
+                    </span>
                   </span>
-                  <span className="mt-2 truncate px-1 pb-1 text-center text-[13.5px] font-semibold text-gray-800 transition-colors group-hover:text-brand-700">
+                  <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-gray-800 transition-colors group-hover:text-brand-700 md:text-sm">
                     {c.name}
                   </span>
                 </Link>
