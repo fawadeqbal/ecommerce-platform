@@ -67,9 +67,9 @@ export function FilterPanel({
       <aside
         aria-label="Filters"
         className={cn(
-          'flex-col rounded-3xl bg-white',
-          // desktop: part of the page (no inner scrolling)
-          'lg:flex',
+          'flex-col rounded-3xl bg-white ring-1 ring-black/[.04]',
+          // desktop: stays in view while the results scroll
+          'lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:flex lg:max-h-[calc(100vh-var(--header-h)-32px)]',
           // phones: bottom sheet
           open
             ? 'fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] animate-sheet-up rounded-b-none shadow-card lg:animate-none'
@@ -77,10 +77,20 @@ export function FilterPanel({
         )}
       >
         <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-5 py-4">
-          <span className="text-lg font-extrabold">Filters</span>
+          <span className="flex items-center gap-2 text-lg font-extrabold">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5 text-brand-600" aria-hidden>
+              <path d="M4 6h16M7 12h10M10 18h4" />
+            </svg>
+            Filters
+            {activeCount > 0 ? (
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand-600 px-1.5 text-[11px] text-white">
+                {activeCount}
+              </span>
+            ) : null}
+          </span>
           <div className="flex items-center gap-3">
             {activeCount > 0 ? (
-              <a href={resetHref} className="text-sm font-semibold text-brand-700">
+              <a href={resetHref} className="rounded-full px-2.5 py-1 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50">
                 Clear all
               </a>
             ) : null}
@@ -97,7 +107,7 @@ export function FilterPanel({
         <form
           ref={formRef}
           method="get"
-          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-5 py-2 lg:overflow-visible"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-2 [scrollbar-width:thin]"
         >
           {children}
           <noscript>

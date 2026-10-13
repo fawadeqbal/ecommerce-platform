@@ -16,9 +16,9 @@ export function FilterSection({
   return (
     <details
       open={open ?? active > 0}
-      className="group/section border-b border-gray-100 pb-3 last:border-b-0"
+      className="group/section border-b border-gray-100 py-1 last:border-b-0"
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-2 text-sm font-bold [&::-webkit-details-marker]:hidden">
+      <summary className="-mx-2 flex cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-2 py-3 text-[15px] font-bold text-gray-900 transition-colors hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2">
           {title}
           {active > 0 ? (
@@ -29,12 +29,18 @@ export function FilterSection({
         </span>
         <span
           aria-hidden
-          className="text-gray-400 transition-transform group-open/section:rotate-180"
+          className="grid h-6 w-6 place-items-center rounded-full bg-gray-100 text-gray-500 transition-transform duration-300 group-open/section:rotate-180"
         >
-          ▾
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+              clipRule="evenodd"
+            />
+          </svg>
         </span>
       </summary>
-      <div className="flex flex-col gap-2 pt-1">{children}</div>
+      <div className="flex animate-fade-in flex-col gap-1 pb-3 pt-1">{children}</div>
     </details>
   );
 }

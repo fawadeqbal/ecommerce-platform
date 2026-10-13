@@ -49,12 +49,13 @@ const SORT_SHORT: Record<StorefrontSort, string> = {
 };
 
 const rowLabel =
-  'flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-sm text-gray-900 hover:bg-gray-50 has-[:checked]:bg-brand-100 has-[:checked]:font-bold has-[:checked]:text-brand-700';
-const checkRow = 'flex cursor-pointer items-center gap-2.5 py-0.5 text-sm text-gray-900';
+  'relative flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-sm text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:text-gray-900 has-[:checked]:bg-brand-50 has-[:checked]:font-semibold has-[:checked]:text-brand-700 has-[:checked]:before:absolute has-[:checked]:before:inset-y-2 has-[:checked]:before:left-0 has-[:checked]:before:w-[3px] has-[:checked]:before:rounded-full has-[:checked]:before:bg-brand-600';
+const checkRow =
+  'flex cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-50 hover:text-gray-900 has-[:checked]:font-semibold has-[:checked]:text-gray-900';
 const box =
-  'flex h-5 w-5 flex-none items-center justify-center rounded-[7px] border-2 border-gray-300 bg-white text-xs font-extrabold text-transparent peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand-300';
+  'flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 border-gray-300 bg-white text-xs font-extrabold text-transparent transition-all duration-200 peer-checked:scale-105 peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand-300';
 const priceInput =
-  'h-[42px] min-w-0 flex-1 rounded-xl border-[1.5px] border-gray-200 px-3 focus:border-brand-500 focus:outline-none';
+  'h-11 min-w-0 flex-1 rounded-xl border-[1.5px] border-gray-200 bg-gray-50 px-3 text-sm transition-colors focus:border-brand-500 focus:bg-white focus:outline-none';
 
 /** Page numbers with gaps: 1 … 4 5 6 … 20 */
 function pageList(page: number, total: number): (number | '…')[] {
