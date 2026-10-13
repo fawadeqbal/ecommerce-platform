@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- images are served from object storage */
 import Link from 'next/link';
+import { Fragment } from 'react';
 import type { BrandDto, CategoryTreeNode, StorefrontProductCard } from '@ecommerce/types';
 import { cn } from '@ecommerce/ui';
 import { ProductCard } from '@/components/catalog/product-card';
@@ -215,7 +216,7 @@ export default async function HomePage() {
 
       {cats.length > 0 ? (
         <Reveal>
-        <section className="relative overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] shadow-card">
+        <section className="relative overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] ring-1 ring-black/[.04]">
           <div className="relative mb-4 flex items-end justify-between gap-3 sm:mb-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-600">
@@ -233,19 +234,61 @@ export default async function HomePage() {
             </Link>
           </div>
           {/* Phone: one swipeable row with every category. Desktop: a full grid. */}
-          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] md:gap-4 md:overflow-visible md:px-0">
+          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-flow-row-dense md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-6">
             {cats.map((c, i) => {
               const img = catImages[c.id];
+              // Desktop bento: the first two categories get large feature tiles.
+              const feature = i < 2 && cats.length >= 6;
+              const tint = TINTS[i % TINTS.length];
               return (
+                <Fragment key={c.id}>
+                {feature ? (
+                  <Link
+                    href={`/categories/${c.slug}`}
+                    className={cn(
+                      'group relative hidden overflow-hidden rounded-[26px] p-6 md:col-span-2 md:row-span-2 md:flex md:flex-col md:justify-between',
+                      tint,
+                    )}
+                  >
+                    <div className="relative z-10">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
+                        {i === 0 ? 'Most loved' : 'Trending'}
+                      </p>
+                      <h3 className="mt-1 text-[clamp(22px,2.2vw,30px)] font-extrabold leading-tight tracking-heading text-gray-900">
+                        {c.name}
+                      </h3>
+                    </div>
+                    <span className="relative z-10 inline-flex items-center gap-1.5 self-start rounded-full bg-white/80 px-3.5 py-1.5 text-sm font-bold text-gray-900 backdrop-blur-sm transition-colors group-hover:bg-white">
+                      Explore <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+                    </span>
+                    {img ? (
+                      <img
+                        src={img}
+                        alt=""
+                        loading="lazy"
+                        className={cn(
+                          'absolute bottom-0 right-0 h-[72%] w-[62%] transition-transform duration-700 ease-out group-hover:scale-[1.04]',
+                          c.imageUrl ? 'rounded-tl-[26px] object-cover' : 'object-contain p-3 mix-blend-multiply',
+                        )}
+                      />
+                    ) : (
+                      <span aria-hidden className="absolute bottom-4 right-6 text-[96px] leading-none">
+                        {iconFor(c.name)}
+                      </span>
+                    )}
+                  </Link>
+                ) : null}
                 <Link
-                  key={c.id}
                   href={`/categories/${c.slug}`}
-                  className="group flex w-[92px] flex-none snap-start flex-col items-center gap-2 text-center sm:w-[110px] md:w-auto"
+                  className={cn(
+                    'group flex w-[92px] flex-none snap-start flex-col items-center gap-2 text-center sm:w-[110px] md:w-auto',
+                    feature && 'md:hidden',
+                  )}
                 >
                   <span
                     className={cn(
                       'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[26px] transition-shadow duration-300 group-hover:shadow-[0_10px_24px_-14px_rgba(30,26,51,.35)]',
-                      TINTS[i % TINTS.length],
+                      tint,
                     )}
                   >
                     {img ? (
@@ -271,6 +314,7 @@ export default async function HomePage() {
                     {c.name}
                   </span>
                 </Link>
+                </Fragment>
               );
             })}
           </div>
