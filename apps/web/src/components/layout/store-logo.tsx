@@ -23,21 +23,8 @@ export function StoreLogo({
         tone === 'light' ? 'text-[27px] tracking-[-0.8px] text-white' : 'text-[26px] text-gray-900',
       )}
     >
-      {/* Mark: a shopping bag in the accent colour. */}
-      <span
-        aria-hidden
-        className={cn(
-          'mr-1.5 flex h-[42px] w-[42px] flex-none -rotate-6 items-center justify-center rounded-[13px] transition-transform duration-300 hover:rotate-0',
-          tone === 'light'
-            ? 'bg-gradient-to-br from-[#ffe066] to-[#ffc61a] text-gray-900 shadow-[0_6px_14px_-4px_rgba(255,198,26,.6),inset_0_1px_0_rgba(255,255,255,.6)]'
-            : 'bg-brand-600 text-white',
-        )}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-5 w-5">
-          <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
-          <path d="M9 8V7a3 3 0 0 1 6 0v1" strokeLinecap="round" />
-        </svg>
-      </span>
+      {/* Mark: the "e-cart" — an e that becomes a cart, with yellow wheels. */}
+      <EcartMark tone={tone} className="mr-0.5 h-9 w-9 flex-none" />
       {name}
       <span aria-hidden className={cn('-ml-1.5', tone === 'light' ? 'text-accent' : 'text-brand-600')}>
         .
@@ -50,5 +37,19 @@ export function StoreLogo({
     </Link>
   ) : (
     mark
+  );
+}
+
+/** The brand mark (e-cart). Light = for the violet header, dark = for white backgrounds. */
+export function EcartMark({ tone = 'light', className }: { tone?: 'light' | 'dark'; className?: string }) {
+  const ink = tone === 'light' ? '#fff' : '#1E1A33';
+  const arc = tone === 'light' ? '#fff' : '#5B3FD9';
+  return (
+    <svg viewBox="0 0 64 64" aria-hidden className={className}>
+      <path d="M4 9h5l2.5 6" fill="none" stroke={ink} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17 29h30a15 15 0 1 0-4.4 10.6" fill="none" stroke={arc} strokeWidth={7.5} strokeLinecap="round" />
+      <circle cx="22" cy="55" r="5" fill={tone === 'light' ? '#FFD12E' : '#1E1A33'} />
+      <circle cx="42" cy="55" r="5" fill="#FFD12E" />
+    </svg>
   );
 }

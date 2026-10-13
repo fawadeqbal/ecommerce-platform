@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { cn } from '@ecommerce/ui';
 import { getStoreSettings, storeName } from '@/lib/store-settings';
+import { EcartMark } from '@/components/layout/store-logo';
 
 /**
  * Split sign-in layout: violet brand panel + form column. `mode` shows the
@@ -45,12 +46,7 @@ export async function AuthCard({
             aria-label={`${name} home`}
             className="relative flex items-center gap-2.5 self-start text-[26px] font-extrabold leading-none tracking-[-0.8px] text-white hover:text-white"
           >
-            <span className="flex h-10 w-10 -rotate-6 items-center justify-center rounded-[12px] bg-gradient-to-br from-[#ffe066] to-[#ffc61a] text-gray-900 shadow-[0_6px_14px_-4px_rgba(255,198,26,.6),inset_0_1px_0_rgba(255,255,255,.6)]">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-5 w-5" aria-hidden>
-                <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
-                <path d="M9 8V7a3 3 0 0 1 6 0v1" strokeLinecap="round" />
-              </svg>
-            </span>
+            <EcartMark className="h-10 w-10 flex-none" />
             <span>
               {name}
               <span className="text-accent">.</span>
