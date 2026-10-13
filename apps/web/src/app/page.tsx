@@ -240,35 +240,51 @@ export default async function HomePage() {
                 <Link
                   key={c.id}
                   href={`/categories/${c.slug}`}
-                  className="group flex w-[92px] flex-none snap-start flex-col items-center gap-2 text-center sm:w-[110px] md:w-auto"
+                  className={cn(
+                    'group relative flex w-[132px] flex-none snap-start flex-col overflow-hidden rounded-[24px] p-2.5 transition-shadow duration-300 hover:shadow-[0_14px_30px_-18px_rgba(30,26,51,.45)] sm:w-[150px] md:w-auto',
+                    TINTS[i % TINTS.length],
+                  )}
                 >
-                  <span
-                    className={cn(
-                      'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[26px] transition-shadow duration-300 group-hover:shadow-[0_10px_24px_-14px_rgba(30,26,51,.35)]',
-                      TINTS[i % TINTS.length],
-                    )}
-                  >
+                  {/* Picture on a soft white disc, so any photo or icon looks intentional */}
+                  <span className="relative grid aspect-square w-full place-items-center">
+                    <span
+                      aria-hidden
+                      className="absolute inset-[10%] rounded-full bg-white/70 transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                    />
                     {img ? (
                       <img
                         src={img}
                         alt=""
                         loading="lazy"
                         className={cn(
-                          'h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.04]',
-                          c.imageUrl ? 'object-cover' : 'object-contain p-3 mix-blend-multiply',
+                          'relative transition-transform duration-500 ease-out group-hover:scale-[1.05]',
+                          c.imageUrl
+                            ? 'h-[78%] w-[78%] rounded-full object-cover'
+                            : 'h-[80%] w-[80%] object-contain mix-blend-multiply drop-shadow-[0_8px_10px_rgba(30,26,51,.12)]',
                         )}
                       />
                     ) : (
                       <span
                         aria-hidden
-                        className="text-[40px] transition-transform duration-500 ease-out group-hover:scale-[1.06] md:text-5xl"
+                        className="relative text-[44px] transition-transform duration-500 ease-out group-hover:scale-[1.06] md:text-5xl"
                       >
                         {iconFor(c.name)}
                       </span>
                     )}
                   </span>
-                  <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-gray-800 transition-colors group-hover:text-brand-700 md:text-sm">
-                    {c.name}
+                  <span className="mt-1.5 flex items-center justify-between gap-1.5 px-1 pb-0.5">
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-bold text-gray-900">{c.name}</span>
+                      <span className="block text-[11.5px] font-medium text-gray-500">
+                        {c.children.length > 0 ? `${c.children.length} sub-categories` : 'Shop now'}
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden
+                      className="grid h-7 w-7 flex-none place-items-center rounded-full bg-white/80 text-sm text-gray-700 transition-colors duration-300 group-hover:bg-gray-900 group-hover:text-white"
+                    >
+                      →
+                    </span>
                   </span>
                 </Link>
               );
