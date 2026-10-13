@@ -23,14 +23,12 @@ function Icon({ size = 20, children, ...props }: IconProps & { children: ReactNo
   );
 }
 
-/** Brand cart: the e-cart mark (currentColor, with the yellow wheel). */
-export const CartIcon = ({ size = 20, ...props }: IconProps) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden focusable="false" {...props}>
-    <path d="M4 9h5l2.5 6" fill="none" stroke="currentColor" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M17 29h30a15 15 0 1 0-4.4 10.6" fill="none" stroke="currentColor" strokeWidth={7.5} strokeLinecap="round" />
-    <circle cx="22" cy="55" r="5" fill="currentColor" />
-    <circle cx="42" cy="55" r="5" fill="#FFD12E" />
-  </svg>
+export const CartIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="9" cy="20" r="1.4" />
+    <circle cx="18" cy="20" r="1.4" />
+    <path d="M2.5 3h2.6l2.4 11.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 1.9-1.5L21.5 7H6.1" />
+  </Icon>
 );
 
 export const HeartIcon = (p: IconProps) => (
