@@ -106,7 +106,6 @@ function categoryTiles(tree: CategoryTreeNode[]): CategoryTreeNode[] {
     out.push(c);
   };
   tree.forEach(add);
-  tree.forEach((c) => c.children.forEach(add)); // few top-level ones: fill with sub-categories
   return out;
 }
 
@@ -233,38 +232,42 @@ export default async function HomePage() {
             </Link>
           </div>
           {/* Phone: one swipeable row with every category. Desktop: a full grid. */}
-          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-4 md:gap-4 lg:grid-cols-6 md:overflow-visible md:px-0">
+          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] md:gap-4 md:overflow-visible md:px-0">
             {cats.map((c, i) => {
               const img = catImages[c.id];
               return (
                 <Link
                   key={c.id}
                   href={`/categories/${c.slug}`}
-                  className={cn(
-                    'group relative block aspect-[4/5] w-[128px] flex-none snap-start overflow-hidden rounded-[22px] sm:w-[150px] md:w-auto',
-                    TINTS[i % TINTS.length],
-                  )}
+                  className="group flex w-[92px] flex-none snap-start flex-col items-center gap-2 text-center sm:w-[110px] md:w-auto"
                 >
-                  {img ? (
-                    <img
-                      src={img}
-                      alt=""
-                      loading="lazy"
-                      className={cn(
-                        'absolute inset-0 h-full w-full transition-transform duration-700 ease-out group-hover:scale-[1.05]',
-                        c.imageUrl ? 'object-cover' : 'object-contain p-[14%] pb-[30%] mix-blend-multiply',
-                      )}
-                    />
-                  ) : (
-                    <span aria-hidden className="absolute inset-x-0 top-[22%] text-center text-5xl">
-                      {iconFor(c.name)}
-                    </span>
-                  )}
-                  {/* Name on a soft fade at the bottom */}
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent px-3 pb-3 pt-10">
-                    <span className="block truncate text-[14px] font-bold text-white drop-shadow-sm">
-                      {c.name}
-                    </span>
+                  <span
+                    className={cn(
+                      'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[26px] transition-shadow duration-300 group-hover:shadow-[0_10px_24px_-14px_rgba(30,26,51,.35)]',
+                      TINTS[i % TINTS.length],
+                    )}
+                  >
+                    {img ? (
+                      <img
+                        src={img}
+                        alt=""
+                        loading="lazy"
+                        className={cn(
+                          'h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.04]',
+                          c.imageUrl ? 'object-cover' : 'object-contain p-3 mix-blend-multiply',
+                        )}
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="text-[40px] transition-transform duration-500 ease-out group-hover:scale-[1.06] md:text-5xl"
+                      >
+                        {iconFor(c.name)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-gray-800 transition-colors group-hover:text-brand-700 md:text-sm">
+                    {c.name}
                   </span>
                 </Link>
               );
