@@ -33,7 +33,8 @@
     "db:validate": "dotenv -e ../../.env -- prisma validate"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "seed:catalog": "tsx prisma/seed-catalog.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1"
