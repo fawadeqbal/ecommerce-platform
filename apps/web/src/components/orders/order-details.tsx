@@ -28,7 +28,7 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+          <h1 className="text-[clamp(22px,2.4vw,30px)] font-extrabold tracking-[-0.03em] text-gray-900">
             Order {order.orderNumber}
           </h1>
           <p className="text-sm text-gray-500">Placed {formatDateTime(order.placedAt)}</p>
@@ -88,13 +88,13 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
               ) : null}
               <ul className="divide-y divide-gray-100">
                 {vo.items.map((item) => (
-                  <li key={item.id} className="flex gap-4 px-5 py-3 text-sm">
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
+                  <li key={item.id} className="flex items-center gap-4 px-5 py-4 text-sm">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#f6f6f8]">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
                           alt=""
-                          className="h-full w-full object-contain p-0.5"
+                          className="h-full w-full object-contain p-1.5 mix-blend-multiply"
                         />
                       ) : null}
                     </div>
@@ -118,7 +118,7 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
                         {item.quantity} × {money(item.unitPrice)}
                       </p>
                     </div>
-                    <span className="font-medium">{money(item.total)}</span>
+                    <span className="font-bold text-gray-900">{money(item.total)}</span>
                   </li>
                 ))}
               </ul>

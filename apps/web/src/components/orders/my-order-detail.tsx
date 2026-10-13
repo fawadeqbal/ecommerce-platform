@@ -46,7 +46,7 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
 
   return (
     <div className="space-y-4">
-      <Link href="/account/orders" className="text-sm text-brand-700 hover:underline">
+      <Link href="/account/orders" className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-brand-700">
         ← All orders
       </Link>
       <OrderDetails
@@ -58,7 +58,7 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
             {order.canCancel ? (
               <button
                 type="button"
-                className={`${orderActionClass} bg-white text-red-600 hover:bg-red-50`}
+                className={`${orderActionClass} text-red-600 hover:bg-red-50`}
                 onClick={() => {
                   cancel.reset();
                   setCancelling(true);
@@ -71,7 +71,7 @@ export function MyOrderDetail({ orderNumber }: { orderNumber: string }) {
         }
       />
       {returnable.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-white p-5 text-sm">
+        <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-white p-5 text-sm ring-1 ring-black/[.04]">
           <div className="mr-auto">
             <p className="font-bold text-gray-900">Something wrong with your items?</p>
             <p className="text-gray-500">
