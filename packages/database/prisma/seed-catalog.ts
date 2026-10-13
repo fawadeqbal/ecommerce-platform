@@ -4,11 +4,12 @@
  *   docker exec ecommerce-app sh -c "cd /app/packages/database && ./node_modules/.bin/tsx prisma/seed-catalog.ts"
  *
  * Pulls ~190 real products with public images from dummyjson.com and adds them to the
- * "Demo Electronics" store: categories + sub-categories, brands, prices with discounts,
+* two approved stores (Demo Electronics + Style Street): categories + sub-categories, brands, prices with discounts,
  * ratings, stock (some sold out), and Color / Size / Storage / RAM variants.
  * Safe to run again: products that already exist (same slug) are skipped.
  */
 import { PrismaClient } from '@prisma/client';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
@@ -58,7 +59,12 @@ const MAP: Record<string, [string, string]> = {
   fragrances: ['Health & Beauty', 'Fragrances'],
   'sports-accessories': ['Sports', 'Fitness Equipment'],
   groceries: ['Groceries', 'Pantry'],
+  motorcycle: ['Automotive', 'Motorcycles'],
+  vehicle: ['Automotive', 'Cars'],
 };
+
+/** Which store sells which root category (everything else goes to the electronics store). */
+const STYLE_ROOTS = new Set(['Fashion', 'Health & Beauty']);
 
 /** Which options a category's products come in. */
 const OPTIONS: Record<string, { code: string; values: string[]; extra?: number[] }[]> = {
@@ -99,16 +105,71 @@ async function category(root: string, child: string): Promise<string> {
   return (await prisma.category.create({ data: { name: child, slug, parentId: rootRow.id } })).id;
 }
 
+/** An approved store with its owner (password Vendor@12345), a warehouse and a 10% commission. */
+async function store(v: { email: string; first: string; last: string; name: string; slug: string; about: string }) {
+  const role = await prisma.role.findUniqueOrThrow({ where: { name: 'VENDOR' } });
+  const user = await prisma.user.upsert({
+    where: { email: v.email },
+    update: {},
+    create: {
+      email: v.email,
+      firstName: v.first,
+      lastName: v.last,
+      passwordHash: await argon2.hash('Vendor@12345'),
+      status: 'ACTIVE',
+      emailVerifiedAt: new Date(),
+      roles: { create: { roleId: role.id } },
+      emailPreference: { create: {} },
+    },
+  });
+  const vendor = await prisma.vendor.upsert({
+    where: { slug: v.slug },
+    update: { status: 'APPROVED', approvedAt: new Date() },
+    create: {
+      ownerId: user.id,
+      name: v.name,
+      slug: v.slug,
+      email: v.email,
+      description: v.about,
+      status: 'APPROVED',
+      approvedAt: new Date(),
+      policies: { shipping: 'Ships in 1–2 business days nationwide.', returns: '7-day returns on unused items.' },
+    },
+  });
+  if (!(await prisma.commissionRule.findFirst({ where: { vendorId: vendor.id, scope: 'VENDOR', categoryId: null } })))
+    await prisma.commissionRule.create({ data: { scope: 'VENDOR', vendorId: vendor.id, rate: 10 } });
+  const code = `${v.slug.toUpperCase()}-MAIN`;
+  const warehouse =
+    (await prisma.warehouse.findFirst({ where: { vendorId: vendor.id } })) ??
+    (await prisma.warehouse.create({
+      data: { vendorId: vendor.id, name: 'Main warehouse', code, address: { city: 'Lahore', country: 'Pakistan' } },
+    }));
+  return { vendor, warehouse };
+}
+
 async function main() {
   console.log('Fetching demo products from dummyjson.com…');
   const res = await fetch('https://dummyjson.com/products?limit=0');
   if (!res.ok) throw new Error(`dummyjson.com answered ${res.status}`);
   const { products } = (await res.json()) as { products: DJ[] };
 
-  const vendor = await prisma.vendor.findUnique({ where: { slug: 'demo-electronics' } });
-  if (!vendor) throw new Error('Run the main seed first (needs the "demo-electronics" store).');
   const currency = (await prisma.currency.findFirst({ where: { isDefault: true } }))?.code ?? 'USD';
-  const warehouse = await prisma.warehouse.findFirst({ where: { vendorId: vendor.id } });
+  const electronics = await store({
+    email: 'vendor@example.com',
+    first: 'Demo',
+    last: 'Seller',
+    name: 'Demo Electronics',
+    slug: 'demo-electronics',
+    about: 'Phones, laptops, home and sports gear from trusted brands.',
+  });
+  const style = await store({
+    email: 'style@example.com',
+    first: 'Sara',
+    last: 'Khan',
+    name: 'Style Street',
+    slug: 'style-street',
+    about: 'Fashion, shoes, bags, beauty and fragrances.',
+  });
 
   const valueId = new Map<string, string>();
   for (const v of await prisma.attributeValue.findMany({ include: { attribute: true } }))
@@ -120,7 +181,16 @@ async function main() {
     const place = MAP[p.category];
     if (!place) continue;
     const slug = `${slugify(p.title)}-${p.id}`;
-    if (await prisma.product.findUnique({ where: { slug }, select: { id: true } })) {
+    const owner = STYLE_ROOTS.has(place[0]) ? style : electronics;
+    const vendor = owner.vendor;
+    const warehouse = owner.warehouse;
+    const existing = await prisma.product.findUnique({ where: { slug }, select: { id: true } });
+    if (existing) {
+      // Re-run: make sure it belongs to the right store and is live.
+      await prisma.product.update({
+        where: { id: existing.id },
+        data: { vendorId: vendor.id, status: 'PUBLISHED', deletedAt: null },
+      });
       skipped++;
       continue;
     }
@@ -180,6 +250,7 @@ async function main() {
     });
 
     for (const [i, c] of combos.entries()) {
+      void vendor;
       const variant = await prisma.productVariant.create({
         data: {
           productId: product.id,
@@ -204,7 +275,8 @@ async function main() {
     }
     created++;
   }
-  console.log(`Done: ${created} products added, ${skipped} already there.`);
+  console.log(`Done: ${created} products added, ${skipped} already there (updated).`);
+  console.log('Stores: Demo Electronics (vendor@example.com) and Style Street (style@example.com), password Vendor@12345');
 }
 
 main()
