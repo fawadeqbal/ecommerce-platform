@@ -107,8 +107,8 @@ export function CategoryNav({ items }: { items: NavItem[] }) {
       <style>
         {'.menu-in{animation:menu-in .32s cubic-bezier(.22,1,.36,1) backwards}' +
           '@keyframes menu-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
-          '.menu-swap{animation:menu-swap .42s cubic-bezier(.22,1,.36,1) both}' +
-          '@keyframes menu-swap{from{opacity:0;transform:translateX(var(--menu-dx,14px))}to{opacity:1;transform:none}}' +
+          '.menu-swap{animation:menu-swap .28s cubic-bezier(.25,.8,.25,1) both}' +
+          '@keyframes menu-swap{from{opacity:.25;transform:translateX(calc(var(--menu-dx,14px) / 2))}to{opacity:1;transform:none}}' +
           '@media (prefers-reduced-motion:reduce){.menu-in,.menu-swap{animation:none}}'}
       </style>
       {(() => {
@@ -352,8 +352,7 @@ function CategoryDetail({ root }: { root: NavItem }) {
             {kids.map((child, k) => (
               <div
                 key={child.href}
-                className="menu-in group/sub flex min-w-0 flex-col gap-2 rounded-2xl p-3 transition-colors duration-200 hover:bg-[#f8f7fc]"
-                style={{ animationDelay: `${30 + k * 35}ms` }}
+                className="group/sub flex min-w-0 flex-col gap-2 rounded-2xl p-3 transition-colors duration-200 hover:bg-[#f8f7fc]"
               >
                 <Link href={child.href} className="flex items-center gap-3 text-gray-900 hover:text-brand-600">
                   {child.image ? (
@@ -407,8 +406,7 @@ function CategoryDetail({ root }: { root: NavItem }) {
       {/* Promo card (wide screens) */}
       <Link
         href={root.href}
-        key={`promo-${root.href}`}
-        className="menu-swap relative m-6 ml-0 hidden w-[260px] flex-none flex-col overflow-hidden rounded-2xl bg-[radial-gradient(240px_160px_at_90%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-5 text-white hover:text-white xl:flex"
+        className="relative m-6 ml-0 hidden w-[260px] flex-none flex-col overflow-hidden rounded-2xl bg-[radial-gradient(240px_160px_at_90%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-5 text-white hover:text-white xl:flex"
       >
         <span className="text-[11.5px] font-bold tracking-[1.2px] text-accent">THIS WEEK</span>
         <span className="mt-1.5 text-2xl font-extrabold leading-[1.1] tracking-[-0.5px]">
@@ -416,7 +414,7 @@ function CategoryDetail({ root }: { root: NavItem }) {
         </span>
         <span className="my-4 grid min-h-[110px] flex-1 place-items-center overflow-hidden rounded-xl bg-white/[.08] shadow-[inset_0_0_0_1px_rgba(255,255,255,.15)]">
           {root.image ? (
-            <img src={root.image} alt="" className="h-full w-full object-cover" />
+            <img key={root.image} src={root.image} alt="" className="h-full w-full animate-fade-in object-cover" />
           ) : (
             <span aria-hidden className="text-5xl">
               🛍️
