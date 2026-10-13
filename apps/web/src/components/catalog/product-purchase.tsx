@@ -3,10 +3,10 @@
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MAX_LINE_QUANTITY, findVariant, type StorefrontProductDetail } from '@ecommerce/types';
 import { Alert, Button, cn } from '@ecommerce/ui';
-import { useSetCart } from '@/hooks/use-cart';
+import { useCart, useSetCart } from '@/hooks/use-cart';
 import { NotifyMe } from '@/components/wishlist/notify-me';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { cartApi } from '@/lib/api-client';
@@ -21,12 +21,20 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
   const [selected, setSelected] = useState<Record<string, string>>(initial?.values ?? {});
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  // "Added ✓" is a short confirmation, then the button is ready to add more.
+  useEffect(() => {
+    if (!added) return;
+    const t = setTimeout(() => setAdded(false), 1800);
+    return () => clearTimeout(t);
+  }, [added]);
+  const { data: cart } = useCart();
 
   const variant = useMemo(
     () => findVariant(product.variants, product.options, selected),
     [product, selected],
   );
   const available = variant?.available ?? 0;
+  const inCart = cart?.items.find((it) => it.variantId === variant?.id)?.quantity ?? 0;
 
   /** A value is "possible" when some variant with it (and the other current choices) is in stock. */
   const possible = (attributeId: string, valueId: string) =>
@@ -185,7 +193,7 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
           loading={add.isPending}
           onClick={() => add.mutate()}
         >
-          {added ? 'Added ✓' : 'Add to cart'}
+          {added ? 'Added ✓' : inCart > 0 ? 'Add more' : 'Add to cart'}
         </Button>
         <button
           type="button"
@@ -208,10 +216,15 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
       {add.error || buyNow.error ? (
         <Alert tone="error">{(add.error ?? buyNow.error)?.message}</Alert>
       ) : null}
-      {added ? (
-        <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl bg-tint-mint px-4 py-3 text-sm text-emerald-900">
-          <b>Added to your cart</b>
-          <Link href="/cart" className="font-bold text-emerald-900 underline">
+      {inCart > 0 ? (
+        <div className="flex animate-fade-in flex-wrap items-center justify-between gap-2.5 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
+          <span className="flex items-center gap-2">
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-brand-600 text-[11px] font-bold text-white">
+              ✓
+            </span>
+            <b>{inCart}</b> in your cart
+          </span>
+          <Link href="/cart" className="font-bold text-brand-700 hover:text-brand-900">
             View cart →
           </Link>
         </div>

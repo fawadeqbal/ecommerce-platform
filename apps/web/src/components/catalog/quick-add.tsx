@@ -36,6 +36,7 @@ export function QuickAdd({
     onSuccess: (cart) => {
       setCart(cart);
       haptic();
+      setTimeout(() => add.reset(), 1800); // brief "Added ✓", then ready again
       toast.success('Added to cart', {
         description: name,
         image: imageUrl,
