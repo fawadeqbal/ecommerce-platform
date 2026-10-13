@@ -216,14 +216,6 @@ export default async function HomePage() {
       {cats.length > 0 ? (
         <Reveal>
         <section className="relative overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] shadow-card">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-accent/25 blur-3xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-brand-200/50 blur-3xl"
-          />
           <div className="relative mb-4 flex items-end justify-between gap-3 sm:mb-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-600">
@@ -252,7 +244,7 @@ export default async function HomePage() {
                 >
                   <span
                     className={cn(
-                      'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[26px] ring-1 ring-black/5 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-card group-hover:ring-2 group-hover:ring-brand-500',
+                      'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[26px] transition-shadow duration-300 group-hover:shadow-[0_10px_24px_-14px_rgba(30,26,51,.35)]',
                       TINTS[i % TINTS.length],
                     )}
                   >
@@ -262,23 +254,20 @@ export default async function HomePage() {
                         alt=""
                         loading="lazy"
                         className={cn(
-                          'h-full w-full transition-transform duration-500 group-hover:scale-110',
+                          'h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.04]',
                           c.imageUrl ? 'object-cover' : 'object-contain p-3 mix-blend-multiply',
                         )}
                       />
                     ) : (
                       <span
                         aria-hidden
-                        className="text-[40px] transition-transform duration-300 group-hover:scale-110 md:text-5xl"
+                        className="text-[40px] transition-transform duration-500 ease-out group-hover:scale-[1.06] md:text-5xl"
                       >
                         {iconFor(c.name)}
                       </span>
                     )}
-                    <span className="absolute inset-x-0 bottom-0 hidden translate-y-full bg-gradient-to-t from-brand-700/90 to-transparent pb-2 pt-6 text-xs font-bold text-white transition-transform duration-300 group-hover:translate-y-0 md:block">
-                      Shop now →
-                    </span>
                   </span>
-                  <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-gray-800 group-hover:text-brand-700 md:text-sm">
+                  <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-gray-800 transition-colors group-hover:text-brand-700 md:text-sm">
                     {c.name}
                   </span>
                 </Link>
