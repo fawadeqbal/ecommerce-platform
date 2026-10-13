@@ -132,7 +132,9 @@ export function CheckoutView() {
   });
 
   // The API picks a method when the chosen one is unavailable (e.g. COD above its limit).
-  const selected = quote.data?.selectedPaymentMethod;
+  // Only trust a fresh quote: while the new one loads, the previous (placeholder) quote still
+  // carries the OLD method and would undo the customer's click.
+  const selected = quote.isPlaceholderData ? undefined : quote.data?.selectedPaymentMethod;
   useEffect(() => {
     if (selected && selected !== paymentMethod)
       setValue('paymentMethod', selected as CheckoutFormValues['paymentMethod']);
@@ -529,8 +531,11 @@ export function CheckoutView() {
                                 type="radio"
                                 name={`ship-${g.vendor.id}`}
                                 className="sr-only"
+                                // The customer's pick shows at once; the quote catches up after.
                                 checked={
-                                  opt.rateId === g.shippingRateId || g.shippingOptions.length === 1
+                                  opt.rateId ===
+                                    (shippingRateIds[g.vendor.id] ?? g.shippingRateId) ||
+                                  g.shippingOptions.length === 1
                                 }
                                 onChange={() =>
                                   opt.rateId &&
