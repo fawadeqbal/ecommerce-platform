@@ -22,6 +22,6 @@ flutter run                                  # uses the live API (api.shop.fawad
 ```
 Against your local API instead (Android emulator):
 ```bash
-flutter run --dart-define=API_URL=http://10.0.2.2:4000/api/v1 --dart-define=STORE_URL=http://10.0.2.2:3000
+flutter run --dart-define=API_URL=http://192.168.1.119:4000/api/v1 --dart-define=STORE_URL=http://192.168.1.119:3000
 ```
 flutter run --dart-define=API_URL=https://api.shop.fawadiqbal.dev --dart-define=STORE_URL=https://shop.fawadiqbal.dev

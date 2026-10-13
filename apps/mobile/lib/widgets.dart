@@ -33,28 +33,40 @@ class SectionHead extends StatelessWidget {
   final VoidCallback? onAll;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 26, 8, 10),
         child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               if (eyebrow != null)
                 Text(eyebrow!.toUpperCase(),
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.4, color: Brand.violet)),
-              Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 1.3, color: Brand.violet)),
+              const SizedBox(height: 2),
+              Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
             ]),
           ),
           if (onAll != null)
             TextButton(
               onPressed: onAll,
-              style: TextButton.styleFrom(
-                backgroundColor: Brand.ink,
-                foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-              ),
-              child: const Text('See all  →', style: TextStyle(fontWeight: FontWeight.w700)),
+              style: TextButton.styleFrom(foregroundColor: Brand.violet, visualDensity: VisualDensity.compact),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('See all', style: TextStyle(fontWeight: FontWeight.w700)),
+                Icon(Icons.chevron_right_rounded, size: 20),
+              ]),
             ),
         ]),
+      );
+}
+
+/// Soft grey block used as a loading placeholder (no spinners on home).
+class Skeleton extends StatelessWidget {
+  const Skeleton({super.key, this.width, this.height, this.radius = Brand.r16});
+  final double? width, height;
+  final double radius;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(color: const Color(0xFFECEAF3), borderRadius: BorderRadius.circular(radius)),
       );
 }
 
