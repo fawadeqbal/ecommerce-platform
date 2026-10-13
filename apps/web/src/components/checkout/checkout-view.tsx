@@ -300,72 +300,91 @@ export function CheckoutView() {
       <nav
         id="checkout-steps"
         aria-label="Checkout steps"
-        className="scrollbar-none -mx-4 flex scroll-mt-[calc(var(--header-h)+16px)] gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+        className="scroll-mt-[calc(var(--header-h)+16px)] rounded-3xl bg-white px-4 py-4 ring-1 ring-black/[.04] sm:px-6"
       >
-        {steps.map((st, i) => {
-          const confirmed = i < reached;
-          const status =
-            i === step
-              ? flagged.includes(i)
-                ? 'error'
-                : 'current'
-              : confirmed && st.done
-                ? 'done'
-                : (confirmed && st.required) || flagged.includes(i)
+        <ol className="flex items-start">
+          {steps.map((st, i) => {
+            const confirmed = i < reached;
+            const status =
+              i === step
+                ? flagged.includes(i)
                   ? 'error'
-                  : 'todo';
-          return (
-            <button
-              key={st.label}
-              type="button"
-              onClick={() => goTo(i)}
-              aria-current={i === step ? 'step' : undefined}
-              className={cn(
-                'flex flex-[1_0_auto] items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm font-bold sm:gap-2.5 sm:px-3.5',
-                status === 'done' && 'bg-brand-600 text-white',
-                status === 'current' && 'bg-white text-gray-900 ring-2 ring-inset ring-brand-600',
-                status === 'error' && 'bg-tint-rose text-red-800 ring-1 ring-inset ring-red-200',
-                status === 'todo' && 'bg-white text-gray-500',
-                i === step && status === 'done' && 'ring-2 ring-inset ring-brand-300',
-              )}
-            >
-              <span
-                className={cn(
-                  'flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full text-[13px]',
-                  status === 'done' && 'bg-white text-brand-700',
-                  status === 'current' && 'bg-brand-600 text-white',
-                  status === 'error' && 'bg-red-500 text-white',
-                  status === 'todo' && 'bg-gray-100 text-gray-500',
-                )}
-              >
-                {status === 'done' ? '✓' : status === 'error' ? '!' : i + 1}
-              </span>
-              <span className="flex flex-col leading-tight">
-                {st.label}
-                <span
-                  className={cn(
-                    'text-[11px] font-semibold',
-                    status === 'done'
-                      ? 'text-brand-100'
-                      : status === 'error'
-                        ? 'text-red-600'
-                        : 'text-gray-400',
-                  )}
+                  : 'current'
+                : confirmed && st.done
+                  ? 'done'
+                  : (confirmed && st.required) || flagged.includes(i)
+                    ? 'error'
+                    : 'todo';
+            const sub =
+              status === 'done'
+                ? 'Done'
+                : status === 'error'
+                  ? 'Needs info'
+                  : !st.required
+                    ? 'Optional'
+                    : i === step
+                      ? 'In progress'
+                      : 'To do';
+            // The line to the next step fills once this step is done.
+            const lineDone = i < steps.length - 1 && confirmed && st.done;
+            return (
+              <li key={st.label} className="relative flex flex-1 flex-col items-center">
+                {i < steps.length - 1 ? (
+                  <span aria-hidden className="absolute left-1/2 right-[-50%] top-[17px] h-[3px] rounded-full bg-gray-100">
+                    <span
+                      className={cn(
+                        'block h-full rounded-full bg-brand-600 transition-[width] duration-500 ease-out',
+                        lineDone ? 'w-full' : 'w-0',
+                      )}
+                    />
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => goTo(i)}
+                  aria-current={i === step ? 'step' : undefined}
+                  className="group relative z-10 flex flex-col items-center gap-1.5 rounded-2xl px-1 text-center"
                 >
-                  {status === 'done'
-                    ? 'Done'
-                    : status === 'error'
-                      ? 'Needs info'
-                      : !st.required
-                        ? 'Savings & note'
-                        : i === step
-                          ? 'In progress'
-                          : 'To do'}
-                </span>
-              </span>
-            </button>
-          );
-        })}
+                  <span
+                    className={cn(
+                      'grid h-9 w-9 place-items-center rounded-full text-sm font-extrabold transition-all duration-300',
+                      status === 'done' && 'bg-brand-600 text-white',
+                      status === 'current' &&
+                        'bg-white text-brand-700 ring-[3px] ring-brand-600 shadow-[0_0_0_6px_rgba(100,71,230,.12)]',
+                      status === 'error' && 'bg-red-500 text-white shadow-[0_0_0_6px_rgba(239,68,68,.12)]',
+                      status === 'todo' && 'bg-gray-100 text-gray-400 group-hover:bg-gray-200',
+                    )}
+                  >
+                    {status === 'done' ? '✓' : status === 'error' ? '!' : i + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-[13px] font-bold leading-tight sm:text-sm',
+                      status === 'todo' ? 'text-gray-500' : 'text-gray-900',
+                      status === 'error' && 'text-red-700',
+                    )}
+                  >
+                    {st.label}
+                  </span>
+                  <span
+                    className={cn(
+                      'hidden text-[11px] font-semibold sm:block',
+                      status === 'done'
+                        ? 'text-brand-600'
+                        : status === 'error'
+                          ? 'text-red-600'
+                          : status === 'current'
+                            ? 'text-brand-600'
+                            : 'text-gray-400',
+                    )}
+                  >
+                    {sub}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       </nav>
 
       <form
