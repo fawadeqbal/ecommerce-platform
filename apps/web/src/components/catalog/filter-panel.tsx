@@ -79,14 +79,6 @@ export function FilterPanel({
           />
         </Portal>
       ) : null}
-      <style>
-        {/* Thin scrollbar that fades in only while the filters are hovered. */}
-        {'.filter-scroll{scrollbar-width:thin;scrollbar-color:transparent transparent;transition:scrollbar-color .3s ease}' +
-          'aside:hover .filter-scroll,.filter-scroll:focus-within{scrollbar-color:rgba(100,71,230,.35) transparent}' +
-          '.filter-scroll::-webkit-scrollbar{width:4px}' +
-          '.filter-scroll::-webkit-scrollbar-thumb{border-radius:9999px;background:transparent;transition:background .3s ease}' +
-          'aside:hover .filter-scroll::-webkit-scrollbar-thumb{background:rgba(100,71,230,.35)}'}
-      </style>
       <aside
         aria-label="Filters"
         className={cn(
@@ -134,7 +126,7 @@ export function FilterPanel({
             e.preventDefault();
             apply(e.currentTarget);
           }}
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-2 filter-scroll"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-2"
         >
           {children}
           <noscript>
