@@ -261,7 +261,7 @@ export async function ProductListing({
         </div>
       ) : null}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[264px_minmax(0,1fr)]">
+      <div className="grid items-start gap-5 lg:grid-cols-[272px_minmax(0,1fr)] lg:items-stretch">
         <div className="flex flex-col gap-3">
           <FilterPanel activeCount={chips.length} total={total} resetHref={resetHref}>
             {q ? <input type="hidden" name="q" value={q} /> : null}
