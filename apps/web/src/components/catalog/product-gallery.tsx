@@ -96,7 +96,7 @@ export function ProductGallery({
     n > 1 ? (
       <div
         className={cn(
-          'scrollbar-none flex gap-2.5',
+          'scrollbar-none flex gap-2.5 p-1.5',
           vertical ? 'flex-col overflow-y-auto' : 'overflow-x-auto',
         )}
       >
@@ -111,7 +111,7 @@ export function ProductGallery({
             onClick={() => go(k)}
             className={cn(
               'relative h-[72px] w-[72px] flex-none overflow-hidden rounded-2xl p-1.5 transition-all duration-200',
-              dark ? 'bg-white/10' : 'bg-white',
+              dark ? 'bg-white/10' : 'bg-[#f6f6f8]',
               k === i
                 ? 'scale-[1.04] ring-2 ring-brand-600 shadow-[0_6px_16px_-6px_rgba(83,43,199,.5)]'
                 : cn('ring-1', dark ? 'opacity-60 ring-white/10 hover:opacity-100' : 'ring-gray-200 hover:ring-gray-300'),
@@ -131,7 +131,7 @@ export function ProductGallery({
     <div className="flex flex-col gap-3 md:flex-row-reverse">
       {/* Stage */}
       <div
-        className="group/stage relative aspect-square min-w-0 flex-1 cursor-zoom-in overflow-hidden rounded-[28px] bg-white"
+        className="group/stage relative aspect-square min-w-0 flex-1 cursor-zoom-in overflow-hidden rounded-[28px] bg-[#f6f6f8] ring-1 ring-black/[.04]"
         onMouseMove={(e) => {
           if (!window.matchMedia('(hover: hover)').matches) return;
           const r = e.currentTarget.getBoundingClientRect();
@@ -167,7 +167,7 @@ export function ProductGallery({
           </span>
         ) : null}
         {cur.url ? (
-          <span className="pointer-events-none absolute bottom-4 right-4 hidden items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm md:flex">
+          <span className="pointer-events-none absolute bottom-4 right-4 hidden items-center gap-1.5 rounded-full bg-white/90 opacity-0 transition-opacity group-hover/stage:opacity-100 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm md:flex">
             🔍 Hover to zoom · click to expand
           </span>
         ) : null}
