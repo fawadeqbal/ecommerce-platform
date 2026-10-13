@@ -24,6 +24,14 @@ import { ProductCard } from './product-card';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+/** One-tap price ranges shown above the results. [label, min, max] */
+const PRICE_PRESETS: [string, number | undefined, number | undefined][] = [
+  ['Under 100', undefined, 100],
+  ['100 – 500', 100, 500],
+  ['500 – 1,000', 500, 1000],
+  ['1,000+', 1000, undefined],
+];
+
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
 const all = (v: string | string[] | undefined) =>
   (Array.isArray(v) ? v : v ? [v] : [])
@@ -459,6 +467,42 @@ export async function ProductListing({
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
+          {/* Quick filters: one tap, no panel needed. Tap again to remove. */}
+          <div className="scrollbar-none -mx-4 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+            {(
+              [
+                ['On sale', { onSale: query.onSale ? undefined : 'true' }, Boolean(query.onSale)],
+                ['In stock', { inStock: query.inStock ? undefined : 'true' }, Boolean(query.inStock)],
+                ['4★ & up', { minRating: query.minRating === 4 ? undefined : '4' }, query.minRating === 4],
+                ...PRICE_PRESETS.map(([label, min, max]) => {
+                  const on = (query.minPrice ?? undefined) === min && (query.maxPrice ?? undefined) === max;
+                  return [
+                    label,
+                    on
+                      ? { minPrice: undefined, maxPrice: undefined }
+                      : { minPrice: min?.toString(), maxPrice: max?.toString() },
+                    on,
+                  ] as const;
+                }),
+              ] as const
+            ).map(([label, change, on]) => (
+              <Link
+                key={label}
+                href={href(change as Record<string, string | undefined>)}
+                scroll={false}
+                aria-pressed={on}
+                className={cn(
+                  'flex flex-none snap-start items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all duration-200',
+                  on
+                    ? 'bg-brand-600 text-white shadow-[0_6px_14px_-6px_rgba(83,43,199,.6)] hover:text-white'
+                    : 'bg-white text-gray-700 ring-1 ring-black/[.06] hover:text-brand-700 hover:ring-brand-200',
+                )}
+              >
+                {on ? <span aria-hidden>✓</span> : null}
+                {label}
+              </Link>
+            ))}
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
               {chips.map((c) => (
