@@ -116,20 +116,11 @@ body {
   *::-webkit-scrollbar-thumb:hover {
     background: rgba(100, 71, 230, 0.6);
   }
-  /* The page itself keeps a slim, always-visible bar so people know where they are. */
+  /* The page itself scrolls without a visible bar, so nothing cuts into the full-width header. */
   html {
-    scrollbar-color: rgba(100, 71, 230, 0.4) transparent;
+    scrollbar-width: none;
   }
   html::-webkit-scrollbar {
-    width: 8px;
-  }
-  html::-webkit-scrollbar-thumb {
-    background: rgba(100, 71, 230, 0.4);
-    border: 2px solid transparent;
-    background-clip: padding-box;
-  }
-  html::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 71, 230, 0.65);
-    background-clip: padding-box;
+    display: none;
   }
 }
