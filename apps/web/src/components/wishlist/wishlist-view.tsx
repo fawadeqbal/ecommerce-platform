@@ -45,7 +45,8 @@ export function WishlistView() {
       {move.error ? <Alert tone="error">{move.error.message}</Alert> : null}
       {isLoading ? <Spinner /> : null}
       {data && data.items.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-6 py-12 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-6 py-14 text-center ring-1 ring-black/[.04]">
+          <span aria-hidden className="grid h-16 w-16 place-items-center rounded-3xl bg-tint-rose text-3xl text-rose-500">♡</span>
           <h2 className="text-xl font-extrabold">Your wishlist is empty</h2>
           <p className="max-w-sm text-gray-500">
             Tap ♡ on a product to keep it here. We email you when a saved item gets cheaper.
@@ -58,18 +59,18 @@ export function WishlistView() {
           </Link>
         </div>
       ) : null}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,18vw,210px),1fr))] gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {data?.items.map((i) => {
           const canMove = !i.unavailable && i.inStock;
           return (
-            <div key={i.id} className="flex flex-col gap-2 rounded-2xl bg-white p-2">
-              <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-50">
+            <div key={i.id} className="group flex flex-col gap-2 rounded-3xl bg-white p-2 ring-1 ring-black/[.04] transition-shadow duration-300 hover:shadow-[0_14px_30px_-18px_rgba(30,26,51,.4)]">
+              <div className="relative aspect-square overflow-hidden rounded-[20px] bg-[#f6f6f8]">
                 <Link href={`/products/${i.slug}`} className="block h-full">
                   {i.imageUrl ? (
                     <img
                       src={i.imageUrl}
                       alt=""
-                      className="h-full w-full object-contain p-3 mix-blend-multiply"
+                      className="h-full w-full object-contain p-3 mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                     />
                   ) : null}
                 </Link>
@@ -88,7 +89,7 @@ export function WishlistView() {
                   ♥
                 </button>
               </div>
-              <div className="flex flex-1 flex-col gap-1 px-1.5">
+              <div className="flex flex-1 flex-col gap-1 px-2 pb-1">
                 <Link
                   href={`/products/${i.slug}`}
                   className="line-clamp-2 min-h-[39px] text-sm hover:text-brand-600"
@@ -120,7 +121,7 @@ export function WishlistView() {
                 disabled={!canMove || (move.isPending && move.variables === i.id)}
                 onClick={() => move.mutate(i.id)}
                 className={cn(
-                  'h-10 rounded-[14px] text-sm font-bold',
+                  'mx-1 mb-1 h-10 rounded-2xl text-sm font-bold transition-colors',
                   canMove
                     ? 'bg-brand-600 text-white hover:bg-brand-700'
                     : 'bg-gray-100 text-gray-500',

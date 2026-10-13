@@ -97,7 +97,7 @@ export function CartView() {
       {mutate.error ? <Alert tone="error">{mutate.error.message}</Alert> : null}
 
       {empty ? (
-        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-6 py-14 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-6 py-16 text-center ring-1 ring-black/[.04]">
           <span className="flex h-[72px] w-[72px] items-center justify-center rounded-3xl bg-brand-100 text-3xl font-extrabold text-brand-700">
             0
           </span>
@@ -114,8 +114,8 @@ export function CartView() {
         <div className="flex flex-wrap items-start gap-5">
           <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-3.5">
             {cart.groups.map((group, gi) => (
-              <div key={group.vendor.id} className="overflow-hidden rounded-3xl bg-white">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-[18px] py-3.5">
+              <div key={group.vendor.id} className="overflow-hidden rounded-3xl bg-white ring-1 ring-black/[.04]">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50/60 px-[18px] py-3">
                   <div className="flex items-center gap-2.5">
                     <span
                       className={cn(
@@ -136,11 +136,11 @@ export function CartView() {
                 {group.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex gap-3.5 border-b border-gray-100 px-[18px] py-4 last:border-b-0"
+                    className="flex gap-4 border-b border-gray-100 px-[18px] py-[18px] transition-colors last:border-b-0 hover:bg-gray-50/40"
                   >
                     <Link
                       href={`/products/${item.productSlug}`}
-                      className="aspect-square w-[clamp(76px,10vw,100px)] flex-none overflow-hidden rounded-xl bg-gray-50"
+                      className="aspect-square w-[clamp(80px,10vw,104px)] flex-none overflow-hidden rounded-2xl bg-[#f6f6f8]"
                     >
                       {item.imageUrl ? (
                         <img
@@ -195,11 +195,11 @@ export function CartView() {
                         </span>
                       ) : null}
                       <div className="mt-auto flex flex-wrap items-center gap-x-3.5 gap-y-1.5 pt-1.5 text-sm">
-                        <div className="flex items-center rounded-xl bg-gray-50">
+                        <div className="flex items-center rounded-full bg-white ring-1 ring-gray-200">
                           <button
                             type="button"
                             aria-label="Decrease quantity"
-                            className="h-9 w-9 text-lg disabled:opacity-40"
+                            className="h-9 w-9 rounded-full text-lg transition-colors hover:bg-gray-50 disabled:opacity-40"
                             disabled={mutate.isPending || item.quantity <= 1}
                             onClick={() =>
                               mutate.mutate({ kind: 'qty', item, quantity: item.quantity - 1 })
@@ -211,7 +211,7 @@ export function CartView() {
                           <button
                             type="button"
                             aria-label="Increase quantity"
-                            className="h-9 w-9 text-lg disabled:opacity-40"
+                            className="h-9 w-9 rounded-full text-lg transition-colors hover:bg-gray-50 disabled:opacity-40"
                             disabled={mutate.isPending || item.quantity >= item.available}
                             onClick={() =>
                               mutate.mutate({ kind: 'qty', item, quantity: item.quantity + 1 })
@@ -261,9 +261,9 @@ export function CartView() {
                   {saved.data.map((s) => (
                     <div
                       key={s.id}
-                      className="flex items-center gap-3 rounded-[20px] bg-white p-2.5"
+                      className="flex items-center gap-3 rounded-[20px] bg-white p-2.5 ring-1 ring-black/[.04] transition-shadow hover:shadow-[0_10px_24px_-16px_rgba(30,26,51,.35)]"
                     >
-                      <div className="h-16 w-16 flex-none overflow-hidden rounded-[14px] bg-gray-50">
+                      <div className="h-16 w-16 flex-none overflow-hidden rounded-[14px] bg-[#f6f6f8]">
                         {s.imageUrl ? (
                           <img
                             src={s.imageUrl}
