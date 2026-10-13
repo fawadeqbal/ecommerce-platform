@@ -291,20 +291,47 @@ export default async function HomePage() {
 
       {deals.length > 0 ? (
         <Reveal>
-        <section className="flex flex-col gap-5 rounded-4xl bg-brand-600 p-[clamp(18px,3vw,36px)] text-white">
-          <SectionHead
-            eyebrow="Limited time"
-            title="Today’s deals"
-            href="/products?onSale=true"
-            linkLabel="All deals →"
-            tone="light"
-          >
-            <DealsCountdown />
-          </SectionHead>
-          <div className={`${productGrid} text-gray-900`}>
+        <section className="relative grid gap-5 overflow-hidden rounded-4xl bg-[linear-gradient(160deg,#6447e6,#4a2fc4)] p-[clamp(18px,3vw,32px)] text-white md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] md:gap-6">
+          <span aria-hidden className="pointer-events-none absolute -left-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
+          <span aria-hidden className="pointer-events-none absolute -bottom-16 left-40 h-40 w-40 rounded-full bg-accent/25 blur-2xl" />
+
+          {/* Left: the offer */}
+          <div className="relative flex flex-col justify-between gap-5">
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">Limited time</p>
+              <h2 className="text-[clamp(30px,3.6vw,46px)] font-extrabold leading-none tracking-display">
+                Today’s deals
+              </h2>
+              <p className="max-w-[260px] text-[15px] text-white/75">
+                Hand-picked price drops. New deals every day at midnight.
+              </p>
+              <div className="self-start">
+                <DealsCountdown />
+              </div>
+            </div>
+            <Link
+              href="/products?onSale=true"
+              className="group/link inline-flex items-center gap-2 self-start rounded-2xl bg-white px-5 py-3 font-bold text-gray-900 shadow-lg shadow-black/10 transition-colors hover:bg-accent hover:text-gray-900"
+            >
+              See all deals
+              <span aria-hidden className="transition-transform group-hover/link:translate-x-1">→</span>
+            </Link>
+          </div>
+
+          {/* Right: the products, in a swipeable row */}
+          <div className="scrollbar-none relative -mx-[clamp(18px,3vw,32px)] flex snap-x gap-3 overflow-x-auto px-[clamp(18px,3vw,32px)] pb-1 text-gray-900 md:mx-0 md:px-0">
             {deals.map((p) => (
-              <ProductCard key={p.id} product={p} dealPrice />
+              <div key={p.id} className="w-[46%] flex-none snap-start sm:w-[220px]">
+                <ProductCard product={p} dealPrice />
+              </div>
             ))}
+            <Link
+              href="/products?onSale=true"
+              className="flex w-[46%] flex-none snap-start flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/30 p-6 text-center font-bold text-white transition-colors hover:border-white/60 hover:bg-white/5 hover:text-white sm:w-[220px]"
+            >
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-white/15 text-xl">→</span>
+              More deals
+            </Link>
           </div>
         </section>
         </Reveal>
