@@ -34,7 +34,8 @@ export function ProductPurchase({ product }: { product: StorefrontProductDetail 
     [product, selected],
   );
   const available = variant?.available ?? 0;
-  const inCart = cart?.items.find((it) => it.variantId === variant?.id)?.quantity ?? 0;
+  const inCart =
+    cart?.groups.flatMap((g) => g.items).find((it) => it.variantId === variant?.id)?.quantity ?? 0;
 
   /** A value is "possible" when some variant with it (and the other current choices) is in stock. */
   const possible = (attributeId: string, valueId: string) =>
