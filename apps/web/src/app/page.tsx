@@ -5,6 +5,8 @@ import { cn } from '@ecommerce/ui';
 import { ProductCard } from '@/components/catalog/product-card';
 import { BannerStrip } from '@/components/cms/banner-strip';
 import { BrandMarquee } from '@/components/home/brand-marquee';
+import { ProductTabs } from '@/components/home/product-tabs';
+import { Reveal } from '@/components/home/reveal';
 import { DealsCountdown } from '@/components/home/deals-countdown';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { SectionHead, productGrid } from '@/components/home/section-head';
@@ -147,37 +149,26 @@ async function categoryImages(cats: CategoryTreeNode[]): Promise<Record<string, 
   return Object.fromEntries(pairs);
 }
 
-function uniqueStores(lists: StorefrontProductCard[][]) {
-  const seen = new Map<string, { name: string; slug: string; count: number }>();
-  for (const p of lists.flat()) {
-    const s = seen.get(p.vendor.slug) ?? { ...p.vendor, count: 0 };
-    s.count += 1;
-    seen.set(p.vendor.slug, s);
-  }
-  return [...seen.values()].sort((a, b) => b.count - a.count).slice(0, 4);
-}
-
 export default async function HomePage() {
   const [hero, mid, tree, brands, featured, popular, latest, onSale] = await Promise.all([
     getBanners('home.hero'),
     getBanners('home.mid'),
     safe(categoriesApi.tree(), [] as CategoryTreeNode[]),
     safe(brandsApi.list(), [] as BrandDto[]),
-    products({ featured: true, limit: 6 }),
+    products({ featured: true, limit: 10 }),
     products({ sort: 'popular', limit: 40 }),
-    products({ sort: 'newest', limit: 6 }),
+    products({ sort: 'newest', limit: 10 }),
     products({ onSale: true, inStock: true, sort: 'newest', limit: 6 }),
   ]);
   const deals = onSale.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
-  const best = popular.slice(0, 5);
+  const best = popular.slice(0, 10);
   const cats = categoryTiles(tree);
   const catImages = await categoryImages(cats);
-  const stores = uniqueStores([featured, popular, latest]);
   const empty = featured.length + popular.length + latest.length === 0;
 
   return (
     <div
-      className={`${container} flex flex-col gap-[clamp(30px,4vw,56px)] pt-[clamp(14px,2vw,24px)]`}
+      className={`${container} flex flex-col gap-[clamp(44px,5.2vw,76px)] pb-6 pt-[clamp(14px,2vw,24px)]`}
     >
       <section className="flex flex-col gap-3">
         <HeroCarousel
@@ -223,6 +214,7 @@ export default async function HomePage() {
       </section>
 
       {cats.length > 0 ? (
+        <Reveal>
         <section className="relative overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] shadow-card">
           <div
             aria-hidden
@@ -294,9 +286,11 @@ export default async function HomePage() {
             })}
           </div>
         </section>
+        </Reveal>
       ) : null}
 
       {deals.length > 0 ? (
+        <Reveal>
         <section className="flex flex-col gap-5 rounded-4xl bg-brand-600 p-[clamp(18px,3vw,36px)] text-white">
           <SectionHead
             eyebrow="Limited time"
@@ -313,100 +307,29 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+        </Reveal>
       ) : null}
 
-      {featured.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <SectionHead eyebrow="Hand-picked" title="Featured for you" href="/products?featured=true" />
-          <div className={productGrid}>
-            {featured.map((p) => (
-              <ProductCard key={p.id} product={p} quickAdd />
-            ))}
-          </div>
-        </section>
+      {featured.length + best.length + latest.length > 0 ? (
+        <Reveal>
+          <ProductTabs
+            tabs={[
+              { key: 'featured', label: 'Featured', href: '/products?featured=true', products: featured },
+              { key: 'best', label: 'Best sellers', href: '/products?sort=popular', products: best, ranked: true },
+              { key: 'new', label: 'New arrivals', href: '/products?sort=newest', products: latest, badge: 'new' },
+            ]}
+          />
+        </Reveal>
       ) : null}
 
       {mid.length > 0 ? (
-        <div className="overflow-hidden rounded-4xl">
+        <Reveal>
           <BannerStrip banners={mid} variant="strip" />
-        </div>
-      ) : (
-        <section className="relative flex min-h-[clamp(220px,22vw,300px)] items-center overflow-hidden rounded-4xl bg-accent">
-          <div aria-hidden className="absolute inset-y-0 right-0 hidden w-1/2 md:block">
-            <span className="absolute -right-10 -top-10 h-80 w-80 rounded-full bg-white/40" />
-            <span className="absolute bottom-6 right-56 h-28 w-28 rounded-3xl bg-brand-600" />
-          </div>
-          <div className="relative flex max-w-full flex-col gap-2.5 p-[clamp(24px,4vw,52px)] md:max-w-[52%]">
-            <span className="text-sm font-bold">New every week · from all our stores</span>
-            <h2 className="text-balance text-[clamp(30px,4.4vw,56px)] font-extrabold leading-[.95] tracking-display">
-              Fresh arrivals, fair prices
-            </h2>
-            <Link
-              href="/products?sort=newest"
-              className="mt-1.5 self-start rounded-2xl bg-gray-900 px-6 py-3.5 font-bold text-white hover:text-white hover:opacity-90"
-            >
-              Shop new in
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {best.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <SectionHead eyebrow="Trending now" title="Best sellers" href="/products?sort=popular" />
-          <div className={productGrid}>
-            {best.map((p, i) => (
-              <ProductCard key={p.id} product={p} rank={i + 1} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {stores.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <SectionHead eyebrow="Verified sellers" title="Stores people love" />
-          <div className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] md:overflow-visible md:px-0">
-            {stores.map((s, i) => (
-              <Link
-                key={s.slug}
-                href={`/stores/${s.slug}`}
-                className="group flex w-[82%] flex-none snap-start items-center gap-3.5 rounded-3xl bg-white p-4 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:text-gray-900 hover:shadow-card sm:w-[48%] md:w-auto"
-              >
-                <span
-                  className={cn(
-                    'flex h-16 w-16 flex-none items-center justify-center rounded-2xl text-[26px] font-extrabold ring-4 ring-white transition-transform duration-300 group-hover:scale-105',
-                    TINTS[(i + 1) % TINTS.length],
-                  )}
-                >
-                  {s.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate text-base font-bold">{s.name}</span>
-                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-emerald-700">
-                    <span aria-hidden>✓</span> Verified seller
-                  </span>
-                </span>
-                <span className="rounded-full bg-brand-100 px-3.5 py-2 text-[13px] font-bold text-brand-700 transition-colors group-hover:bg-brand-600 group-hover:text-white">
-                  Visit →
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {latest.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <SectionHead eyebrow="Just landed" title="New arrivals" href="/products?sort=newest" />
-          <div className={productGrid}>
-            {latest.map((p) => (
-              <ProductCard key={p.id} product={p} badge="new" />
-            ))}
-          </div>
-        </section>
+        </Reveal>
       ) : null}
 
       {brands.length > 0 ? (
+        <Reveal>
         <section className="relative flex flex-col gap-5 overflow-hidden rounded-4xl bg-white py-[clamp(16px,2.6vw,32px)] shadow-card">
           <div
             aria-hidden
@@ -417,14 +340,16 @@ export default async function HomePage() {
           </div>
           <BrandMarquee brands={brands.slice(0, 24)} />
         </section>
+        </Reveal>
       ) : null}
 
+      <Reveal>
       <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] gap-3">
-        <div className="flex flex-col gap-3.5 rounded-4xl bg-gray-900 p-[clamp(22px,3.4vw,44px)] text-white">
+        <div className="flex flex-col gap-3.5 rounded-4xl bg-white p-[clamp(22px,3.4vw,44px)] ring-1 ring-black/[.04]">
           <span className="self-start rounded-full bg-accent px-3 py-1.5 text-[13px] font-bold text-gray-900">
             Rewards
           </span>
-          <h2 className="text-balance text-[clamp(28px,3.6vw,44px)] font-extrabold leading-none tracking-display text-white">
+          <h2 className="text-balance text-[clamp(28px,3.6vw,44px)] font-extrabold leading-none tracking-display text-gray-900">
             Every order earns you points
           </h2>
           <div className="grid grid-cols-3 gap-2">
@@ -433,16 +358,16 @@ export default async function HomePage() {
               ['Redeem', 'Save', 'at checkout'],
               ['Tiers', 'More', 'as you shop more'],
             ].map(([name, big, note]) => (
-              <div key={name} className="flex flex-col gap-0.5 rounded-[18px] bg-white/[.08] p-3.5">
-                <span className="text-[13px] text-gray-300">{name}</span>
-                <span className="text-2xl font-extrabold text-white">{big}</span>
-                <span className="text-xs text-gray-400">{note}</span>
+              <div key={name} className="flex flex-col gap-0.5 rounded-[18px] bg-gray-50 p-3.5">
+                <span className="text-[13px] text-gray-500">{name}</span>
+                <span className="text-2xl font-extrabold text-brand-700">{big}</span>
+                <span className="text-xs text-gray-500">{note}</span>
               </div>
             ))}
           </div>
           <Link
             href="/account/loyalty"
-            className="self-start rounded-2xl bg-white px-[22px] py-[13px] font-bold text-gray-900 hover:text-brand-600"
+            className="self-start rounded-2xl bg-gray-900 px-[22px] py-[13px] font-bold text-white hover:bg-brand-700 hover:text-white"
           >
             See my points
           </Link>
@@ -463,6 +388,7 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+      </Reveal>
 
       {empty ? (
         <p className="text-center text-gray-500">
