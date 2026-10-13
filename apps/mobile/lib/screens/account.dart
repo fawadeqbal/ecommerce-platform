@@ -48,6 +48,7 @@ class AccountScreen extends ConsumerWidget {
           _Item(Icons.favorite_border, 'Wishlist', '/account/wishlist'),
           _Item(Icons.star_border_rounded, 'Points & rewards', '/account/points'),
           _Item(Icons.place_outlined, 'Addresses', '/account/addresses'),
+          _Item(Icons.person_outline, 'Profile & password', '/account/profile'),
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () => ref.read(sessionProvider.notifier).logout(),

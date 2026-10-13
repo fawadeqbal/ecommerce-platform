@@ -7,6 +7,7 @@ import '../checkout_api.dart';
 import '../providers.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'order_actions.dart';
 
 /// Order placed / order detail. While a card payment is pending it polls the API (the Stripe
 /// webhook confirms it), and offers "Pay now" to reopen the gateway page.
@@ -140,6 +141,7 @@ class _OrderState extends ConsumerState<OrderScreen> with WidgetsBindingObserver
               ]),
             ]),
           ),
+          OrderActions(order: o, onChanged: _load),
           const SizedBox(height: 16),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Brand.ink),
