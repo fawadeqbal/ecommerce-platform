@@ -25,7 +25,26 @@ export function ProductGallery({
   const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null);
   const [full, setFull] = useState(false);
   const touchX = useRef<number | null>(null);
-  const go = useCallback((k: number) => setI(((k % n) + n) % n), [n]);
+  const [dir, setDir] = useState(1);
+  const [lbZoom, setLbZoom] = useState<{ x: number; y: number } | null>(null);
+  const railRef = useRef<HTMLDivElement>(null);
+  const go = useCallback(
+    (k: number) => {
+      setI((prev) => {
+        const next = ((k % n) + n) % n;
+        setDir(next >= prev ? 1 : -1);
+        return next;
+      });
+      setLbZoom(null);
+    },
+    [n],
+  );
+  // Keep the active thumbnail in view.
+  useEffect(() => {
+    railRef.current
+      ?.querySelectorAll('[data-thumb]')
+      [i]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }, [i]);
   const cur = list[i]!;
 
   useEffect(() => {
@@ -87,13 +106,14 @@ export function ProductGallery({
             type="button"
             aria-label={`Photo ${k + 1}`}
             aria-current={k === i}
-            onMouseEnter={() => !dark && setI(k)}
-            onClick={() => setI(k)}
+            data-thumb
+            onMouseEnter={() => !dark && k !== i && go(k)}
+            onClick={() => go(k)}
             className={cn(
               'relative h-[72px] w-[72px] flex-none overflow-hidden rounded-2xl p-1.5 transition-all duration-200',
               dark ? 'bg-white/10' : 'bg-white',
               k === i
-                ? 'ring-2 ring-brand-600'
+                ? 'scale-[1.04] ring-2 ring-brand-600 shadow-[0_6px_16px_-6px_rgba(83,43,199,.5)]'
                 : cn('ring-1', dark ? 'opacity-60 ring-white/10 hover:opacity-100' : 'ring-gray-200 hover:ring-gray-300'),
             )}
           >
@@ -126,12 +146,12 @@ export function ProductGallery({
             key={cur.url}
             src={cur.url}
             alt={cur.altText ?? name}
-            className="h-full w-full animate-fade-in object-contain p-[6%] mix-blend-multiply transition-transform duration-200 ease-out"
-            style={
-              zoom
-                ? { transform: 'scale(2)', transformOrigin: `${zoom.x}% ${zoom.y}%` }
-                : undefined
-            }
+            className="gal-in h-full w-full object-contain p-[6%] mix-blend-multiply transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] will-change-transform"
+            style={{
+              ['--gal-dx' as string]: `${dir * 28}px`,
+              transform: zoom ? 'scale(2.2)' : 'scale(1)',
+              transformOrigin: zoom ? `${zoom.x}% ${zoom.y}%` : '50% 50%',
+            }}
           />
         ) : (
           <div className="grid h-full place-items-center text-6xl text-gray-300">🛍️</div>
@@ -142,7 +162,7 @@ export function ProductGallery({
           </span>
         ) : null}
         {n > 1 ? (
-          <span className="absolute bottom-4 left-4 rounded-full bg-gray-900/70 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+          <span className="absolute bottom-4 left-4 hidden rounded-full bg-gray-900/70 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm md:block">
             {i + 1} / {n}
           </span>
         ) : null}
@@ -153,10 +173,28 @@ export function ProductGallery({
         ) : null}
         {arrow(-1)}
         {arrow(1)}
+        {n > 1 ? (
+          <div className="absolute inset-x-0 bottom-4 flex justify-center gap-1.5 md:hidden">
+            {list.map((_, k) => (
+              <span
+                key={k}
+                className={cn(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  k === i ? 'w-5 bg-brand-600' : 'w-1.5 bg-gray-300',
+                )}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
+      <style>
+        {'.gal-in{animation:gal-in .45s cubic-bezier(.22,1,.36,1) both}' +
+          '@keyframes gal-in{from{opacity:0;translate:var(--gal-dx,28px) 0}to{opacity:1;translate:0 0}}' +
+          '@media (prefers-reduced-motion:reduce){.gal-in{animation:none}}'}
+      </style>
 
       {/* Thumbnails: rail on desktop, row on phones */}
-      <div className="md:max-h-[560px]">
+      <div ref={railRef} className="md:max-h-[560px]">
         <div className="hidden h-full md:block">{thumbs(true)}</div>
         <div className="md:hidden">{thumbs(false)}</div>
       </div>
@@ -174,6 +212,7 @@ export function ProductGallery({
             <div className="flex items-center justify-between px-5 py-4 text-white">
               <span className="truncate text-sm font-semibold text-white/80">
                 {name} · {i + 1} / {n}
+                <span className="ml-2 hidden text-white/50 sm:inline">· click photo to zoom</span>
               </span>
               <button
                 type="button"
@@ -185,13 +224,36 @@ export function ProductGallery({
               </button>
             </div>
             <div className="relative flex min-h-0 flex-1 items-center justify-center px-4" {...swipe}>
-              <img
-                key={cur.url}
-                src={cur.url}
-                alt={cur.altText ?? name}
-                onClick={(e) => e.stopPropagation()}
-                className="max-h-full max-w-full animate-pop-in rounded-2xl bg-white object-contain p-4"
-              />
+              <div
+                className="max-h-full max-w-full overflow-hidden rounded-2xl bg-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const r = e.currentTarget.getBoundingClientRect();
+                  setLbZoom((z) =>
+                    z ? null : { x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 },
+                  );
+                }}
+                onMouseMove={(e) => {
+                  if (!lbZoom) return;
+                  const r = e.currentTarget.getBoundingClientRect();
+                  setLbZoom({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
+                }}
+              >
+                <img
+                  key={cur.url}
+                  src={cur.url}
+                  alt={cur.altText ?? name}
+                  className={cn(
+                    'gal-in max-h-[calc(100dvh-200px)] max-w-full object-contain p-4 transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)]',
+                    lbZoom ? 'cursor-zoom-out' : 'cursor-zoom-in',
+                  )}
+                  style={{
+                    ['--gal-dx' as string]: `${dir * 40}px`,
+                    transform: lbZoom ? 'scale(2.5)' : 'scale(1)',
+                    transformOrigin: lbZoom ? `${lbZoom.x}% ${lbZoom.y}%` : '50% 50%',
+                  }}
+                />
+              </div>
               {arrow(-1, true)}
               {arrow(1, true)}
             </div>
