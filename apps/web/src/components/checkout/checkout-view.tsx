@@ -330,7 +330,7 @@ export function CheckoutView() {
             return (
               <li key={st.label} className="relative flex flex-1 flex-col items-center">
                 {i < steps.length - 1 ? (
-                  <span aria-hidden className="absolute left-1/2 right-[-50%] top-[17px] h-[3px] rounded-full bg-gray-100">
+                  <span aria-hidden className="absolute left-1/2 right-[-50%] top-[15px] h-[2px] rounded-full bg-gray-100">
                     <span
                       className={cn(
                         'block h-full rounded-full bg-brand-600 transition-[width] duration-500 ease-out',
@@ -347,12 +347,11 @@ export function CheckoutView() {
                 >
                   <span
                     className={cn(
-                      'grid h-9 w-9 place-items-center rounded-full text-sm font-extrabold transition-all duration-300',
+                      'grid h-8 w-8 place-items-center rounded-full text-[13px] font-bold transition-colors duration-300',
                       status === 'done' && 'bg-brand-600 text-white',
-                      status === 'current' &&
-                        'bg-white text-brand-700 ring-[3px] ring-brand-600 shadow-[0_0_0_6px_rgba(100,71,230,.12)]',
-                      status === 'error' && 'bg-red-500 text-white shadow-[0_0_0_6px_rgba(239,68,68,.12)]',
-                      status === 'todo' && 'bg-gray-100 text-gray-400 group-hover:bg-gray-200',
+                      status === 'current' && 'bg-white text-brand-700 ring-2 ring-brand-600',
+                      status === 'error' && 'bg-red-500 text-white',
+                      status === 'todo' && 'bg-gray-100 text-gray-400',
                     )}
                   >
                     {status === 'done' ? '✓' : status === 'error' ? '!' : i + 1}
