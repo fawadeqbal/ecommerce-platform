@@ -9,7 +9,7 @@ import { ProductTabs } from '@/components/home/product-tabs';
 import { Reveal } from '@/components/home/reveal';
 import { DealsCountdown } from '@/components/home/deals-countdown';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
-import { SectionHead, productGrid } from '@/components/home/section-head';
+import { SectionHead } from '@/components/home/section-head';
 import { container } from '@/components/layout/container';
 import { getBanners } from '@/lib/cms';
 import { brandsApi, categoriesApi, storefrontApi } from '@/lib/api-client';
