@@ -8,7 +8,6 @@ import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { container } from './container';
 import { HeaderActions } from './header-actions';
 import { CategoryNav, type NavItem } from './category-nav';
-import { FlashDeals } from './flash-deals';
 import { HeaderShell } from './header-shell';
 import { StoreLogo } from './store-logo';
 
@@ -117,7 +116,6 @@ export async function SiteHeader() {
           >
             <CategoryNav items={nav} />
           </Suspense>
-          <FlashDeals />
         </nav>
       </div>
     </>
