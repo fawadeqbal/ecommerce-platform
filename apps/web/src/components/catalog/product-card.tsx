@@ -34,10 +34,10 @@ export function ProductCard({
   const discount = p.compareAtPrice ? Math.round((1 - p.price / p.compareAtPrice) * 100) : 0;
   const href = `/products/${p.slug}`;
   return (
-    <div className="group relative flex flex-col gap-2 rounded-2xl bg-white p-2 transition-shadow hover:shadow-card">
+    <div className="group relative flex flex-col gap-2.5 rounded-[22px] bg-white p-2 ring-1 ring-black/[.04] transition-shadow duration-300 hover:shadow-[0_16px_34px_-20px_rgba(30,26,51,.45)]">
       <Link
         href={href}
-        className="relative block aspect-square overflow-hidden rounded-xl bg-gray-50"
+        className="relative block aspect-square overflow-hidden rounded-2xl bg-[#f6f6f8]"
         tabIndex={-1}
         aria-hidden
       >
@@ -45,7 +45,10 @@ export function ProductCard({
           <img
             src={p.imageUrl}
             alt=""
-            className="h-full w-full object-contain p-3 mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.03]"
+            className={cn(
+              'h-full w-full object-contain p-[10%] mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.04]',
+              !p.inStock && 'opacity-50 grayscale',
+            )}
             loading="lazy"
           />
         ) : (
@@ -54,23 +57,23 @@ export function ProductCard({
           </span>
         )}
         {rank === undefined && discount > 0 ? (
-          <span className="pointer-events-none absolute left-2 top-2 -rotate-[4deg] rounded-full bg-accent px-[9px] py-1 text-[13px] font-extrabold text-gray-900">
+          <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-lg bg-accent px-2 py-[3px] text-[12px] font-extrabold text-gray-900">
             −{discount}%
           </span>
         ) : null}
         {rank === undefined && discount <= 0 && badge === 'new' ? (
-          <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-brand-600 px-2.5 py-1 text-xs font-bold text-white">
+          <span className="pointer-events-none absolute left-2.5 top-2.5 rounded-lg bg-brand-600 px-2 py-[3px] text-[11px] font-bold uppercase tracking-wide text-white">
             New
           </span>
         ) : null}
         {!p.inStock ? (
-          <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-gray-900/80 px-2.5 py-1 text-xs font-semibold text-white">
+          <span className="pointer-events-none absolute bottom-2.5 left-2.5 rounded-lg bg-white/90 px-2 py-[3px] text-[11px] font-semibold text-gray-700 ring-1 ring-black/5">
             Out of stock
           </span>
         ) : null}
       </Link>
       {wishlist ? (
-        <span className="absolute right-4 top-4">
+        <span className="absolute right-[14px] top-[14px]">
           <WishlistButton productId={p.id} slug={p.slug} variant="icon" />
         </span>
       ) : null}
@@ -84,35 +87,39 @@ export function ProductCard({
           {rank}
         </span>
       ) : null}
-      <div className="flex flex-1 flex-col gap-1 px-1.5 pb-1.5">
+      <div className="flex flex-1 flex-col gap-1.5 px-2 pb-2">
         {p.brandName || p.ratingCount > 0 ? (
-          <p className="text-xs text-gray-500">
-            {p.brandName}
-            {p.brandName && p.ratingCount > 0 ? ' · ' : ''}
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="truncate font-medium uppercase tracking-wide text-gray-400">
+              {p.brandName}
+            </span>
             {p.ratingCount > 0 ? (
-              <>
-                <span className="font-semibold text-gray-900">★ {p.ratingAverage.toFixed(1)}</span>{' '}
-                ({p.ratingCount})
-              </>
+              <span className="flex flex-none items-center gap-1 font-semibold text-gray-700">
+                <span className="text-amber-400">★</span>
+                {p.ratingAverage.toFixed(1)}
+                <span className="font-normal text-gray-400">({p.ratingCount})</span>
+              </span>
             ) : null}
+          </div>
+        ) : null}
           </p>
         ) : null}
         <Link
           href={href}
-          className="line-clamp-2 min-h-[39px] text-sm text-gray-900 hover:text-brand-600"
+          className="line-clamp-2 min-h-[40px] text-[14px] font-medium leading-snug text-gray-900 hover:text-brand-600"
         >
           {p.name}
         </Link>
         <div className="mt-auto flex items-end justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-          <span className={cn('text-[17px] font-extrabold', dealPrice && 'text-brand-600')}>
+          <span className={cn('text-[18px] font-extrabold tracking-[-0.02em] text-gray-900', dealPrice && 'text-brand-600')}>
             {p.hasOptions ? (
               <span className="text-xs font-semibold text-gray-500">From </span>
             ) : null}
             <Money amount={p.price} currency={p.currency} />
           </span>
           {p.compareAtPrice ? (
-            <span className="text-xs text-gray-500 line-through">
+            <span className="text-xs text-gray-400 line-through">
               <Money amount={p.compareAtPrice} currency={p.currency} />
             </span>
           ) : null}
