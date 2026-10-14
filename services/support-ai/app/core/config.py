@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]   # the backend/ folder
 load_dotenv(BASE_DIR / ".env")                # this service's own overrides (optional)
-load_dotenv(BASE_DIR.parents[1] / ".env")     # the monorepo .env (SUPPORT_AI_*, STORE_*, ANTHROPIC_API_KEY)
+if len(BASE_DIR.parents) > 1: load_dotenv(BASE_DIR.parents[1] / ".env")   # monorepo .env (not there in Docker)
 
 # ---- databases ----
 # Own tables (chats, messages, knowledge base): a separate database, created on first start.
