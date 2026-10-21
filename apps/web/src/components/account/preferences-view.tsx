@@ -27,7 +27,7 @@ import { queryKeys, usersApi } from '@/lib/api-client';
 export function PreferencesView() {
   return (
     <div className="space-y-6">
-      <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+      <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading text-gray-900">
         Preferences
       </h1>
       <EmailPreferencesCard />

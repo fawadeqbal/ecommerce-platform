@@ -39,7 +39,7 @@ export function MyOrders() {
 
   return (
     <>
-      <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em]">My orders</h1>
+      <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading">My orders</h1>
       <div className="scrollbar-none flex gap-1.5 overflow-x-auto">
         {FILTERS.map((f) => (
           <button
@@ -82,7 +82,7 @@ export function MyOrders() {
           href={`/account/orders/${encodeURIComponent(o.orderNumber)}`}
           className="flex flex-wrap items-center gap-x-[18px] gap-y-3 rounded-3xl bg-white px-[18px] py-4 hover:text-gray-900 hover:shadow-card"
         >
-          <span className="h-[52px] w-[52px] flex-none overflow-hidden rounded-[14px] bg-gray-50">
+          <span className="h-[52px] w-[52px] flex-none overflow-hidden rounded-[8px] bg-gray-50">
             {o.imageUrl ? (
               <img
                 src={o.imageUrl}

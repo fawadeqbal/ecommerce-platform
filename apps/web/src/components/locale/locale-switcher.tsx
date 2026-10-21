@@ -51,7 +51,7 @@ function HeaderPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className={cn(headerChip, 'px-3', open && 'bg-white/25')}
+        className={cn(headerChip, 'px-3', open && 'border-gray-900')}
       >
         {display}
         <ChevronDownIcon size={15} className={cn('transition-transform', open && 'rotate-180')} />

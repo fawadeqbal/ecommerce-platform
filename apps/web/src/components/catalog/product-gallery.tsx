@@ -83,12 +83,23 @@ export function ProductGallery({
           go(i + dir);
         }}
         className={cn(
-          'absolute top-1/2 z-10 grid -translate-y-1/2 place-items-center rounded-full bg-white/95 text-xl font-bold text-gray-900 shadow-lg transition-all hover:scale-105 hover:bg-white',
-          big ? 'h-12 w-12' : 'h-10 w-10 opacity-0 group-hover/stage:opacity-100',
+          'absolute top-1/2 z-10 grid -translate-y-1/2 place-items-center rounded-full bg-white text-gray-900 shadow-[0_6px_18px_-8px_rgba(23,21,19,.45)] transition-all duration-200 hover:bg-gray-900 hover:text-white',
+          big
+            ? 'h-12 w-12'
+            : 'h-10 w-10 opacity-0 group-hover/stage:opacity-100 focus-visible:opacity-100',
           dir < 0 ? (big ? 'left-4' : 'left-3') : big ? 'right-4' : 'right-3',
         )}
       >
-        {dir < 0 ? '‹' : '›'}
+        <svg viewBox="0 0 16 16" aria-hidden className={cn('h-4 w-4', dir < 0 && 'rotate-180')}>
+          <path
+            d="m6 3 5 5-5 5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     ) : null;
 
@@ -96,7 +107,7 @@ export function ProductGallery({
     n > 1 ? (
       <div
         className={cn(
-          'scrollbar-none flex gap-2.5 p-1.5',
+          'scrollbar-none flex gap-2 p-0.5',
           vertical ? 'flex-col overflow-y-auto' : 'overflow-x-auto',
         )}
       >
@@ -110,11 +121,14 @@ export function ProductGallery({
             onMouseEnter={() => !dark && k !== i && go(k)}
             onClick={() => go(k)}
             className={cn(
-              'relative h-[72px] w-[72px] flex-none overflow-hidden rounded-2xl p-1.5 transition-all duration-200',
-              dark ? 'bg-white/10' : 'bg-[#f6f6f8]',
+              'relative h-[76px] w-[64px] flex-none overflow-hidden rounded-md p-1 transition-all duration-200',
+              dark ? 'bg-white/10' : 'bg-canvas',
               k === i
-                ? 'scale-[1.04] ring-2 ring-brand-600 shadow-[0_6px_16px_-6px_rgba(83,43,199,.5)]'
-                : cn('ring-1', dark ? 'opacity-60 ring-white/10 hover:opacity-100' : 'ring-gray-200 hover:ring-gray-300'),
+                ? cn('ring-[1.5px]', dark ? 'ring-white' : 'ring-gray-900')
+                : cn(
+                    'ring-1 ring-transparent',
+                    dark ? 'opacity-50 hover:opacity-100' : 'opacity-70 hover:opacity-100',
+                  ),
             )}
           >
             <img
@@ -131,11 +145,14 @@ export function ProductGallery({
     <div className="flex flex-col gap-3 md:flex-row-reverse">
       {/* Stage */}
       <div
-        className="group/stage relative aspect-square min-w-0 flex-1 cursor-zoom-in overflow-hidden rounded-[28px] bg-[#f6f6f8] ring-1 ring-black/[.04]"
+        className="group/stage relative aspect-[4/5] min-w-0 flex-1 cursor-zoom-in overflow-hidden rounded-md bg-canvas sm:aspect-square"
         onMouseMove={(e) => {
           if (!window.matchMedia('(hover: hover)').matches) return;
           const r = e.currentTarget.getBoundingClientRect();
-          setZoom({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
+          setZoom({
+            x: ((e.clientX - r.left) / r.width) * 100,
+            y: ((e.clientY - r.top) / r.height) * 100,
+          });
         }}
         onMouseLeave={() => setZoom(null)}
         onClick={() => cur.url && setFull(true)}
@@ -154,21 +171,21 @@ export function ProductGallery({
             }}
           />
         ) : (
-          <div className="grid h-full place-items-center text-6xl text-gray-300">🛍️</div>
+          <div className="grid h-full place-items-center text-sm text-gray-400">No photo yet</div>
         )}
         {discount ? (
-          <span className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-sm font-extrabold text-gray-900">
+          <span className="absolute left-4 top-4 rounded-sm bg-sale px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-white">
             −{discount}%
           </span>
         ) : null}
         {n > 1 ? (
-          <span className="absolute bottom-4 left-4 hidden rounded-full bg-gray-900/70 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm md:block">
+          <span className="absolute bottom-4 left-4 hidden text-[12px] font-semibold tabular-nums tracking-[0.08em] text-gray-900 md:block">
             {i + 1} / {n}
           </span>
         ) : null}
         {cur.url ? (
-          <span className="pointer-events-none absolute bottom-4 right-4 hidden items-center gap-1.5 rounded-full bg-white/90 opacity-0 transition-opacity group-hover/stage:opacity-100 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm md:flex">
-            🔍 Hover to zoom · click to expand
+          <span className="pointer-events-none absolute bottom-4 right-4 hidden items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-gray-900 opacity-0 transition-opacity duration-300 group-hover/stage:opacity-100 md:flex">
+            Click to expand
           </span>
         ) : null}
         {arrow(-1)}
@@ -180,7 +197,7 @@ export function ProductGallery({
                 key={k}
                 className={cn(
                   'h-1.5 rounded-full transition-all duration-300',
-                  k === i ? 'w-5 bg-brand-600' : 'w-1.5 bg-gray-300',
+                  k === i ? 'w-5 bg-gray-900' : 'w-1.5 bg-gray-300',
                 )}
               />
             ))}
@@ -206,7 +223,7 @@ export function ProductGallery({
             role="dialog"
             aria-modal="true"
             aria-label={`${name} photos`}
-            className="fixed inset-0 z-[100] flex animate-fade-in flex-col bg-[#120d2b]/95 backdrop-blur-md"
+            className="fixed inset-0 z-[100] flex animate-fade-in flex-col bg-gray-950/95 backdrop-blur-md"
             onClick={() => setFull(false)}
           >
             <div className="flex items-center justify-between px-5 py-4 text-white">
@@ -223,20 +240,31 @@ export function ProductGallery({
                 ×
               </button>
             </div>
-            <div className="relative flex min-h-0 flex-1 items-center justify-center px-4" {...swipe}>
+            <div
+              className="relative flex min-h-0 flex-1 items-center justify-center px-4"
+              {...swipe}
+            >
               <div
-                className="max-h-full max-w-full overflow-hidden rounded-2xl bg-white"
+                className="max-h-full max-w-full overflow-hidden rounded-md bg-canvas"
                 onClick={(e) => {
                   e.stopPropagation();
                   const r = e.currentTarget.getBoundingClientRect();
                   setLbZoom((z) =>
-                    z ? null : { x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 },
+                    z
+                      ? null
+                      : {
+                          x: ((e.clientX - r.left) / r.width) * 100,
+                          y: ((e.clientY - r.top) / r.height) * 100,
+                        },
                   );
                 }}
                 onMouseMove={(e) => {
                   if (!lbZoom) return;
                   const r = e.currentTarget.getBoundingClientRect();
-                  setLbZoom({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
+                  setLbZoom({
+                    x: ((e.clientX - r.left) / r.width) * 100,
+                    y: ((e.clientY - r.top) / r.height) * 100,
+                  });
                 }}
               >
                 <img
@@ -244,7 +272,7 @@ export function ProductGallery({
                   src={cur.url}
                   alt={cur.altText ?? name}
                   className={cn(
-                    'gal-in max-h-[calc(100dvh-200px)] max-w-full object-contain p-4 transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)]',
+                    'gal-in max-h-[calc(100dvh-200px)] max-w-full object-contain p-4 mix-blend-multiply transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)]',
                     lbZoom ? 'cursor-zoom-out' : 'cursor-zoom-in',
                   )}
                   style={{

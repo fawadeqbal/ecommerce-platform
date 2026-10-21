@@ -2,37 +2,39 @@
 import Link from 'next/link';
 import { cn } from '@ecommerce/ui';
 
-/** Store name with the dot mark (or the uploaded logo). `tone` = on violet (header) or on white. */
+/**
+ * Store wordmark (or the uploaded logo). `tone` = ink on light backgrounds (default)
+ * or bone on dark ones (footer band, campaign tiles).
+ */
 export function StoreLogo({
   name,
   logoUrl,
-  tone = 'light',
+  tone = 'dark',
   href = '/',
+  className,
 }: {
   name: string;
   logoUrl?: string | null;
   tone?: 'light' | 'dark';
   href?: string | null;
+  className?: string;
 }) {
   const mark = logoUrl ? (
     <img src={logoUrl} alt={name} className="h-8 w-auto" />
   ) : (
     <span
       className={cn(
-        'flex items-center gap-1.5 font-extrabold leading-none tracking-display',
-        tone === 'light' ? 'text-[27px] tracking-[-0.8px] text-white' : 'text-[26px] text-gray-900',
+        'group/logo flex items-center gap-2 leading-none',
+        tone === 'light' ? 'text-gray-50' : 'text-gray-900',
+        className,
       )}
     >
-      {/* Mark: the "e-cart" — an e that becomes a cart, with yellow wheels. */}
-      <EcartMark tone={tone} className="mr-0.5 h-9 w-9 flex-none" />
-      {name}
-      <span aria-hidden className={cn('-ml-1.5', tone === 'light' ? 'text-accent' : 'text-brand-600')}>
-        .
-      </span>
+      <KadamMark className="h-7 w-7 flex-none" />
+      <span className="type-display text-[30px] tracking-[0.02em]">{name}</span>
     </span>
   );
   return href ? (
-    <Link href={href} aria-label={`${name} home`} className="shrink-0">
+    <Link href={href} aria-label={`${name} home`} className="shrink-0 hover:text-inherit">
       {mark}
     </Link>
   ) : (
@@ -40,16 +42,34 @@ export function StoreLogo({
   );
 }
 
-/** The brand mark (e-cart). Light = for the violet header, dark = for white backgrounds. */
-export function EcartMark({ tone = 'light', className }: { tone?: 'light' | 'dark'; className?: string }) {
-  const ink = tone === 'light' ? '#fff' : '#1E1A33';
-  const arc = tone === 'light' ? '#fff' : '#5B3FD9';
+/**
+ * The KADAM mark: two forward-leaning strides inside a square. Uses currentColor for the
+ * frame so it follows the text colour; the leading stride is always clay. On hover of the
+ * wordmark the strides step forward a little.
+ */
+export function KadamMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 64 64" aria-hidden className={className}>
-      <path d="M4 9h5l2.5 6" fill="none" stroke={ink} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M17 29h30a15 15 0 1 0-4.4 10.6" fill="none" stroke={arc} strokeWidth={7.5} strokeLinecap="round" />
-      <circle cx="22" cy="55" r="5" fill={tone === 'light' ? '#FFD12E' : '#1E1A33'} />
-      <circle cx="42" cy="55" r="5" fill="#FFD12E" />
+    <svg viewBox="0 0 32 32" aria-hidden className={className}>
+      <rect
+        x="1.5"
+        y="1.5"
+        width="29"
+        height="29"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <path
+        d="M9 23 13.5 9h4L13 23z"
+        fill="currentColor"
+        className="transition-transform duration-300 ease-out group-hover/logo:-translate-x-[1px]"
+      />
+      <path
+        d="M16 23 20.5 9h4L20 23z"
+        fill="#cf5a2a"
+        className="transition-transform duration-300 ease-out group-hover/logo:translate-x-[1.5px]"
+      />
     </svg>
   );
 }

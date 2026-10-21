@@ -6,8 +6,8 @@ import { ProductCard } from './product-card';
 function Row({ title, products }: { title: string; products: StorefrontProductCard[] }) {
   if (products.length === 0) return null;
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="text-[clamp(24px,2.8vw,34px)] font-extrabold tracking-heading">{title}</h2>
+    <section className="flex flex-col gap-7">
+      <h2 className="type-display text-[clamp(36px,4.4vw,60px)]">{title}</h2>
       <div className={productGrid}>
         {products.map((p) => (
           <ProductCard key={p.id} product={p} quickAdd />

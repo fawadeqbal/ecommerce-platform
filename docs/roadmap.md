@@ -12,6 +12,10 @@ We build one entity at a time through every layer:
 **Where we are:** Phase 1 and Phase 2 done (payments run on the mock gateway until a real one is plugged in).
 Phase 3 done (steps 12–19, 18b). **Phase 4 — scope completion — in progress. Next: step 32.** (Step 22 support is deferred: it will be built together with the RAG support assistant. Step 33a connected the assistant; step 33b adds tickets.)
 
+**Storefront theme:** the web app now uses the **KADAM** footwear design system (tokens, header, mega menu,
+product card hover swap, size picker, sticky add-to-bag, bag drawer, home sections). See `apps/web/DESIGN_SYSTEM.md`.
+`StorefrontProductCard` gained `hoverImageUrl` (no migration).
+
 **Migrations so far** (`packages/database/prisma/migrations/`): `init` → vendor `statusReason` →
 product `rejectionReason` (`pnpm db:migrate --name product_rejection_reason`, Step 6b). Steps 7–10 needed no migration. Step 11: `vendor_order_shipping_method` (VendorOrder.shippingRateId /
 shippingMethod snapshot). Step 12: `return_request_vendor_order` (ReturnRequest.vendorOrderId / decisionNote / refundedAt). Step 25: `commission_rules_only`

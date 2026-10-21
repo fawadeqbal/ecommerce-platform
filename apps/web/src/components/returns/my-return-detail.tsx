@@ -58,7 +58,7 @@ export function MyReturnDetail({ rmaNumber }: { rmaNumber: string }) {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading text-gray-900">
             Return {r.rmaNumber}
           </h1>
           <p className="text-sm text-gray-500">

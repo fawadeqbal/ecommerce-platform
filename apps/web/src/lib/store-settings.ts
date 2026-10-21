@@ -6,4 +6,4 @@ export async function getStoreSettings(): Promise<PublicStoreSettings | null> {
   return settingsApi.public({ next: { revalidate: 60 } }).catch(() => null);
 }
 
-export const storeName = (s: PublicStoreSettings | null) => s?.name || 'Ecommerce';
+export const storeName = (s: PublicStoreSettings | null) => s?.name || 'KADAM';

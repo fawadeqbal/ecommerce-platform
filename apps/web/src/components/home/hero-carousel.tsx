@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PublicBannerDto } from '@ecommerce/types';
 import { cn } from '@ecommerce/ui';
+import { container } from '@/components/layout/container';
 
 export interface HeroProduct {
   name: string;
@@ -20,16 +21,23 @@ export interface HeroSlide {
   href: string;
   /** Tailwind background class. */
   bg: string;
-  /** Live products shown on the slide (up to 3). */
+  /** Text colour on that background. */
+  tone?: 'light' | 'dark';
+  /** Live products: the first is the hero shoe, the next ones are small thumbnails. */
   products?: HeroProduct[];
 }
 
-const INTERVAL = 6000;
+const INTERVAL = 6500;
+const pad = (n: number) => String(n).padStart(2, '0');
 
 /**
- * Rotating hero. CMS banners (Admin → Content → Banners, "home.hero") show as full images;
- * without banners the built-in slides are used, decorated with live products.
- * Swipe on phones, dots everywhere, pauses while hovered.
+ * Full-bleed campaign hero.
+ * - CMS banners (Admin → Content → Banners, "home.hero") show as full images; without them the
+ *   built-in slides are used, each starring a live product photo.
+ * - Slide change: background cross-fades, the headline rises line by line, the shoe glides in
+ *   from the right with a slight tilt. On pointer devices the shoe follows the cursor a little.
+ * - Numbered progress bars (01 02 03) fill over INTERVAL; hover or focus pauses; swipe on phones;
+ *   ←/→ arrow buttons.
  */
 export function HeroCarousel({
   banners,
@@ -41,6 +49,7 @@ export function HeroCarousel({
   const count = banners.length > 0 ? banners.length : slides.length;
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const touchX = useRef<number | null>(null);
 
   const go = useCallback((i: number) => setActive(((i % count) + count) % count), [count]);
@@ -51,11 +60,29 @@ export function HeroCarousel({
     return () => clearTimeout(t);
   }, [active, count, paused, go]);
 
+  const current = banners.length === 0 ? slides[active] : undefined;
+  const light = banners.length > 0 || current?.tone !== 'dark';
+
   return (
-    <div
-      className="group/hero relative h-[clamp(420px,40vw,480px)] overflow-hidden rounded-[28px] bg-gray-900 sm:h-[clamp(360px,36vw,480px)]"
+    <section
+      aria-roledescription="carousel"
+      aria-label="Featured"
+      className="group/hero relative h-[clamp(520px,82vh,720px)] overflow-hidden bg-gray-900 md:h-[clamp(480px,74vh,680px)]"
       onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseLeave={() => {
+        setPaused(false);
+        setTilt({ x: 0, y: 0 });
+      }}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      onMouseMove={(e) => {
+        if (!window.matchMedia('(hover: hover)').matches) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        setTilt({
+          x: (e.clientX - r.left) / r.width - 0.5,
+          y: (e.clientY - r.top) / r.height - 0.5,
+        });
+      }}
       onTouchStart={(e) => (touchX.current = e.touches[0]?.clientX ?? null)}
       onTouchEnd={(e) => {
         const start = touchX.current;
@@ -76,7 +103,7 @@ export function HeroCarousel({
                   src={b.imageUrl}
                   alt={b.title}
                   className={cn(
-                    'h-full w-full object-cover transition-transform duration-[6000ms] ease-linear',
+                    'h-full w-full object-cover transition-transform duration-[7000ms] ease-linear',
                     i === active ? 'scale-105' : 'scale-100',
                   )}
                 />
@@ -103,125 +130,248 @@ export function HeroCarousel({
           })
         : slides.map((s, i) => {
             const on = i === active;
-            const items = (s.products ?? []).filter((p) => p.imageUrl).slice(0, 3);
+            const dark = s.tone === 'dark';
+            const items = (s.products ?? []).filter((p) => p.imageUrl);
+            const star = items[0];
+            const thumbs = items.slice(1, 4);
             return (
               <div
                 key={s.title}
                 aria-hidden={!on}
                 className={cn(
-                  'absolute inset-0 flex flex-col overflow-hidden transition-opacity duration-700 md:flex-row',
+                  'absolute inset-0 transition-opacity duration-700 ease-out',
                   s.bg,
                   on ? 'opacity-100' : 'pointer-events-none opacity-0',
                 )}
               >
-                {/* Soft light shapes. */}
+                {/* Giant outlined word in the background. */}
                 <span
                   aria-hidden
-                  className="absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-white/10"
-                />
-                <span
-                  aria-hidden
-                  className="absolute -bottom-32 right-1/3 h-72 w-72 rounded-full bg-accent/20 blur-2xl"
-                />
-                <span
-                  aria-hidden
-                  className="absolute left-[46%] top-10 hidden h-3 w-3 rounded-full bg-accent md:block"
-                />
-
-                {/* Copy */}
-                <div
                   className={cn(
-                    'relative z-10 flex flex-col justify-center gap-3 p-[clamp(22px,4.4vw,60px)] pb-2 transition-all duration-700 md:w-[54%] md:gap-4 md:pb-[clamp(22px,4.4vw,60px)]',
-                    on ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
+                    'type-display pointer-events-none absolute -bottom-[0.12em] right-[-0.04em] select-none whitespace-nowrap text-[clamp(160px,26vw,420px)] text-transparent transition-transform duration-[1200ms] ease-out',
+                    dark
+                      ? '[-webkit-text-stroke:1.5px_rgba(23,21,19,.14)]'
+                      : '[-webkit-text-stroke:1.5px_rgba(255,255,255,.22)]',
+                    on ? 'translate-x-0' : 'translate-x-16',
                   )}
                 >
-                  <span className="-rotate-2 self-start rounded-full bg-accent px-3 py-1.5 text-[12px] font-extrabold uppercase tracking-wide text-gray-900 sm:text-[13px]">
-                    {s.tag}
-                  </span>
-                  <h1 className="text-balance text-[clamp(30px,5vw,64px)] font-extrabold leading-[.98] tracking-display text-white">
-                    {s.title}
-                  </h1>
-                  <p className="max-w-md text-[clamp(14px,1.4vw,18px)] text-white/75">{s.sub}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-3">
-                    <Link
-                      href={s.href}
-                      tabIndex={on ? 0 : -1}
-                      className="group/cta inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 font-bold text-gray-900 shadow-lg shadow-black/10 transition-colors hover:bg-accent sm:px-6 sm:py-3.5"
-                    >
-                      {s.cta}
-                      <span className="transition-transform group-hover/cta:translate-x-1">→</span>
-                    </Link>
-                    <span className="hidden text-sm font-semibold text-white/70 sm:inline">
-                      Cash on delivery · Easy returns
-                    </span>
-                  </div>
-                </div>
+                  {s.tag}
+                </span>
 
-                {/* Live products: a fanned stack on desktop, a neat row on phones. */}
-                {items.length > 0 ? (
-                  <div className="relative z-10 flex flex-1 items-center justify-center px-5 pb-12 md:px-8 md:pb-0">
-                    <div className="flex w-full max-w-[460px] items-end justify-center gap-3 md:relative md:h-[320px] md:gap-0">
-                      {items.map((p, k) => (
-                        <Link
-                          key={p.slug}
-                          href={`/products/${p.slug}`}
-                          tabIndex={on ? 0 : -1}
-                          title={p.name}
-                          className={cn(
-                            'flex aspect-square w-[30%] flex-none items-center justify-center rounded-3xl bg-white p-2 shadow-xl shadow-black/20 transition-all duration-700 hover:z-20 hover:scale-105 md:absolute md:w-[52%] md:p-4',
-                            k === 0 && 'md:left-1/2 md:top-1/2 md:z-10 md:-translate-x-1/2 md:-translate-y-1/2',
-                            k === 1 && 'md:left-0 md:top-6 md:w-[40%] md:-rotate-6',
-                            k === 2 && 'md:bottom-4 md:right-0 md:w-[40%] md:rotate-6',
-                            on ? 'opacity-100' : 'opacity-0',
-                          )}
-                          style={{ transitionDelay: on ? `${150 + k * 120}ms` : '0ms' }}
-                        >
-                          <img
-                            src={p.imageUrl!}
-                            alt={p.name}
-                            loading={i === 0 ? 'eager' : 'lazy'}
-                            className="h-full w-full object-contain mix-blend-multiply"
-                          />
-                        </Link>
+                <div
+                  className={cn(
+                    container,
+                    'relative grid h-full content-start gap-6 pb-24 pt-10 md:grid-cols-[1.05fr_1fr] md:content-center md:items-center md:pb-16',
+                  )}
+                >
+                  {/* Copy */}
+                  <div
+                    className={cn(
+                      'relative z-10 flex flex-col gap-5',
+                      dark ? 'text-gray-900' : 'text-gray-50',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'type-eyebrow transition-all delay-100 duration-700 ease-out',
+                        dark ? 'text-gray-700' : 'text-accent',
+                        on ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0',
+                      )}
+                    >
+                      {s.tag}
+                    </span>
+                    <h2 className="type-display text-[clamp(52px,8.6vw,132px)]">
+                      {s.title.split(' / ').map((line, k) => (
+                        <span key={k} className="block overflow-hidden pb-[0.04em]">
+                          <span
+                            className={cn(
+                              'block transition-transform duration-[900ms] ease-out',
+                              on ? 'translate-y-0' : 'translate-y-[105%]',
+                            )}
+                            style={{ transitionDelay: on ? `${120 + k * 90}ms` : '0ms' }}
+                          >
+                            {line}
+                          </span>
+                        </span>
                       ))}
+                    </h2>
+                    <p
+                      className={cn(
+                        'max-w-[420px] text-[clamp(15px,1.3vw,18px)] transition-all delay-300 duration-700 ease-out',
+                        dark ? 'text-gray-700' : 'text-white/80',
+                        on ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0',
+                      )}
+                    >
+                      {s.sub}
+                    </p>
+                    <div
+                      className={cn(
+                        'flex flex-wrap items-center gap-4 transition-all delay-[400ms] duration-700 ease-out',
+                        on ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0',
+                      )}
+                    >
+                      <Link
+                        href={s.href}
+                        tabIndex={on ? 0 : -1}
+                        className={cn(
+                          'group/cta inline-flex h-[52px] items-center gap-3 rounded-md px-7 text-[13px] font-bold uppercase tracking-[0.1em] transition-colors',
+                          dark
+                            ? 'bg-gray-900 text-white hover:bg-white hover:text-gray-900'
+                            : 'bg-white text-gray-900 hover:bg-gray-900 hover:text-white',
+                        )}
+                      >
+                        {s.cta}
+                        <span
+                          aria-hidden
+                          className="transition-transform duration-300 group-hover/cta:translate-x-1"
+                        >
+                          →
+                        </span>
+                      </Link>
+                      {thumbs.length > 0 ? (
+                        <div className="flex -space-x-2">
+                          {thumbs.map((p) => (
+                            <Link
+                              key={p.slug}
+                              href={`/products/${p.slug}`}
+                              tabIndex={on ? 0 : -1}
+                              title={p.name}
+                              className="grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-canvas ring-2 ring-white/80 transition-transform duration-200 hover:z-10 hover:-translate-y-1"
+                            >
+                              <img
+                                src={p.imageUrl!}
+                                alt={p.name}
+                                className="h-full w-full object-contain p-1 mix-blend-multiply"
+                              />
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
-                ) : null}
+
+                  {/* Hero shoe */}
+                  {star ? (
+                    <Link
+                      href={`/products/${star.slug}`}
+                      tabIndex={on ? 0 : -1}
+                      aria-label={star.name}
+                      className={cn(
+                        'absolute inset-x-6 bottom-20 top-[46%] flex items-center justify-center md:relative md:inset-auto md:h-[min(62vh,520px)]',
+                        'transition-[opacity,transform] duration-[1000ms] ease-out',
+                        on ? 'translate-x-0 opacity-100' : 'translate-x-24 opacity-0',
+                      )}
+                      style={{ transitionDelay: on ? '150ms' : '0ms' }}
+                    >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'absolute aspect-square w-[min(78%,420px)] rounded-full',
+                          dark ? 'bg-white/50' : 'bg-white/10',
+                        )}
+                      />
+                      <img
+                        src={star.imageUrl!}
+                        alt=""
+                        loading={i === 0 ? 'eager' : 'lazy'}
+                        className="relative max-h-full w-[min(92%,560px)] object-contain drop-shadow-[0_40px_40px_rgba(0,0,0,.35)] transition-transform duration-300 ease-out"
+                        style={{
+                          transform: `translate(${tilt.x * 22}px, ${tilt.y * 14}px) rotate(${-14 + tilt.x * 4}deg)`,
+                        }}
+                      />
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             );
           })}
 
+      {/* Controls */}
       {count > 1 ? (
-        <>
-          <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/25 px-2.5 py-2 backdrop-blur-sm">
+        <div
+          className={cn(
+            container,
+            'pointer-events-none absolute inset-x-0 bottom-6 z-20 flex items-end justify-between gap-4',
+          )}
+        >
+          <div className="pointer-events-auto flex gap-3">
             {Array.from({ length: count }, (_, i) => (
               <button
                 key={i}
                 type="button"
-                aria-label={`Slide ${i + 1}`}
+                aria-label={`Show slide ${i + 1}`}
                 aria-current={i === active}
                 onClick={() => go(i)}
                 className={cn(
-                  'relative h-2 overflow-hidden rounded-full bg-white/40 transition-all duration-300',
-                  i === active ? 'w-8' : 'w-2 hover:bg-white/70',
+                  'group/dot flex w-12 flex-col gap-1.5 text-left text-[11px] font-bold tabular-nums tracking-[0.1em] sm:w-16',
+                  light ? 'text-white' : 'text-gray-900',
                 )}
               >
-                {i === active ? (
-                  <span
-                    key={`${active}-${paused}`}
-                    className="absolute inset-y-0 left-0 rounded-full bg-white"
-                    style={{
-                      animation: paused ? 'none' : `hero-progress ${INTERVAL}ms linear forwards`,
-                      width: paused ? '100%' : undefined,
-                    }}
+                <span
+                  className={cn(
+                    'transition-opacity',
+                    i === active ? 'opacity-100' : 'opacity-50 group-hover/dot:opacity-90',
+                  )}
+                >
+                  {pad(i + 1)}
+                </span>
+                <span
+                  className={cn(
+                    'relative h-[2px] w-full overflow-hidden',
+                    light ? 'bg-white/30' : 'bg-gray-900/20',
+                  )}
+                >
+                  {i === active ? (
+                    <span
+                      key={`${active}-${paused}`}
+                      className={cn(
+                        'absolute inset-y-0 left-0',
+                        light ? 'bg-white' : 'bg-gray-900',
+                      )}
+                      style={{
+                        animation: paused ? 'none' : `hero-progress ${INTERVAL}ms linear forwards`,
+                        width: paused ? '100%' : undefined,
+                      }}
+                    />
+                  ) : null}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="pointer-events-auto hidden gap-2 sm:flex">
+            {[-1, 1].map((d) => (
+              <button
+                key={d}
+                type="button"
+                aria-label={d < 0 ? 'Previous slide' : 'Next slide'}
+                onClick={() => go(active + d)}
+                className={cn(
+                  'grid h-11 w-11 place-items-center rounded-full border transition-colors',
+                  light
+                    ? 'border-white/40 text-white hover:border-white hover:bg-white hover:text-gray-900'
+                    : 'border-gray-900/30 text-gray-900 hover:border-gray-900 hover:bg-gray-900 hover:text-white',
+                )}
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  aria-hidden
+                  className={cn('h-4 w-4', d < 0 && 'rotate-180')}
+                >
+                  <path
+                    d="m6 3 5 5-5 5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                ) : null}
+                </svg>
               </button>
             ))}
           </div>
           <style>{'@keyframes hero-progress{from{width:0}to{width:100%}}'}</style>
-        </>
+        </div>
       ) : null}
-    </div>
+    </section>
   );
 }

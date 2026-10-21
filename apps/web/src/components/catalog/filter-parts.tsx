@@ -16,31 +16,24 @@ export function FilterSection({
   return (
     <details
       open={open ?? active > 0}
-      className="group/section border-b border-gray-100 py-1 last:border-b-0"
+      className="group/section border-b border-gray-200 py-0.5 last:border-b-0"
     >
-      <summary className="-mx-2 flex cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-2 py-3 text-[15px] font-bold text-gray-900 transition-colors hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-3.5 text-[13px] font-bold uppercase tracking-[0.08em] text-gray-900 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2">
           {title}
           {active > 0 ? (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1.5 text-[11px] text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-900 px-1.5 text-[11px] tracking-normal text-white">
               {active}
             </span>
           ) : null}
         </span>
-        <span
-          aria-hidden
-          className="grid h-6 w-6 place-items-center rounded-full bg-gray-100 text-gray-500 transition-transform duration-300 group-open/section:rotate-180"
-        >
-          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-            <path
-              fillRule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-              clipRule="evenodd"
-            />
-          </svg>
+        {/* Plus that turns into a minus: the vertical stroke rotates flat when open. */}
+        <span aria-hidden className="relative h-3 w-3 text-gray-900">
+          <span className="absolute inset-x-0 top-1/2 h-[1.5px] -translate-y-1/2 bg-current" />
+          <span className="absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-current transition-transform duration-300 ease-out group-open/section:rotate-90 group-open/section:scale-y-0" />
         </span>
       </summary>
-      <div className="flex animate-fade-in flex-col gap-1 pb-3 pt-1">{children}</div>
+      <div className="flex animate-fade-in flex-col gap-0.5 pb-4">{children}</div>
     </details>
   );
 }
@@ -61,7 +54,7 @@ export function ShowMore({
     <>
       {items.slice(0, visible)}
       <details open={keepOpen} className="group/more">
-        <summary className="cursor-pointer list-none py-1 text-[13px] font-bold text-brand-700 [&::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer list-none px-1 py-1.5 text-[13px] font-semibold text-gray-900 underline underline-offset-4 [&::-webkit-details-marker]:hidden">
           <span className="group-open/more:hidden">Show {items.length - visible} more</span>
           <span className="hidden group-open/more:inline">Show less</span>
         </summary>

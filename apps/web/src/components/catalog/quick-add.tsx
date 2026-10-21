@@ -3,27 +3,35 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Tooltip, cn } from '@ecommerce/ui';
-import { CartIcon } from '@/components/icons';
+import { BagIcon, PlusIcon } from '@/components/icons';
 import { useSetCart } from '@/hooks/use-cart';
 import { cartApi, storefrontApi } from '@/lib/api-client';
+import { openCartDrawer } from '@/lib/cart-drawer';
 import { haptic, toast } from '@/lib/toast';
 
-/** "Add to cart" on a product card. Products with options open the product page instead. */
+/**
+ * Quick add from a product card. Products with options (size, colour) go to the product page
+ * so the shopper picks a size; single-variant products are added and the bag drawer opens
+ * with the new line highlighted.
+ *
+ * `bar` = full-width bar over the photo (slides up on hover), `icon` = small round button,
+ * `button` = plain full-width button under the card.
+ */
 export function QuickAdd({
   slug,
   hasOptions,
   inStock,
   name,
-  imageUrl,
-  compact,
+  variant = 'button',
 }: {
   slug: string;
   hasOptions: boolean;
   inStock: boolean;
-  /** For the confirmation toast. */
   name?: string;
+  /** Kept for callers that still pass it (the drawer shows the photo now). */
   imageUrl?: string | null;
-  /** Small round cart icon (home rows) instead of the full-width button. */
+  variant?: 'bar' | 'icon' | 'button';
+  /** @deprecated use variant="icon" */
   compact?: boolean;
 }) {
   const router = useRouter();
@@ -31,76 +39,79 @@ export function QuickAdd({
   const add = useMutation({
     mutationFn: async () => {
       const product = await storefrontApi.product(slug);
-      const variant =
-        product.variants.find((v) => v.isDefault && v.available > 0) ??
-        product.variants.find((v) => v.available > 0);
-      if (!variant) throw new Error('Out of stock');
-      return cartApi.add({ variantId: variant.id, quantity: 1 });
+      const v =
+        product.variants.find((x) => x.isDefault && x.available > 0) ??
+        product.variants.find((x) => x.available > 0);
+      if (!v) throw new Error('Out of stock');
+      return { cart: await cartApi.add({ variantId: v.id, quantity: 1 }), variantId: v.id };
     },
-    onSuccess: (cart) => {
+    onSuccess: ({ cart, variantId }) => {
       setCart(cart);
       haptic();
-      setTimeout(() => add.reset(), 1800); // brief "Added ✓", then ready again
-      toast.success('Added to cart', {
-        description: name,
-        image: imageUrl,
-        action: { label: 'View cart', href: '/cart' },
-      });
+      openCartDrawer({ justAdded: variantId });
+      setTimeout(() => add.reset(), 1800);
     },
     onError: (e) => toast.error(e.message),
   });
-  if (compact) {
-    const done = add.isSuccess;
+  const run = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (hasOptions) router.push(`/products/${slug}`);
+    else add.mutate();
+  };
+  const label = !inStock
+    ? 'Sold out'
+    : hasOptions
+      ? 'Choose size'
+      : add.isPending
+        ? 'Adding…'
+        : add.isSuccess
+          ? 'Added'
+          : 'Quick add';
+
+  if (variant === 'icon') {
     return (
-      <Tooltip content={!inStock ? 'Out of stock' : hasOptions ? 'Choose options' : done ? 'Added' : 'Add to cart'}>
+      <Tooltip content={label}>
         <button
           type="button"
-          aria-label={hasOptions ? `Choose options for ${name}` : `Add ${name} to cart`}
+          aria-label={hasOptions ? `Choose a size for ${name}` : `Add ${name} to bag`}
           disabled={!inStock || add.isPending}
-          onClick={(e) => {
-            e.preventDefault();
-            if (hasOptions) router.push(`/products/${slug}`);
-            else add.mutate();
-          }}
+          onClick={run}
           className={cn(
-            'grid h-9 w-9 flex-none place-items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40',
-            done ? 'bg-emerald-500 text-white' : 'bg-brand-600 text-white hover:bg-brand-700',
+            'grid h-9 w-9 flex-none place-items-center rounded-full border transition-colors duration-200 disabled:opacity-40',
+            add.isSuccess
+              ? 'border-gray-900 bg-gray-900 text-white'
+              : 'border-gray-300 bg-white text-gray-900 hover:border-gray-900 hover:bg-gray-900 hover:text-white',
           )}
         >
           {add.isPending ? (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-          ) : done ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : add.isSuccess ? (
             <span className="text-sm font-bold">✓</span>
           ) : (
-            <CartIcon size={17} />
+            <PlusIcon size={17} />
           )}
         </button>
       </Tooltip>
     );
   }
-  const label = !inStock
-    ? 'Out of stock'
-    : hasOptions
-      ? 'Choose options'
-      : add.isPending
-        ? 'Adding…'
-        : add.isSuccess
-          ? 'Added ✓'
-          : add.isError
-            ? 'Try again'
-            : 'Add to cart';
+
   return (
     <button
       type="button"
       disabled={!inStock || add.isPending}
-      onClick={() => (hasOptions ? router.push(`/products/${slug}`) : add.mutate())}
+      onClick={run}
       className={cn(
-        'h-10 rounded-[14px] text-sm font-bold transition-colors disabled:cursor-not-allowed',
-        add.isSuccess
-          ? 'bg-brand-600 text-white'
-          : 'bg-brand-100 text-brand-700 hover:bg-brand-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-500',
+        'flex w-full items-center justify-center gap-2 text-[12px] font-bold uppercase tracking-[0.1em] transition-colors disabled:cursor-not-allowed',
+        variant === 'bar'
+          ? 'h-11 rounded-md bg-white/95 text-gray-900 shadow-[0_8px_20px_-12px_rgba(23,21,19,.5)] backdrop-blur hover:bg-gray-900 hover:text-white'
+          : 'h-11 rounded-md border border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white disabled:border-gray-200 disabled:text-gray-400',
       )}
     >
+      {add.isPending ? (
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      ) : (
+        <BagIcon size={16} />
+      )}
       {label}
     </button>
   );

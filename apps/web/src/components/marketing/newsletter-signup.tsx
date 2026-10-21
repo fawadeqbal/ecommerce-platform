@@ -6,7 +6,10 @@ import { newsletterFormSchema } from '@ecommerce/types';
 import { marketingApi } from '@/lib/api-client';
 import { toast } from '@/lib/toast';
 
-/** Footer signup band: double opt-in (a confirmation email is sent). */
+/**
+ * Footer signup (double opt-in: a confirmation email is sent). Sits on the ink footer:
+ * an underlined field whose line turns marigold on focus, with an arrow submit button.
+ */
 export function NewsletterSignup() {
   const [email, setEmail] = useState('');
   const [invalid, setInvalid] = useState<string | null>(null);
@@ -16,54 +19,62 @@ export function NewsletterSignup() {
       toast.success('Check your inbox', { description: 'Confirm your email to subscribe.' }),
   });
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-brand-600 p-[clamp(20px,3vw,36px)] text-white">
-      <div className="flex-[1_1_300px]">
-        <h2 className="mb-1 text-[clamp(22px,2.6vw,30px)] font-extrabold tracking-heading text-white">
-          Get deals before everyone else
+    <div className="flex flex-col gap-5">
+      <div>
+        <h2 className="type-display text-[clamp(40px,5vw,72px)] text-gray-50">
+          <span className="block">First in line</span>
+          <span className="block text-gray-500">for every drop</span>
         </h2>
-        <p className="text-brand-100">Weekly sale alerts and price drops. Unsubscribe any time.</p>
+        <p className="mt-3 max-w-[420px] text-[15px] text-white/65">
+          New arrivals, restocks and price drops — once a week, no noise. Unsubscribe any time.
+        </p>
       </div>
-      <div className="min-w-0 max-w-[480px] flex-[1_1_280px]">
-        {join.isSuccess ? (
-          <p className="rounded-[18px] bg-white/15 px-4 py-3 font-semibold" role="status">
-            {join.data.message}
-          </p>
-        ) : (
-          <form
-            noValidate
-            className="flex gap-2 rounded-[18px] bg-white p-1.5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const parsed = newsletterFormSchema.safeParse({ email });
-              if (!parsed.success)
-                return setInvalid(parsed.error.issues[0]?.message ?? 'Enter a valid email');
-              setInvalid(null);
-              join.mutate(parsed.data.email);
-            }}
+      {join.isSuccess ? (
+        <p
+          className="max-w-[460px] border-b border-accent pb-3 font-semibold text-gray-50"
+          role="status"
+        >
+          {join.data.message}
+        </p>
+      ) : (
+        <form
+          noValidate
+          className="group/nl flex max-w-[460px] items-center gap-3 border-b border-white/30 pb-1 transition-colors focus-within:border-accent"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const parsed = newsletterFormSchema.safeParse({ email });
+            if (!parsed.success)
+              return setInvalid(parsed.error.issues[0]?.message ?? 'Enter a valid email');
+            setInvalid(null);
+            join.mutate(parsed.data.email);
+          }}
+        >
+          <input
+            type="email"
+            aria-label="Email address"
+            placeholder="Your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-12 min-w-0 flex-1 bg-transparent text-[16px] text-gray-50 placeholder:text-white/40 focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={join.isPending}
+            className="group/sub flex h-11 items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.1em] text-gray-50 hover:text-accent disabled:opacity-60"
           >
-            <input
-              type="email"
-              aria-label="Email address"
-              placeholder="you@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="min-w-0 flex-1 bg-transparent px-3 text-gray-900 placeholder:text-gray-500 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={join.isPending}
-              className="h-11 rounded-[14px] bg-accent px-5 font-bold text-gray-900 hover:bg-accent-strong disabled:opacity-60"
+            {join.isPending ? 'Joining…' : 'Sign up'}
+            <span
+              aria-hidden
+              className="transition-transform duration-300 group-hover/sub:translate-x-1"
             >
-              Subscribe
-            </button>
-          </form>
-        )}
-        {invalid || join.error ? (
-          <p className="mt-2 text-sm font-medium text-accent-soft">
-            {invalid ?? join.error?.message}
-          </p>
-        ) : null}
-      </div>
+              →
+            </span>
+          </button>
+        </form>
+      )}
+      {invalid || join.error ? (
+        <p className="text-sm font-medium text-accent">{invalid ?? join.error?.message}</p>
+      ) : null}
     </div>
   );
 }

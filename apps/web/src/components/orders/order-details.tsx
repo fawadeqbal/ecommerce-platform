@@ -89,7 +89,7 @@ export function OrderDetails({ order, actions }: { order: OrderDto; actions?: Re
               <ul className="divide-y divide-gray-100">
                 {vo.items.map((item) => (
                   <li key={item.id} className="flex items-center gap-4 px-5 py-4 text-sm">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#f6f6f8]">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#efebe4]">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}

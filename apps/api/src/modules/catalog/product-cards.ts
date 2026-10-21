@@ -13,7 +13,7 @@ export const VISIBLE: Prisma.ProductWhereInput = {
 export const cardInclude = {
   brand: { select: { name: true } },
   vendor: { select: { name: true, slug: true } },
-  images: { orderBy: { position: 'asc' }, take: 1, select: { url: true } },
+  images: { orderBy: { position: 'asc' }, take: 2, select: { url: true } },
   variants: {
     where: { isActive: true },
     select: { id: true, _count: { select: { attributes: true } } },
@@ -36,6 +36,7 @@ export async function toProductCards(
     name: p.name,
     slug: p.slug,
     imageUrl: p.images[0]?.url ?? null,
+    hoverImageUrl: p.images[1]?.url ?? null,
     price: Number(p.basePrice),
     compareAtPrice: p.compareAtPrice === null ? null : Number(p.compareAtPrice),
     currency: p.currency,

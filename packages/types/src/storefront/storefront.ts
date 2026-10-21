@@ -45,6 +45,8 @@ export interface StorefrontProductCard {
   name: string;
   slug: string;
   imageUrl: string | null;
+  /** Second product photo, shown when the card is hovered (null when there is only one). */
+  hoverImageUrl: string | null;
   price: number;
   compareAtPrice: number | null;
   currency: string;

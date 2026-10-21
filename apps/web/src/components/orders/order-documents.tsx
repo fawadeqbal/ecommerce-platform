@@ -6,7 +6,7 @@ import type { OrderDto } from '@ecommerce/types';
 import { documentsApi, queryKeys } from '@/lib/api-client';
 
 export const orderActionClass =
-  'inline-flex h-10 items-center justify-center gap-1.5 rounded-[14px] px-4 text-sm font-bold transition-colors disabled:opacity-50';
+  'inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] px-4 text-sm font-bold transition-colors disabled:opacity-50';
 
 /** Invoice PDF link for the order header (hidden until the order is paid / confirmed). */
 export function InvoiceLink({ order }: { order: OrderDto }) {
