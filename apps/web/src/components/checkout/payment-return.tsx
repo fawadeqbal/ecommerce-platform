@@ -117,7 +117,7 @@ export function PaymentReturn() {
 
   return (
     <div className={`${container} max-w-[560px] py-[clamp(24px,5vw,56px)]`}>
-      <div className="flex flex-col items-center gap-4 rounded-[28px] bg-white p-8 text-center shadow-card">
+      <div className="flex flex-col items-center gap-4 rounded-[12px] bg-white p-8 text-center shadow-card">
         {!paymentId || error ? (
           <>
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-tint-rose text-2xl font-extrabold text-red-600">

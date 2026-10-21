@@ -114,7 +114,10 @@ export function CartView() {
         <div className="flex flex-wrap items-start gap-5">
           <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-3.5">
             {cart.groups.map((group, gi) => (
-              <div key={group.vendor.id} className="overflow-hidden rounded-3xl bg-white ring-1 ring-black/[.04]">
+              <div
+                key={group.vendor.id}
+                className="overflow-hidden rounded-3xl bg-white ring-1 ring-black/[.04]"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50/60 px-[18px] py-3">
                   <div className="flex items-center gap-2.5">
                     <span
@@ -140,7 +143,7 @@ export function CartView() {
                   >
                     <Link
                       href={`/products/${item.productSlug}`}
-                      className="aspect-square w-[clamp(80px,10vw,104px)] flex-none overflow-hidden rounded-2xl bg-[#f6f6f8]"
+                      className="aspect-square w-[clamp(80px,10vw,104px)] flex-none overflow-hidden rounded-2xl bg-[#efebe4]"
                     >
                       {item.imageUrl ? (
                         <img
@@ -261,9 +264,9 @@ export function CartView() {
                   {saved.data.map((s) => (
                     <div
                       key={s.id}
-                      className="flex items-center gap-3 rounded-[20px] bg-white p-2.5 ring-1 ring-black/[.04] transition-shadow hover:shadow-[0_10px_24px_-16px_rgba(30,26,51,.35)]"
+                      className="flex items-center gap-3 rounded-[10px] bg-white p-2.5 ring-1 ring-black/[.04] transition-shadow hover:shadow-[0_10px_24px_-16px_rgba(23,21,19,.35)]"
                     >
-                      <div className="h-16 w-16 flex-none overflow-hidden rounded-[14px] bg-[#f6f6f8]">
+                      <div className="h-16 w-16 flex-none overflow-hidden rounded-[8px] bg-[#efebe4]">
                         {s.imageUrl ? (
                           <img
                             src={s.imageUrl}

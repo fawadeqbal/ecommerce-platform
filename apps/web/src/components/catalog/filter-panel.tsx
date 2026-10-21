@@ -24,7 +24,14 @@ export function FilterPanel({
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const pathname = usePathname();
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
+  // While new results load, the grid dims (see product-listing: [html[data-filtering]_&]).
+  useEffect(() => {
+    const root = document.documentElement;
+    if (pending) root.dataset.filtering = 'true';
+    else delete root.dataset.filtering;
+    return () => void delete root.dataset.filtering;
+  }, [pending]);
 
   // Apply filters without reloading the page: only the results (and counts) refresh.
   const apply = (form: HTMLFormElement) => {
@@ -60,11 +67,11 @@ export function FilterPanel({
         type="button"
         onClick={() => setOpen(true)}
         aria-expanded={open}
-        className="flex items-center gap-2 self-start rounded-xl bg-gray-900 px-3.5 py-[9px] text-sm font-bold text-white lg:hidden"
+        className="flex h-11 items-center gap-2 self-start rounded-md border border-gray-900 px-4 text-[12px] font-bold uppercase tracking-[0.1em] text-gray-900 lg:hidden"
       >
         Filters
         {activeCount > 0 ? (
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] text-gray-900">
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-900 px-1.5 text-[11px] tracking-normal text-white">
             {activeCount}
           </span>
         ) : null}
@@ -82,30 +89,36 @@ export function FilterPanel({
       <aside
         aria-label="Filters"
         className={cn(
-          'flex-col rounded-3xl bg-white ring-1 ring-black/[.04]',
+          'flex-col bg-white lg:bg-transparent',
           // desktop: stays in view while the results scroll
-          'lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:flex lg:max-h-[calc(100vh-var(--header-h)-32px)]',
+          'lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:flex lg:max-h-[calc(100vh-var(--header-h)-32px)] lg:transition-[top] lg:duration-300 lg:ease-out',
           // phones: bottom sheet
           open
-            ? 'fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] animate-sheet-up rounded-b-none shadow-card lg:animate-none'
+            ? 'fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] animate-sheet-up rounded-t-xl shadow-card lg:animate-none lg:rounded-none lg:shadow-none'
             : 'hidden',
         )}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-5 py-4">
-          <span className="flex items-center gap-2 text-lg font-extrabold">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5 text-brand-600" aria-hidden>
-              <path d="M4 6h16M7 12h10M10 18h4" />
-            </svg>
-            Filters
+        <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-5 py-4 lg:px-0 lg:pt-1">
+          <span className="type-eyebrow flex items-center gap-2 text-[12px] text-gray-900">
+            Filter
             {activeCount > 0 ? (
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand-600 px-1.5 text-[11px] text-white">
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gray-900 px-1.5 text-[11px] tracking-normal text-white">
                 {activeCount}
               </span>
+            ) : null}
+            {pending ? (
+              <span
+                aria-label="Updating results"
+                className="ml-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900"
+              />
             ) : null}
           </span>
           <div className="flex items-center gap-3">
             {activeCount > 0 ? (
-              <a href={resetHref} className="rounded-full px-2.5 py-1 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50">
+              <a
+                href={resetHref}
+                className="text-[13px] font-semibold text-gray-900 underline underline-offset-4 hover:text-brand-600"
+              >
                 Clear all
               </a>
             ) : null}
@@ -113,7 +126,7 @@ export function FilterPanel({
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close filters"
-              className="text-xl text-gray-500 lg:hidden"
+              className="grid h-9 w-9 place-items-center rounded-full text-xl text-gray-900 hover:bg-gray-100 lg:hidden"
             >
               ×
             </button>
@@ -126,23 +139,23 @@ export function FilterPanel({
             e.preventDefault();
             apply(e.currentTarget);
           }}
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-2"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-1 lg:px-0 lg:pr-2"
         >
           {children}
           <noscript>
             <button
               type="submit"
-              className="mt-2 h-11 w-full rounded-2xl bg-brand-600 font-bold text-white"
+              className="mt-2 h-11 w-full rounded-md bg-gray-900 font-bold text-white"
             >
               Apply
             </button>
           </noscript>
         </form>
-        <div className="border-t border-gray-100 p-4 lg:hidden">
+        <div className="border-t border-gray-200 p-4 pb-[max(16px,env(safe-area-inset-bottom))] lg:hidden">
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="h-12 w-full rounded-2xl bg-brand-600 font-bold text-white"
+            className="h-12 w-full rounded-md bg-gray-900 text-[13px] font-bold uppercase tracking-[0.1em] text-white"
           >
             Show {total.toLocaleString()} results
           </button>

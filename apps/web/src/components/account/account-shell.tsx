@@ -8,7 +8,16 @@ import { Spinner, cn } from '@ecommerce/ui';
 import { container } from '@/components/layout/container';
 import { useMe } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
-import { ArrowUpLeftIcon, BoxIcon, HeartIcon, LogoutIcon, PinIcon, SettingsIcon, StarIcon, UserIcon } from '@/components/icons';
+import {
+  ArrowUpLeftIcon,
+  BoxIcon,
+  HeartIcon,
+  LogoutIcon,
+  PinIcon,
+  SettingsIcon,
+  StarIcon,
+  UserIcon,
+} from '@/components/icons';
 import { authApi, loyaltyApi, queryKeys } from '@/lib/api-client';
 
 const NAV = [
@@ -82,8 +91,11 @@ export function AccountShell({ children }: { children: ReactNode }) {
       className={`${container} flex max-w-[1240px] flex-wrap items-start gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`}
     >
       <aside className="flex max-w-full flex-[1_1_240px] flex-col gap-3">
-        <div className="relative flex items-center gap-3 overflow-hidden rounded-3xl bg-[radial-gradient(260px_120px_at_100%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#6447e6,#3b2390)] p-[18px] text-white">
-          <span aria-hidden className="absolute -bottom-8 -right-6 h-24 w-24 rounded-full bg-accent/25 blur-xl" />
+        <div className="relative flex items-center gap-3 overflow-hidden rounded-3xl bg-[radial-gradient(260px_120px_at_100%_0%,rgba(255,255,255,.18),transparent_70%),linear-gradient(160deg,#b6461c,#622918)] p-[18px] text-white">
+          <span
+            aria-hidden
+            className="absolute -bottom-8 -right-6 h-24 w-24 rounded-full bg-accent/25 blur-xl"
+          />
           <span className="relative flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full bg-gradient-to-br from-[#ffe066] to-[#ffc61a] text-xl font-extrabold text-gray-900 shadow-[inset_0_1px_0_rgba(255,255,255,.6)]">
             {initials}
           </span>
@@ -111,19 +123,24 @@ export function AccountShell({ children }: { children: ReactNode }) {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'relative flex flex-none items-center gap-3 whitespace-nowrap rounded-full px-3.5 py-2 text-sm transition-colors md:rounded-[14px] md:py-[11px] md:text-[15px]',
+                  'relative flex flex-none items-center gap-3 whitespace-nowrap rounded-full px-3.5 py-2 text-sm transition-colors md:rounded-[8px] md:py-[11px] md:text-[15px]',
                   active
                     ? 'bg-brand-600 font-semibold text-white hover:text-white md:bg-brand-50 md:text-brand-700 md:hover:text-brand-700 md:before:absolute md:before:inset-y-2.5 md:before:left-0 md:before:w-[3px] md:before:rounded-full md:before:bg-brand-600'
                     : 'bg-white font-medium text-gray-700 ring-1 ring-black/[.05] hover:text-gray-900 md:bg-transparent md:ring-0 md:hover:bg-gray-50',
                 )}
               >
-                <item.icon size={18} className={cn('hidden md:block', active ? 'text-brand-600' : 'text-gray-400')} />
+                <item.icon
+                  size={18}
+                  className={cn('hidden md:block', active ? 'text-brand-600' : 'text-gray-400')}
+                />
                 <span className="md:flex-1">{item.label}</span>
                 {count ? (
                   <span
                     className={cn(
                       'rounded-full px-2 py-0.5 text-[11px] font-bold',
-                      active ? 'bg-white/20 md:bg-brand-600 md:text-white' : 'bg-gray-100 text-gray-500',
+                      active
+                        ? 'bg-white/20 md:bg-brand-600 md:text-white'
+                        : 'bg-gray-100 text-gray-500',
                     )}
                   >
                     {count.toLocaleString()}
@@ -135,7 +152,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={signOut}
-            className="hidden items-center gap-3 rounded-[14px] px-3.5 py-[11px] text-left text-[15px] font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 md:flex"
+            className="hidden items-center gap-3 rounded-[8px] px-3.5 py-[11px] text-left text-[15px] font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 md:flex"
           >
             <LogoutIcon size={18} />
             Sign out

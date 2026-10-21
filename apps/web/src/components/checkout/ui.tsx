@@ -16,7 +16,13 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className={cn('flex min-w-0 flex-col gap-3.5 rounded-3xl bg-white p-4 ring-1 ring-black/[.04] sm:p-5', className)}>
+    <section
+      id={id}
+      className={cn(
+        'flex min-w-0 flex-col gap-3.5 rounded-3xl bg-white p-4 ring-1 ring-black/[.04] sm:p-5',
+        className,
+      )}
+    >
       {title || action ? (
         <div className="flex items-center justify-between gap-2.5">
           {title ? <h2 className="text-lg font-extrabold sm:text-xl">{title}</h2> : <span />}
@@ -48,10 +54,10 @@ export const optionCard =
   'group flex cursor-pointer rounded-2xl border border-gray-200 bg-white text-gray-900 transition-colors duration-200 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50/50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-300';
 
 export const codeInput =
-  'h-[46px] min-w-0 flex-1 rounded-[14px] border-[1.5px] border-gray-200 bg-white px-3.5 uppercase placeholder:normal-case focus:border-brand-500 focus:outline-none';
+  'h-[46px] min-w-0 flex-1 rounded-[8px] border-[1.5px] border-gray-200 bg-white px-3.5 uppercase placeholder:normal-case focus:border-brand-500 focus:outline-none';
 
 export const darkButton =
-  'flex-none rounded-[14px] bg-gray-900 px-4 font-bold text-white hover:bg-gray-800 disabled:opacity-50';
+  'flex-none rounded-[8px] bg-gray-900 px-4 font-bold text-white hover:bg-gray-800 disabled:opacity-50';
 
 export function SummaryRow({
   label,

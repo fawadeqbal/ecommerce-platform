@@ -49,13 +49,16 @@ const SORT_SHORT: Record<StorefrontSort, string> = {
 };
 
 const rowLabel =
-  'relative flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-sm text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:text-gray-900 has-[:checked]:bg-brand-50 has-[:checked]:font-semibold has-[:checked]:text-brand-700 has-[:checked]:before:absolute has-[:checked]:before:inset-y-2 has-[:checked]:before:left-0 has-[:checked]:before:w-[3px] has-[:checked]:before:rounded-full has-[:checked]:before:bg-brand-600';
+  'relative flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-[14px] text-gray-600 transition-colors duration-200 hover:text-gray-900 has-[:checked]:font-semibold has-[:checked]:text-gray-900 has-[:checked]:before:absolute has-[:checked]:before:inset-y-2 has-[:checked]:before:left-0 has-[:checked]:before:w-[2px] has-[:checked]:before:bg-gray-900';
 const checkRow =
-  'flex cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-50 hover:text-gray-900 has-[:checked]:font-semibold has-[:checked]:text-gray-900';
+  'flex cursor-pointer items-center gap-3 rounded-md px-1 py-1.5 text-[14px] text-gray-600 transition-colors duration-200 hover:bg-gray-50 hover:text-gray-900 has-[:checked]:font-semibold has-[:checked]:text-gray-900';
 const box =
-  'flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 border-gray-300 bg-white text-xs font-extrabold text-transparent transition-all duration-200 peer-checked:scale-105 peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand-300';
+  'flex h-[18px] w-[18px] flex-none items-center justify-center rounded-sm border-[1.5px] border-gray-400 bg-white text-[11px] font-bold text-transparent transition-all duration-200 peer-checked:border-gray-900 peer-checked:bg-gray-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-gray-900 peer-focus-visible:ring-offset-2';
+/** Size-style values (short labels like 40, 41, UK 8) render as a grid of tiles. */
+const sizeTile =
+  'flex h-10 cursor-pointer items-center justify-center rounded-md border border-gray-300 bg-white text-[13px] font-semibold text-gray-900 transition-colors hover:border-gray-900 has-[:checked]:border-gray-900 has-[:checked]:bg-gray-900 has-[:checked]:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-gray-900 has-[:focus-visible]:ring-offset-2';
 const priceInput =
-  'h-11 min-w-0 flex-1 rounded-xl border-[1.5px] border-gray-200 bg-gray-50 px-3 text-sm transition-colors focus:border-brand-500 focus:bg-white focus:outline-none';
+  'h-11 min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-3 text-sm transition-colors focus:border-gray-900 focus:outline-none';
 
 /** Page numbers with gaps: 1 … 4 5 6 … 20 */
 function pageList(page: number, total: number): (number | '…')[] {
@@ -225,18 +228,18 @@ export async function ProductListing({
     <div className={`${container} flex flex-col gap-5 pb-14 pt-[clamp(16px,2.4vw,28px)]`}>
       {header ?? (
         <div className="flex flex-col gap-1.5">
-          <nav aria-label="Breadcrumb" className="flex gap-2 text-[13px] text-gray-500">
-            <Link href="/" className="text-gray-500 hover:text-brand-600">
+          <nav aria-label="Breadcrumb" className="flex gap-2 text-[12.5px] text-gray-500">
+            <Link href="/" className="link-grow text-gray-500 hover:text-gray-900">
               Home
             </Link>
             <span>/</span>
             <span className="text-gray-900">{heading}</span>
           </nav>
-          <div className="flex flex-wrap items-baseline justify-between gap-2.5">
-            <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-none tracking-display">
-              {heading}
-            </h1>
-            <span className="text-sm text-gray-500">{total.toLocaleString()} results</span>
+          <div className="flex flex-wrap items-end justify-between gap-2.5 border-b border-gray-200 pb-5">
+            <h1 className="type-display text-[clamp(40px,5.4vw,72px)]">{heading}</h1>
+            <span className="pb-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+              {total.toLocaleString()} {total === 1 ? 'style' : 'styles'}
+            </span>
           </div>
         </div>
       )}
@@ -250,8 +253,10 @@ export async function ProductListing({
                 key={c.slug || 'all'}
                 href={href({ category: c.slug || undefined })}
                 className={cn(
-                  'flex-none rounded-full px-4 py-[9px] text-sm font-semibold',
-                  on ? 'bg-brand-600 text-white hover:text-white' : 'bg-white text-gray-900',
+                  'flex-none rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors',
+                  on
+                    ? 'border-gray-900 bg-gray-900 text-white hover:text-white'
+                    : 'border-gray-300 bg-white text-gray-900 hover:border-gray-900',
                 )}
               >
                 {c.name}
@@ -261,7 +266,7 @@ export async function ProductListing({
         </div>
       ) : null}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[272px_minmax(0,1fr)] lg:items-stretch">
+      <div className="grid items-start gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-stretch xl:gap-10">
         <div className="flex flex-col gap-3">
           <FilterPanel activeCount={chips.length} total={total} resetHref={resetHref}>
             {q ? <input type="hidden" name="q" value={q} /> : null}
@@ -381,10 +386,28 @@ export async function ProductListing({
                           />
                           <span
                             aria-hidden
-                            className="block h-8 w-8 rounded-full border-[3px] border-white shadow-[0_0_0_2px_#e6e3f0] peer-checked:shadow-[0_0_0_2px_#6445df] peer-focus-visible:shadow-[0_0_0_2px_#958aff]"
+                            className="block h-8 w-8 rounded-full border-[3px] border-white shadow-[0_0_0_1px_#cfc7ba] transition-shadow peer-checked:shadow-[0_0_0_2px_#171513] peer-focus-visible:shadow-[0_0_0_2px_#cf5a2a]"
                             style={{ background: v.swatch ?? undefined }}
                           />
                           <span className="sr-only">{v.label ?? v.value}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : /size/i.test(a.name) ||
+                    a.values.every(
+                      (v) => /\d/.test(v.label ?? v.value) && (v.label ?? v.value).length <= 6,
+                    ) ? (
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {a.values.map((v) => (
+                        <label key={v.id} className={sizeTile} title={v.label ?? v.value}>
+                          <input
+                            type="checkbox"
+                            name="values"
+                            value={v.id}
+                            defaultChecked={values.includes(v.id)}
+                            className="sr-only"
+                          />
+                          {v.label ?? v.value}
                         </label>
                       ))}
                     </div>
@@ -421,7 +444,7 @@ export async function ProductListing({
                 ].map(([value, label]) => (
                   <label
                     key={value || 'any'}
-                    className="flex-1 cursor-pointer rounded-xl bg-gray-50 p-2 text-center text-sm font-semibold has-[:checked]:bg-brand-600 has-[:checked]:text-white"
+                    className="flex-1 cursor-pointer rounded-md border border-gray-300 p-2 text-center text-[13px] font-semibold transition-colors hover:border-gray-900 has-[:checked]:border-gray-900 has-[:checked]:bg-gray-900 has-[:checked]:text-white"
                   >
                     <input
                       type="radio"
@@ -436,7 +459,7 @@ export async function ProductListing({
               </div>
             </FilterSection>
 
-            <label className="my-2 flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-3.5 py-3 text-sm font-semibold">
+            <label className="mt-3 flex cursor-pointer items-center justify-between py-2.5 text-[14px] font-semibold">
               In stock only
               <input
                 type="checkbox"
@@ -447,10 +470,10 @@ export async function ProductListing({
               />
               <span
                 aria-hidden
-                className="relative h-6 w-10 rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[19px]"
+                className="relative h-6 w-10 rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition-all after:duration-300 after:ease-out peer-checked:bg-gray-900 peer-checked:after:left-[19px] peer-focus-visible:ring-2 peer-focus-visible:ring-gray-900 peer-focus-visible:ring-offset-2"
               />
             </label>
-            <label className="mb-2 flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-3.5 py-3 text-sm font-semibold">
+            <label className="mb-2 flex cursor-pointer items-center justify-between py-2.5 text-[14px] font-semibold">
               On sale only
               <input
                 type="checkbox"
@@ -461,7 +484,7 @@ export async function ProductListing({
               />
               <span
                 aria-hidden
-                className="relative h-6 w-10 rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition-all peer-checked:bg-brand-600 peer-checked:after:left-[19px]"
+                className="relative h-6 w-10 rounded-full bg-gray-300 transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[18px] after:w-[18px] after:rounded-full after:bg-white after:transition-all after:duration-300 after:ease-out peer-checked:bg-gray-900 peer-checked:after:left-[19px] peer-focus-visible:ring-2 peer-focus-visible:ring-gray-900 peer-focus-visible:ring-offset-2"
               />
             </label>
           </FilterPanel>
@@ -473,10 +496,19 @@ export async function ProductListing({
             {(
               [
                 ['On sale', { onSale: query.onSale ? undefined : 'true' }, Boolean(query.onSale)],
-                ['In stock', { inStock: query.inStock ? undefined : 'true' }, Boolean(query.inStock)],
-                ['4★ & up', { minRating: query.minRating === 4 ? undefined : '4' }, query.minRating === 4],
+                [
+                  'In stock',
+                  { inStock: query.inStock ? undefined : 'true' },
+                  Boolean(query.inStock),
+                ],
+                [
+                  '4★ & up',
+                  { minRating: query.minRating === 4 ? undefined : '4' },
+                  query.minRating === 4,
+                ],
                 ...PRICE_PRESETS.map(([label, min, max]) => {
-                  const on = (query.minPrice ?? undefined) === min && (query.maxPrice ?? undefined) === max;
+                  const on =
+                    (query.minPrice ?? undefined) === min && (query.maxPrice ?? undefined) === max;
                   return [
                     label,
                     on
@@ -493,10 +525,10 @@ export async function ProductListing({
                 scroll={false}
                 aria-pressed={on}
                 className={cn(
-                  'flex flex-none snap-start items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all duration-200',
+                  'flex flex-none snap-start items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-[7px] text-[13px] font-semibold transition-colors duration-200',
                   on
-                    ? 'bg-brand-600 text-white shadow-[0_6px_14px_-6px_rgba(83,43,199,.6)] hover:text-white'
-                    : 'bg-white text-gray-700 ring-1 ring-black/[.06] hover:text-brand-700 hover:ring-brand-200',
+                    ? 'border-gray-900 bg-gray-900 text-white hover:text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-900 hover:text-gray-900',
                 )}
               >
                 {on ? <span aria-hidden>✓</span> : null}
@@ -510,15 +542,22 @@ export async function ProductListing({
                 <Link
                   key={c.label}
                   href={c.href}
-                  className="flex items-center gap-1.5 rounded-full bg-brand-100 px-3 py-[7px] text-[13px] font-semibold text-brand-700 hover:text-brand-900"
+                  className="group/chip flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-[6px] text-[13px] font-semibold text-gray-900 hover:bg-gray-200 hover:text-gray-900"
                 >
-                  {c.label} <span className="font-extrabold">×</span>
+                  {c.label}{' '}
+                  <span
+                    aria-hidden
+                    className="text-gray-500 transition-colors group-hover/chip:text-gray-900"
+                  >
+                    ✕
+                  </span>
+                  <span className="sr-only">(remove)</span>
                 </Link>
               ))}
             </div>
             <nav
               aria-label="Sort"
-              className="scrollbar-none flex max-w-full items-center gap-1 overflow-x-auto rounded-[14px] bg-white p-1"
+              className="scrollbar-none flex max-w-full items-center gap-4 overflow-x-auto"
             >
               {sorts.map((s) => (
                 <Link
@@ -527,10 +566,10 @@ export async function ProductListing({
                   title={STOREFRONT_SORT_LABELS[s]}
                   aria-current={s === activeSort ? 'true' : undefined}
                   className={cn(
-                    'whitespace-nowrap rounded-[10px] px-3 py-[7px] text-[13px] font-semibold',
+                    'relative whitespace-nowrap py-2 text-[13px] font-semibold after:absolute after:inset-x-0 after:bottom-0.5 after:h-px after:origin-left after:bg-gray-900 after:transition-transform after:duration-300',
                     s === activeSort
-                      ? 'bg-gray-900 text-white hover:text-white'
-                      : 'text-gray-600 hover:text-gray-900',
+                      ? 'text-gray-900 after:scale-x-100 hover:text-gray-900'
+                      : 'text-gray-500 after:scale-x-0 hover:text-gray-900 hover:after:scale-x-100',
                   )}
                 >
                   {SORT_SHORT[s]}
@@ -544,7 +583,7 @@ export async function ProductListing({
               The store is temporarily unavailable. Please try again in a moment.
             </Alert>
           ) : result.value.items.length === 0 ? (
-            <div className="space-y-4 rounded-3xl bg-white p-6">
+            <div className="space-y-4 rounded-lg bg-white p-6">
               {didYouMean?.suggestion ? (
                 <p className="text-sm text-gray-700">
                   Did you mean{' '}
@@ -565,15 +604,24 @@ export async function ProductListing({
               />
             </div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(clamp(150px,17vw,220px),1fr))] gap-3">
-              {result.value.items.map((p) => (
-                <ProductCard key={p.id} product={p} quickAdd showVendor wishlist />
+            <div className="grid grid-cols-2 gap-x-3 gap-y-8 transition-opacity duration-300 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10 xl:grid-cols-4 [html[data-filtering]_&]:pointer-events-none [html[data-filtering]_&]:opacity-50">
+              {result.value.items.map((p, i) => (
+                <div
+                  key={p.id}
+                  className="animate-rise-in"
+                  style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
+                >
+                  <ProductCard product={p} quickAdd showVendor wishlist priority={i < 4} />
+                </div>
               ))}
             </div>
           )}
 
           {meta && meta.totalPages > 1 ? (
-            <nav aria-label="Pagination" className="mt-3 flex justify-center gap-1.5">
+            <nav
+              aria-label="Pagination"
+              className="mt-8 flex justify-center gap-1 border-t border-gray-200 pt-8"
+            >
               {[
                 { label: '‹', target: meta.page > 1 ? meta.page - 1 : null, aria: 'Previous page' },
                 ...pageList(meta.page, meta.totalPages).map((n) => ({
@@ -590,7 +638,7 @@ export async function ProductListing({
                 target === null ? (
                   <span
                     key={`${label}-${i}`}
-                    className="flex h-[42px] min-w-[42px] items-center justify-center rounded-[14px] bg-white font-bold text-gray-400"
+                    className="flex h-10 min-w-10 items-center justify-center rounded-md text-[14px] font-semibold text-gray-400"
                   >
                     {label}
                   </span>
@@ -601,10 +649,10 @@ export async function ProductListing({
                     aria-label={aria}
                     aria-current={target === meta.page && !aria ? 'page' : undefined}
                     className={cn(
-                      'flex h-[42px] min-w-[42px] items-center justify-center rounded-[14px] px-2 font-bold',
+                      'flex h-10 min-w-10 items-center justify-center rounded-md border px-2 text-[14px] font-semibold transition-colors',
                       target === meta.page && !aria
-                        ? 'bg-brand-600 text-white hover:text-white'
-                        : 'bg-white text-gray-900',
+                        ? 'border-gray-900 bg-gray-900 text-white hover:text-white'
+                        : 'border-transparent text-gray-900 hover:border-gray-900',
                     )}
                   >
                     {label}

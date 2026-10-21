@@ -7,7 +7,11 @@ import type { BrandDto } from '@ecommerce/types';
  * The list is rendered twice and shifted by exactly one copy, so the loop has no seam.
  * Brands without a logo show as a clean wordmark.
  */
-export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' | 'slug' | 'logoUrl'>[] }) {
+export function BrandMarquee({
+  brands,
+}: {
+  brands: Pick<BrandDto, 'id' | 'name' | 'slug' | 'logoUrl'>[];
+}) {
   if (brands.length === 0) return null;
   // Short lists are repeated so one copy is always wider than the screen.
   const base = brands.length < 8 ? [...brands, ...brands, ...brands].slice(0, 12) : brands;
@@ -21,7 +25,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
         aria-hidden={copy > 0 ? true : undefined}
         tabIndex={copy > 0 ? -1 : undefined}
         title={b.name}
-        className="group/brand mr-3 flex h-20 w-[150px] flex-none items-center justify-center rounded-2xl bg-white px-5 ring-1 ring-black/[.05] transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-card sm:h-24 sm:w-[180px]"
+        className="group/brand flex h-24 min-w-[170px] flex-none items-center justify-center border-r border-gray-200 px-10 sm:h-28 sm:min-w-[210px]"
       >
         {b.logoUrl ? (
           <img
@@ -31,7 +35,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
             className="max-h-11 max-w-full object-contain opacity-70 grayscale transition-all duration-300 group-hover/brand:opacity-100 group-hover/brand:grayscale-0 sm:max-h-12"
           />
         ) : (
-          <span className="truncate text-lg font-extrabold tracking-[-0.03em] text-gray-400 transition-colors duration-300 group-hover/brand:text-brand-700 sm:text-xl">
+          <span className="type-display whitespace-nowrap text-[30px] text-gray-400 transition-colors duration-300 group-hover/brand:text-gray-900 sm:text-[34px]">
             {b.name}
           </span>
         )}
@@ -39,7 +43,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
     ));
 
   return (
-    <div className="brand-marquee group/marquee relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_6%,#000_94%,transparent)]">
+    <div className="brand-marquee group/marquee relative overflow-hidden border-y border-gray-200 [mask-image:linear-gradient(to_right,transparent,#000_6%,#000_94%,transparent)]">
       <style>
         {'.brand-marquee__track{animation:brand-marquee var(--brand-speed) linear infinite}' +
           '.brand-marquee:hover .brand-marquee__track{animation-play-state:paused}' +
@@ -47,7 +51,7 @@ export function BrandMarquee({ brands }: { brands: Pick<BrandDto, 'id' | 'name' 
           '@media (prefers-reduced-motion:reduce){.brand-marquee__track{animation:none}}'}
       </style>
       <div
-        className="brand-marquee__track flex w-max py-2"
+        className="brand-marquee__track flex w-max"
         style={{ ['--brand-speed' as string]: `${seconds}s` }}
       >
         {row(0)}

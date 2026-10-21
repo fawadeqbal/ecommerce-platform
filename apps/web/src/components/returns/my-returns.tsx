@@ -25,7 +25,7 @@ export function MyReturns() {
   });
   return (
     <div>
-      <h1 className="mb-2 text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+      <h1 className="mb-2 text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading text-gray-900">
         Returns
       </h1>
       <p className="mb-6 text-sm text-gray-600">

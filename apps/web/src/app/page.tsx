@@ -9,7 +9,7 @@ import { ProductTabs } from '@/components/home/product-tabs';
 import { Reveal } from '@/components/home/reveal';
 import { DealsCountdown } from '@/components/home/deals-countdown';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
-import { SectionHead } from '@/components/home/section-head';
+import { ArrowLink, SectionHead } from '@/components/home/section-head';
 import { container } from '@/components/layout/container';
 import { getBanners } from '@/lib/cms';
 import { brandsApi, categoriesApi, storefrontApi } from '@/lib/api-client';
@@ -31,30 +31,32 @@ async function products(
 
 const safe = <T,>(p: Promise<T>, fallback: T) => p.catch(() => fallback);
 
+/** Built-in campaign slides (used when no "home.hero" banners are live). " / " = line break. */
 const SLIDES: HeroSlide[] = [
   {
-    tag: 'This week',
-    title: 'Top brands, up to 25% off',
-    sub: 'Phones, laptops and gadgets from verified sellers.',
-    cta: 'Shop deals',
-    href: '/products?onSale=true',
-    bg: 'bg-gradient-to-br from-brand-600 to-brand-800',
-  },
-  {
-    tag: 'Just in',
-    title: 'Thousands of new styles',
-    sub: 'Fresh arrivals from our stores every day. Pay on delivery.',
-    cta: 'See new arrivals',
+    tag: 'New season',
+    title: 'Step into / something new',
+    sub: 'Fresh sneakers, loafers and sandals from the stores you love — new pairs every week.',
+    cta: 'Shop new in',
     href: '/products?sort=newest',
-    bg: 'bg-gradient-to-br from-gray-900 to-[#2a2450]',
+    bg: 'bg-brand-600',
   },
   {
-    tag: 'Featured',
-    title: 'Hand-picked for you',
-    sub: 'Our team’s favourite products, all in one place.',
-    cta: 'Shop featured',
-    href: '/products?featured=true',
-    bg: 'bg-gradient-to-br from-[#0055a9] to-[#0a2f66]',
+    tag: 'Price drop',
+    title: 'Good pairs, / better prices',
+    sub: 'Favourite styles, marked down for a limited time. Pay on delivery.',
+    cta: 'Shop the sale',
+    href: '/products?onSale=true',
+    bg: 'bg-gray-900',
+  },
+  {
+    tag: 'Best sellers',
+    title: 'The pairs / everyone wants',
+    sub: 'The most-loved styles this month, picked by people who wear them.',
+    cta: 'Shop best sellers',
+    href: '/products?sort=popular',
+    bg: 'bg-accent',
+    tone: 'dark',
   },
 ];
 
@@ -62,87 +64,56 @@ const TRUST = [
   {
     title: 'Cash on delivery',
     sub: 'Pay when it arrives',
-    tint: 'bg-tint-yellow text-amber-800',
-    icon: 'M3 7h18v10H3zM7 12h.01M17 12h.01M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+    icon: 'M3 7h18v10H3zM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   },
-  {
-    title: 'Easy returns',
-    sub: 'Request from your orders',
-    tint: 'bg-tint-mint text-emerald-800',
-    icon: 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4',
-  },
+  { title: '7-day exchanges', sub: 'Wrong size? Swap it', icon: 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4' },
   {
     title: 'Verified sellers',
     sub: 'Every store reviewed',
-    tint: 'bg-tint-violet text-brand-800',
     icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3ZM9 12l2 2 4-4',
   },
   {
     title: 'Secure payments',
     sub: 'Card, wallet or cash',
-    tint: 'bg-tint-rose text-rose-800',
     icon: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5zM12 15v2',
   },
 ];
 
-const TINTS = [
-  'bg-tint-violet',
-  'bg-tint-yellow',
-  'bg-tint-mint',
+/** Category tile backgrounds (product photos are multiplied onto them). */
+const TILE_BG = [
+  'bg-canvas',
   'bg-tint-rose',
+  'bg-tint-mint',
+  'bg-tint-yellow',
   'bg-tint-sky',
-  'bg-tint-pink',
+  'bg-tint-violet',
 ];
 
-/** Up to 12 distinct categories (top level first), trimmed to full rows of 6 on desktop. */
+/** Up to 6 distinct top-level categories. */
 function categoryTiles(tree: CategoryTreeNode[]): CategoryTreeNode[] {
   const seen = new Set<string>();
-  const out: CategoryTreeNode[] = [];
-  const add = (c: CategoryTreeNode) => {
-    const key = c.name.trim().toLowerCase();
-    if (seen.has(c.slug) || seen.has(key) || out.length >= 24) return;
-    seen.add(c.slug);
-    seen.add(key);
-    out.push(c);
-  };
-  tree.forEach(add);
-  return out;
+  return tree
+    .filter((c) => {
+      const key = c.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 6);
 }
 
-/** Fallback picture for a category without an image: a product photo, else an icon. */
-const ICONS: [RegExp, string][] = [
-  [/phone|mobile/i, '📱'],
-  [/laptop|computer|pc/i, '💻'],
-  [/head|audio|ear|speaker/i, '🎧'],
-  [/watch/i, '⌚'],
-  [/camera/i, '📷'],
-  [/game|console/i, '🎮'],
-  [/tv|television/i, '📺'],
-  [/electronic|gadget/i, '🔌'],
-  [/women|dress|lawn/i, '👗'],
-  [/men|shirt/i, '👔'],
-  [/fashion|cloth|apparel/i, '👕'],
-  [/shoe|sneaker|foot/i, '👟'],
-  [/bag|luggage/i, '👜'],
-  [/beauty|health|cosmetic|skin/i, '💄'],
-  [/home|kitchen|furniture|living/i, '🏠'],
-  [/sport|fitness|outdoor/i, '⚽'],
-  [/toy|kid|baby/i, '🧸'],
-  [/book|station/i, '📚'],
-  [/grocery|food/i, '🛒'],
-];
-const iconFor = (name: string) => ICONS.find(([re]) => re.test(name))?.[1] ?? '🛍️';
-
-async function categoryImages(cats: CategoryTreeNode[]): Promise<Record<string, string | null>> {
+async function categoryImages(
+  cats: CategoryTreeNode[],
+): Promise<Record<string, { url: string | null; photo: boolean }>> {
   const pairs = await Promise.all(
     cats.map(async (c) => {
-      if (c.imageUrl) return [c.id, c.imageUrl] as const;
-      // Fallback photo only: cached for 10 minutes so the live home page stays light.
+      if (c.imageUrl) return [c.id, { url: c.imageUrl, photo: true }] as const;
+      // Fallback product photo only: cached for 10 minutes so the live home page stays light.
       const [first] = await products(
         { category: c.slug, sort: 'popular', limit: 1 },
         { next: { revalidate: 600 } },
       );
-      return [c.id, first?.imageUrl ?? null] as const;
+      return [c.id, { url: first?.imageUrl ?? null, photo: false }] as const;
     }),
   );
   return Object.fromEntries(pairs);
@@ -155,257 +126,350 @@ export default async function HomePage() {
     safe(categoriesApi.tree(), [] as CategoryTreeNode[]),
     safe(brandsApi.list(), [] as BrandDto[]),
     products({ featured: true, limit: 10 }),
-    products({ sort: 'popular', limit: 40 }),
+    products({ sort: 'popular', limit: 20 }),
     products({ sort: 'newest', limit: 10 }),
-    products({ onSale: true, inStock: true, sort: 'newest', limit: 6 }),
+    products({ onSale: true, inStock: true, sort: 'newest', limit: 8 }),
   ]);
   const deals = onSale.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
   const best = popular.slice(0, 10);
   const cats = categoryTiles(tree);
   const catImages = await categoryImages(cats);
   const empty = featured.length + popular.length + latest.length === 0;
+  // Campaign split: two editorial tiles fed by live products.
+  const campaign = [
+    {
+      eyebrow: 'Just landed',
+      title: 'Made for / the city',
+      href: '/products?sort=newest',
+      cta: 'Shop new in',
+      product: latest[0] ?? popular[0],
+      bg: 'bg-tint-mint',
+    },
+    {
+      eyebrow: 'Editor’s picks',
+      title: 'Weekend / ready',
+      href: '/products?featured=true',
+      cta: 'Shop the edit',
+      product: featured[0] ?? popular[1],
+      bg: 'bg-tint-rose',
+    },
+  ].filter((c) => c.product?.imageUrl);
 
   return (
-    <div
-      className={`${container} flex flex-col gap-[clamp(44px,5.2vw,76px)] pb-6 pt-[clamp(14px,2vw,24px)]`}
-    >
-      <section className="flex flex-col gap-3">
-        <HeroCarousel
-          banners={hero}
-          slides={SLIDES.map((slide, i) => ({
-            ...slide,
-            // Live products on each slide: deals, new arrivals, featured.
-            products: [deals.length ? deals : popular, latest, featured.length ? featured : popular][i] ?? [],
-          }))}
-        />
-        <div className="scrollbar-none -mx-4 flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
-          {TRUST.map((t) => (
-            <div
-              key={t.title}
-              className="flex w-[64%] flex-none snap-start items-center gap-2.5 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-black/[.04] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card sm:w-[40%] md:w-auto"
-            >
-              <span
-                className={cn(
-                  'flex h-8 w-8 flex-none items-center justify-center rounded-lg',
-                  t.tint,
-                )}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                  className="h-4 w-4"
-                >
-                  <path d={t.icon} />
-                </svg>
-              </span>
-              <div>
-                <p className="text-sm font-bold">{t.title}</p>
-                <p className="text-xs text-gray-500">{t.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+    <div className="flex flex-col pb-6">
+      <HeroCarousel
+        banners={hero}
+        slides={SLIDES.map((slide, i) => ({
+          ...slide,
+          products:
+            [latest.length ? latest : popular, deals.length ? deals : popular, best][i] ?? [],
+        }))}
+      />
 
-      {cats.length > 0 ? (
-        <Reveal>
-        <section className="relative overflow-hidden rounded-4xl bg-white p-[clamp(16px,2.6vw,32px)] shadow-card">
-          <div className="relative mb-4 flex items-end justify-between gap-3 sm:mb-6">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-600">
-                Explore
-              </p>
-              <h2 className="text-[clamp(22px,2.6vw,32px)] font-extrabold leading-tight tracking-heading">
-                Shop by category
-              </h2>
-            </div>
-            <Link
-              href="/products"
-              className="flex-none rounded-full bg-gray-900 px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
-            >
-              View all
-            </Link>
-          </div>
-          {/* Phone: one swipeable row with every category. Desktop: a full grid. */}
-          <div className="scrollbar-none relative -mx-[clamp(16px,2.6vw,32px)] flex snap-x snap-mandatory scroll-px-[clamp(16px,2.6vw,32px)] gap-3 overflow-x-auto px-[clamp(16px,2.6vw,32px)] pb-1 md:mx-0 md:grid md:snap-none md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] md:gap-4 md:overflow-visible md:px-0">
-            {cats.map((c, i) => {
-              const img = catImages[c.id];
-              return (
-                <Link
-                  key={c.id}
-                  href={`/categories/${c.slug}`}
-                  className="group flex w-[92px] flex-none snap-start flex-col items-center gap-2 text-center sm:w-[110px] md:w-auto"
-                >
-                  <span
-                    className={cn(
-                      'relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[26px] transition-shadow duration-300 group-hover:shadow-[0_10px_24px_-14px_rgba(30,26,51,.35)]',
-                      TINTS[i % TINTS.length],
-                    )}
-                  >
-                    {img ? (
-                      <img
-                        src={img}
-                        alt=""
-                        loading="lazy"
-                        className={cn(
-                          'h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.04]',
-                          c.imageUrl ? 'object-cover' : 'object-contain p-3 mix-blend-multiply',
-                        )}
-                      />
-                    ) : (
+      {/* Trust strip */}
+      <div className="border-b border-gray-200 bg-white">
+        <ul
+          className={cn(
+            container,
+            'scrollbar-none flex snap-x gap-8 overflow-x-auto py-4 md:grid md:grid-cols-4 md:gap-6',
+          )}
+        >
+          {TRUST.map((t) => (
+            <li key={t.title} className="flex flex-none snap-start items-center gap-3">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.6}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+                className="h-6 w-6 flex-none text-gray-900"
+              >
+                <path d={t.icon} />
+              </svg>
+              <div className="leading-tight">
+                <p className="text-[13px] font-bold uppercase tracking-[0.06em]">{t.title}</p>
+                <p className="text-[12.5px] text-gray-500">{t.sub}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div
+        className={cn(
+          container,
+          'flex flex-col gap-[clamp(64px,8vw,120px)] pt-[clamp(48px,6vw,88px)]',
+        )}
+      >
+        {cats.length > 0 ? (
+          <Reveal>
+            <section className="flex flex-col gap-7">
+              <SectionHead eyebrow="Find your fit" title="Shop by category" href="/products" />
+              <div className="scrollbar-none -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:grid-rows-2 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-4">
+                {cats.map((c, i) => {
+                  const img = catImages[c.id];
+                  const big = i === 0;
+                  return (
+                    <Link
+                      key={c.id}
+                      href={`/categories/${c.slug}`}
+                      className={cn(
+                        'group/tile relative flex w-[62%] flex-none snap-start flex-col justify-end overflow-hidden rounded-md sm:w-[40%] md:w-auto',
+                        TILE_BG[i % TILE_BG.length],
+                        big
+                          ? 'aspect-[3/4] md:row-span-2 md:aspect-auto lg:col-span-2'
+                          : 'aspect-[3/4] md:aspect-[4/3]',
+                        // 1 big + 4 small fills the 2-row grid exactly; the rest stay in the phone row.
+                        i >= 5 && 'md:hidden',
+                      )}
+                    >
+                      {img?.url ? (
+                        <img
+                          src={img.url}
+                          alt=""
+                          loading="lazy"
+                          className={cn(
+                            'absolute inset-0 h-full w-full transition-transform duration-700 ease-out group-hover/tile:scale-[1.05]',
+                            img.photo
+                              ? 'object-cover'
+                              : 'object-contain p-[14%] pb-[22%] mix-blend-multiply group-hover/tile:-rotate-3',
+                          )}
+                        />
+                      ) : null}
+                      {img?.photo ? (
+                        <span
+                          aria-hidden
+                          className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent"
+                        />
+                      ) : null}
                       <span
-                        aria-hidden
-                        className="text-[40px] transition-transform duration-500 ease-out group-hover:scale-[1.06] md:text-5xl"
+                        className={cn(
+                          'relative flex items-end justify-between gap-3 p-4 md:p-5',
+                          img?.photo ? 'text-white' : 'text-gray-900',
+                        )}
                       >
-                        {iconFor(c.name)}
+                        <span
+                          className={cn(
+                            'type-display',
+                            big ? 'text-[clamp(34px,4vw,56px)]' : 'text-[clamp(26px,2.6vw,36px)]',
+                          )}
+                        >
+                          {c.name}
+                        </span>
+                        <span
+                          aria-hidden
+                          className={cn(
+                            'grid h-10 w-10 flex-none place-items-center rounded-full transition-all duration-300 group-hover/tile:translate-x-0 group-hover/tile:opacity-100 md:-translate-x-2 md:opacity-0',
+                            img?.photo ? 'bg-white text-gray-900' : 'bg-gray-900 text-white',
+                          )}
+                        >
+                          →
+                        </span>
                       </span>
-                    )}
-                  </span>
-                  <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-gray-800 transition-colors group-hover:text-brand-700 md:text-sm">
-                    {c.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          </Reveal>
+        ) : null}
+
+        {featured.length + best.length + latest.length > 0 ? (
+          <Reveal>
+            <ProductTabs
+              tabs={[
+                {
+                  key: 'new',
+                  label: 'New in',
+                  href: '/products?sort=newest',
+                  products: latest,
+                  badge: 'new',
+                },
+                {
+                  key: 'best',
+                  label: 'Best sellers',
+                  href: '/products?sort=popular',
+                  products: best,
+                  ranked: true,
+                },
+                {
+                  key: 'featured',
+                  label: 'Featured',
+                  href: '/products?featured=true',
+                  products: featured,
+                },
+              ]}
+            />
+          </Reveal>
+        ) : null}
+
+        {campaign.length > 0 ? (
+          <Reveal>
+            <section className="grid gap-4 md:grid-cols-2">
+              {campaign.map((c) => (
+                <Link
+                  key={c.href}
+                  href={c.href}
+                  className={cn(
+                    'group/camp relative flex aspect-[4/5] flex-col justify-between overflow-hidden rounded-md p-[clamp(20px,3vw,40px)] text-gray-900 hover:text-gray-900 sm:aspect-[5/4]',
+                    c.bg,
+                  )}
+                >
+                  <div className="relative z-10">
+                    <p className="type-eyebrow mb-3 text-gray-700">{c.eyebrow}</p>
+                    <h3 className="type-display text-[clamp(44px,6vw,88px)]">
+                      {c.title.split(' / ').map((line) => (
+                        <span key={line} className="block">
+                          {line}
+                        </span>
+                      ))}
+                    </h3>
+                  </div>
+                  <img
+                    src={c.product!.imageUrl!}
+                    alt=""
+                    loading="lazy"
+                    className="absolute bottom-[8%] right-[-6%] w-[78%] -rotate-12 object-contain mix-blend-multiply transition-transform duration-700 ease-out group-hover/camp:-translate-y-3 group-hover/camp:-rotate-[16deg]"
+                  />
+                  <span className="relative z-10 inline-flex items-center gap-2 self-start text-[12.5px] font-bold uppercase tracking-[0.1em]">
+                    <span className="link-grow">{c.cta}</span>
+                    <span
+                      aria-hidden
+                      className="transition-transform duration-300 group-hover/camp:translate-x-1"
+                    >
+                      →
+                    </span>
                   </span>
                 </Link>
-              );
-            })}
-          </div>
-        </section>
-        </Reveal>
-      ) : null}
+              ))}
+            </section>
+          </Reveal>
+        ) : null}
+      </div>
 
       {deals.length > 0 ? (
-        <Reveal>
-        <section className="relative grid gap-5 overflow-hidden rounded-4xl bg-[linear-gradient(160deg,#6447e6,#4a2fc4)] p-[clamp(18px,3vw,32px)] text-white md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] md:gap-6">
-          <span aria-hidden className="pointer-events-none absolute -left-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
-          <span aria-hidden className="pointer-events-none absolute -bottom-16 left-40 h-40 w-40 rounded-full bg-accent/25 blur-2xl" />
-
-          {/* Left: the offer */}
-          <div className="relative flex flex-col justify-between gap-5">
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">Limited time</p>
-              <h2 className="text-[clamp(30px,3.6vw,46px)] font-extrabold leading-none tracking-display">
-                Today’s deals
-              </h2>
-              <p className="max-w-[260px] text-[15px] text-white/75">
-                Hand-picked price drops. New deals every day at midnight.
-              </p>
-              <div className="self-start">
-                <DealsCountdown />
+        <Reveal className="mt-[clamp(64px,8vw,120px)]">
+          <section className="bg-gray-900 py-[clamp(48px,6vw,88px)] text-gray-50">
+            <div className={cn(container, 'flex flex-col gap-8')}>
+              <div className="flex flex-wrap items-end justify-between gap-6">
+                <div>
+                  <p className="type-eyebrow mb-2 text-accent">Today only</p>
+                  <h2 className="type-display text-[clamp(44px,6vw,88px)] text-gray-50">
+                    Price drops
+                  </h2>
+                  <p className="mt-2 max-w-[360px] text-[15px] text-white/65">
+                    New markdowns every day at midnight. When they’re gone, they’re gone.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-end gap-8">
+                  <DealsCountdown />
+                  <ArrowLink href="/products?onSale=true" label="Shop all deals" tone="light" />
+                </div>
+              </div>
+              <div className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:gap-4 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-y-10 lg:px-0">
+                {/* Full rows only on desktop (4 per row). */}
+                {deals
+                  .slice(
+                    0,
+                    deals.length >= 4
+                      ? Math.min(8, deals.length - (deals.length % 4))
+                      : deals.length,
+                  )
+                  .map((p) => (
+                    <div key={p.id} className="w-[46%] flex-none snap-start sm:w-[31%] lg:w-auto">
+                      <ProductCard product={p} quickAdd tone="dark" />
+                    </div>
+                  ))}
               </div>
             </div>
-            <Link
-              href="/products?onSale=true"
-              className="group/link inline-flex items-center gap-2 self-start rounded-2xl bg-white px-5 py-3 font-bold text-gray-900 shadow-lg shadow-black/10 transition-colors hover:bg-accent hover:text-gray-900"
-            >
-              See all deals
-              <span aria-hidden className="transition-transform group-hover/link:translate-x-1">→</span>
-            </Link>
-          </div>
+          </section>
+        </Reveal>
+      ) : null}
 
-          {/* Right: the products, in a swipeable row */}
-          <div className="scrollbar-none relative -mx-[clamp(18px,3vw,32px)] flex snap-x scroll-px-[clamp(18px,3vw,32px)] gap-3 overflow-x-auto px-[clamp(18px,3vw,32px)] pb-1 text-gray-900 md:mx-0 md:px-0">
-            {deals.map((p) => (
-              <div key={p.id} className="w-[46%] flex-none snap-start sm:w-[220px]">
-                <ProductCard product={p} dealPrice quickAdd="icon" />
+      <div
+        className={cn(
+          container,
+          'flex flex-col gap-[clamp(64px,8vw,120px)] pt-[clamp(64px,8vw,120px)]',
+        )}
+      >
+        {mid.length > 0 ? (
+          <Reveal>
+            <BannerStrip banners={mid} variant="strip" />
+          </Reveal>
+        ) : null}
+
+        {brands.length > 0 ? (
+          <Reveal>
+            <section className="flex flex-col gap-7">
+              <SectionHead
+                eyebrow="Official stores"
+                title="Shop the brands"
+                href="/products"
+                linkLabel="All products"
+              />
+              <div className="-mx-4 sm:-mx-6 lg:-mx-10">
+                <BrandMarquee brands={brands.slice(0, 24)} />
               </div>
-            ))}
-            <Link
-              href="/products?onSale=true"
-              className="flex w-[46%] flex-none snap-start flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/30 p-6 text-center font-bold text-white transition-colors hover:border-white/60 hover:bg-white/5 hover:text-white sm:w-[220px]"
-            >
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-white/15 text-xl">→</span>
-              More deals
-            </Link>
-          </div>
-        </section>
-        </Reveal>
-      ) : null}
+            </section>
+          </Reveal>
+        ) : null}
 
-      {featured.length + best.length + latest.length > 0 ? (
         <Reveal>
-          <ProductTabs
-            tabs={[
-              { key: 'featured', label: 'Featured', href: '/products?featured=true', products: featured },
-              { key: 'best', label: 'Best sellers', href: '/products?sort=popular', products: best, ranked: true },
-              { key: 'new', label: 'New arrivals', href: '/products?sort=newest', products: latest, badge: 'new' },
-            ]}
-          />
-        </Reveal>
-      ) : null}
-
-      {mid.length > 0 ? (
-        <Reveal>
-          <BannerStrip banners={mid} variant="strip" />
-        </Reveal>
-      ) : null}
-
-      {brands.length > 0 ? (
-        <Reveal>
-        <section className="flex flex-col gap-5">
-          <SectionHead eyebrow="Shop the brands" title="Official brand stores" />
-          <div className="-mx-4 sm:-mx-6 md:mx-0">
-            <BrandMarquee brands={brands.slice(0, 24)} />
-          </div>
-        </section>
-        </Reveal>
-      ) : null}
-
-      <Reveal>
-      <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] gap-3">
-        <div className="flex flex-col gap-3.5 rounded-4xl bg-white p-[clamp(22px,3.4vw,44px)] ring-1 ring-black/[.04]">
-          <span className="self-start rounded-full bg-accent px-3 py-1.5 text-[13px] font-bold text-gray-900">
-            Rewards
-          </span>
-          <h2 className="text-balance text-[clamp(28px,3.6vw,44px)] font-extrabold leading-none tracking-display text-gray-900">
-            Every order earns you points
-          </h2>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              ['Earn', 'Shop', 'on delivered orders'],
-              ['Redeem', 'Save', 'at checkout'],
-              ['Tiers', 'More', 'as you shop more'],
-            ].map(([name, big, note]) => (
-              <div key={name} className="flex flex-col gap-0.5 rounded-[18px] bg-gray-50 p-3.5">
-                <span className="text-[13px] text-gray-500">{name}</span>
-                <span className="text-2xl font-extrabold text-brand-700">{big}</span>
-                <span className="text-xs text-gray-500">{note}</span>
+          <section className="grid overflow-hidden rounded-md bg-brand-600 text-gray-50 md:grid-cols-[1.2fr_1fr]">
+            <div className="flex flex-col gap-5 p-[clamp(24px,4vw,56px)]">
+              <p className="type-eyebrow text-accent">KADAM Rewards</p>
+              <h2 className="type-display text-[clamp(44px,6vw,88px)] text-gray-50">
+                <span className="block">Every step</span>
+                <span className="block">earns points</span>
+              </h2>
+              <p className="max-w-[440px] text-white/80">
+                Earn points on every delivered order, redeem them at checkout, and unlock better
+                tiers the more you shop. Invite a friend and you both get a bonus.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <Link
+                  href="/account/loyalty"
+                  className="inline-flex h-12 items-center rounded-md bg-white px-6 text-[12.5px] font-bold uppercase tracking-[0.1em] text-gray-900 hover:bg-gray-900 hover:text-white"
+                >
+                  See my points
+                </Link>
+                <Link
+                  href="/account/loyalty"
+                  className="inline-flex h-12 items-center rounded-md border border-white/50 px-6 text-[12.5px] font-bold uppercase tracking-[0.1em] text-white hover:border-white hover:bg-white/10 hover:text-white"
+                >
+                  Invite friends
+                </Link>
               </div>
-            ))}
-          </div>
-          <Link
-            href="/account/loyalty"
-            className="self-start rounded-2xl bg-gray-900 px-[22px] py-[13px] font-bold text-white hover:bg-brand-700 hover:text-white"
-          >
-            See my points
-          </Link>
-        </div>
-        <div className="flex flex-col justify-between gap-3.5 rounded-4xl bg-brand-100 p-[clamp(22px,3.4vw,44px)]">
-          <div className="flex flex-col gap-2.5">
-            <span className="font-bold text-brand-700">Invite friends</span>
-            <h2 className="text-[clamp(28px,3.6vw,44px)] font-extrabold leading-none tracking-display">
-              You both get bonus points
-            </h2>
-            <p className="text-gray-600">After your friend’s first delivered order.</p>
-          </div>
-          <Link
-            href="/account/loyalty"
-            className="self-start rounded-2xl bg-brand-600 px-[22px] py-[13px] font-bold text-white hover:bg-brand-700 hover:text-white"
-          >
-            Share my link
-          </Link>
-        </div>
-      </section>
-      </Reveal>
+            </div>
+            <dl className="grid grid-cols-3 border-t border-white/20 md:grid-cols-1 md:border-l md:border-t-0">
+              {[
+                ['Earn', 'on delivered orders'],
+                ['Redeem', 'at checkout'],
+                ['Level up', 'as you shop more'],
+              ].map(([k, v], i) => (
+                <div
+                  key={k}
+                  className={cn(
+                    'flex flex-col justify-center gap-1 p-5 md:px-10',
+                    i > 0 && 'border-l border-white/20 md:border-l-0 md:border-t',
+                  )}
+                >
+                  <dt className="type-display text-[clamp(26px,3vw,40px)]">{k}</dt>
+                  <dd className="text-[13px] text-white/75">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        </Reveal>
 
-      {empty ? (
-        <p className="text-center text-gray-500">
-          No products yet. Approve products in the admin to see them here.
-        </p>
-      ) : null}
+        {empty ? (
+          <p className="text-center text-gray-500">
+            No products yet. Approve products in the admin to see them here.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

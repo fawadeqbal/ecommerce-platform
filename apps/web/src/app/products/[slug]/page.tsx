@@ -16,10 +16,22 @@ import { JsonLd, breadcrumbLd } from '@/components/seo/json-ld';
 import { ApiClientError, storefrontApi } from '@/lib/api-client';
 
 const PERKS = [
-  { k: 'C', title: 'Cash on delivery', sub: 'Pay at your door', tint: 'bg-tint-yellow' },
-  { k: '↺', title: 'Easy returns', sub: 'Request from your orders', tint: 'bg-tint-mint' },
-  { k: '✓', title: 'Verified seller', sub: 'Every store is reviewed', tint: 'bg-tint-violet' },
-  { k: '%', title: 'Secure payment', sub: 'Card, wallet or cash', tint: 'bg-tint-rose' },
+  {
+    title: 'Cash on delivery',
+    sub: 'Pay at your door',
+    icon: 'M3 7h18v10H3zM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  },
+  { title: '7-day exchanges', sub: 'Wrong size? Swap it', icon: 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4' },
+  {
+    title: 'Verified seller',
+    sub: 'Every store is reviewed',
+    icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3ZM9 12l2 2 4-4',
+  },
+  {
+    title: 'Secure payment',
+    sub: 'Card, wallet or cash',
+    icon: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5zM12 15v2',
+  },
 ];
 
 /** Stock must be live, so product pages are rendered per request. */
@@ -97,14 +109,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           { name: product.name, path: `/products/${product.slug}` },
         ])}
       />
-      <nav aria-label="Breadcrumb" className="-mb-2 flex flex-wrap gap-2 text-[13px] text-gray-500">
-        <Link href="/" className="text-gray-500 hover:text-brand-600">
+      <nav
+        aria-label="Breadcrumb"
+        className="-mb-2 flex flex-wrap gap-2 text-[12.5px] text-gray-500"
+      >
+        <Link href="/" className="link-grow text-gray-500 hover:text-gray-900">
           Home
         </Link>
         <span>/</span>
         <Link
           href={`/categories/${product.category.slug}`}
-          className="text-gray-500 hover:text-brand-600"
+          className="link-grow text-gray-500 hover:text-gray-900"
         >
           {product.category.name}
         </Link>
@@ -112,38 +127,37 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <span className="text-gray-900">{product.name}</span>
       </nav>
 
-      <section className="grid items-start gap-[clamp(20px,3vw,40px)] lg:grid-cols-2">
-        <ProductGallery images={product.images} name={product.name} discount={discount} />
-        <div className="flex flex-col gap-[18px]">
-          <div className="flex flex-col gap-2">
+      <section className="grid items-start gap-[clamp(24px,3.4vw,56px)] lg:grid-cols-[minmax(0,1.3fr)_minmax(360px,1fr)]">
+        <div className="lg:sticky lg:top-[calc(var(--header-h)+20px)] lg:transition-[top] lg:duration-300">
+          <ProductGallery images={product.images} name={product.name} discount={discount} />
+        </div>
+        <div className="flex flex-col gap-7">
+          <div className="flex flex-col gap-2.5 border-b border-gray-200 pb-6">
             {product.brand ? (
               <Link
                 href={`/brands/${product.brand.slug}`}
-                className="self-start rounded-full bg-brand-100 px-3 py-[5px] text-[13px] font-bold text-brand-700 hover:text-brand-900"
+                className="type-eyebrow link-grow self-start text-gray-500 hover:text-gray-900"
               >
                 {product.brand.name}
               </Link>
             ) : null}
-            <h1 className="text-balance text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.05] tracking-[-0.035em]">
+            <h1 className="text-balance text-[clamp(30px,3.2vw,44px)] font-bold leading-[1.02] tracking-heading">
               {product.name}
             </h1>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-gray-600">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13.5px] text-gray-600">
               {product.ratingCount > 0 ? (
-                <a
-                  href="#reviews"
-                  className="inline-flex items-center gap-1.5 hover:text-brand-600"
-                >
+                <a href="#reviews" className="inline-flex items-center gap-1.5 hover:text-gray-900">
                   <Stars value={product.ratingAverage} />
                   <b className="text-gray-900">{product.ratingAverage.toFixed(1)}</b> ·{' '}
                   {product.ratingCount.toLocaleString()} review
                   {product.ratingCount === 1 ? '' : 's'}
                 </a>
               ) : (
-                <a href="#reviews" className="hover:text-brand-600">
+                <a href="#reviews" className="underline underline-offset-4 hover:text-gray-900">
                   No reviews yet
                 </a>
               )}
-              <a href="#questions" className="hover:text-brand-600">
+              <a href="#questions" className="underline underline-offset-4 hover:text-gray-900">
                 Questions &amp; answers
               </a>
             </div>
@@ -154,26 +168,30 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
           <ProductPurchase product={product} />
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-2">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-4 border-y border-gray-200 py-5">
             {PERKS.map((t) => (
-              <div
-                key={t.title}
-                className="flex items-center gap-2.5 rounded-[18px] bg-white px-3.5 py-3"
-              >
-                <span
-                  className={`flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] text-sm font-extrabold ${t.tint}`}
+              <li key={t.title} className="flex items-start gap-3">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.6}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                  className="mt-0.5 h-5 w-5 flex-none text-gray-900"
                 >
-                  {t.k}
-                </span>
+                  <path d={t.icon} />
+                </svg>
                 <div>
-                  <p className="text-sm font-bold">{t.title}</p>
-                  <p className="text-xs text-gray-500">{t.sub}</p>
+                  <p className="text-[13.5px] font-semibold">{t.title}</p>
+                  <p className="text-[12.5px] text-gray-500">{t.sub}</p>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
 
-          <div className="flex flex-wrap items-center gap-3.5 rounded-3xl bg-white p-4">
+          <div className="flex flex-wrap items-center gap-3.5">
             {product.vendor.logoUrl ? (
               <img
                 src={product.vendor.logoUrl}
@@ -181,7 +199,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 className="h-[52px] w-[52px] flex-none rounded-full object-cover"
               />
             ) : (
-              <span className="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full bg-tint-yellow text-[22px] font-extrabold">
+              <span className="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full bg-gray-900 text-[20px] font-bold text-white">
                 {product.vendor.name.charAt(0).toUpperCase()}
               </span>
             )}
@@ -192,7 +210,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
             <Link
               href={`/stores/${product.vendor.slug}`}
-              className="rounded-[14px] bg-brand-100 px-4 py-2.5 text-sm font-bold text-brand-700 hover:text-brand-900"
+              className="rounded-md border border-gray-300 px-4 py-2.5 text-[12px] font-bold uppercase tracking-[0.08em] text-gray-900 hover:border-gray-900 hover:text-gray-900"
             >
               Visit store
             </Link>

@@ -64,7 +64,7 @@ export default async function StorePage({
               ) : null}
             </div>
             <div className="flex-1 pt-3">
-              <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+              <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading text-gray-900">
                 {store.name}
               </h1>
               <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">

@@ -8,7 +8,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { RECENTLY_VIEWED_KEY } from '@ecommerce/types';
 import { cn, formatMoney } from '@ecommerce/ui';
 import { useLocale } from '@/components/locale/locale-provider';
-import { ArrowUpLeftIcon, ChevronDownIcon, ClockIcon, GridIcon, SearchIcon } from '@/components/icons';
+import {
+  ArrowUpLeftIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  GridIcon,
+  SearchIcon,
+} from '@/components/icons';
 import { categoriesApi, queryKeys, searchApi, storefrontApi } from '@/lib/api-client';
 import { clearSearches, forgetSearch, readSearches, rememberSearch } from '@/lib/search-history';
 
@@ -145,13 +151,13 @@ export function SearchBox() {
   return (
     <div
       ref={boxRef}
-      className="relative order-last w-full min-w-0 md:order-none md:w-auto md:min-w-[200px] md:flex-1"
+      className="relative order-last w-full min-w-0 md:order-none md:w-auto md:min-w-[200px] md:max-w-[620px] md:flex-1"
     >
       <form
         action="/search"
         onSubmit={submit}
         role="search"
-        className="flex h-[50px] items-center gap-2 rounded-2xl bg-white p-[5px] shadow-[0_10px_24px_-10px_rgba(20,8,70,.5)] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(255,255,255,.28),0_10px_24px_-10px_rgba(20,8,70,.5)]"
+        className="flex h-11 items-center gap-1.5 rounded-lg bg-gray-100 p-1 ring-1 ring-inset ring-transparent transition-[background-color,box-shadow] duration-200 hover:bg-gray-200/70 focus-within:bg-white focus-within:ring-gray-900"
       >
         <div className="relative flex-none" ref={scopeRef}>
           <button
@@ -159,7 +165,7 @@ export function SearchBox() {
             aria-haspopup="listbox"
             aria-expanded={scopeOpen}
             onClick={() => setScopeOpen((o) => !o)}
-            className="flex h-10 items-center gap-[7px] whitespace-nowrap rounded-[11px] bg-[#f3f0fd] pl-3.5 pr-3 text-sm font-semibold text-[#3b2390] transition-colors hover:bg-[#e9e3fc]"
+            className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md bg-white pl-2.5 pr-2 text-[13px] font-semibold text-gray-900 shadow-[0_1px_0_rgba(23,21,19,.08)] transition-colors hover:bg-gray-50"
           >
             <GridIcon size={16} />
             <span className="hidden max-w-[110px] truncate xl:inline">{scopeLabel}</span>
@@ -172,7 +178,7 @@ export function SearchBox() {
             <ul
               role="listbox"
               aria-label="Search in"
-              className="absolute left-0 top-[calc(100%+10px)] z-50 max-h-80 w-60 animate-pop-in overflow-y-auto rounded-2xl bg-white p-1.5 text-gray-900 shadow-[0_0_0_1px_rgba(30,26,51,.05),0_20px_50px_-12px_rgba(30,26,51,.35)]"
+              className="absolute left-0 top-[calc(100%+10px)] z-50 max-h-80 w-60 animate-pop-in overflow-y-auto rounded-lg bg-white p-1.5 text-gray-900 shadow-pop"
             >
               {[{ id: '', slug: '', name: 'All categories' }, ...(tree.data ?? [])].map((c) => {
                 const on = c.slug === scope;
@@ -188,10 +194,10 @@ export function SearchBox() {
                         inputRef.current?.focus();
                       }}
                       className={cn(
-                        'flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
+                        'flex w-full items-center justify-between gap-2 rounded-md px-3 py-2.5 text-left text-sm transition-colors',
                         on
-                          ? 'bg-brand-50 font-semibold text-brand-700'
-                          : 'font-medium text-[#3d3955] hover:bg-gray-50 hover:text-brand-600',
+                          ? 'bg-gray-100 font-semibold text-gray-900'
+                          : 'font-medium text-[#3d3934] hover:bg-gray-50 hover:text-brand-600',
                       )}
                     >
                       <span className="truncate">{c.name}</span>
@@ -203,7 +209,7 @@ export function SearchBox() {
             </ul>
           ) : null}
         </div>
-        <SearchIcon size={20} className="ml-1.5 flex-none text-[#9894ae]" />
+        <SearchIcon size={19} className="ml-1.5 flex-none text-gray-500" />
         <input
           ref={inputRef}
           name="q"
@@ -220,7 +226,7 @@ export function SearchBox() {
           aria-controls={listId}
           aria-expanded={open && (showHistory || showSuggest)}
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent text-[15.5px] text-gray-900 placeholder:text-[#9894ae] focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-[15px] text-gray-900 placeholder:text-gray-500 focus:outline-none"
         />
         {value ? (
           <button
@@ -236,13 +242,13 @@ export function SearchBox() {
             ×
           </button>
         ) : (
-          <kbd className="mr-1.5 hidden rounded-md border border-b-2 border-gray-200 bg-[#f7f6fb] px-[7px] py-0.5 font-sans text-[11px] font-semibold text-[#8c88a3] xl:block">
+          <kbd className="mr-1.5 hidden rounded border border-b-2 border-gray-300 bg-white px-[7px] py-0.5 font-sans text-[11px] font-semibold text-gray-500 xl:block">
             /
           </kbd>
         )}
         <button
           type="submit"
-          className="h-10 flex-none rounded-[11px] bg-gradient-to-b from-[#ffda3d] to-[#ffc61a] px-5 text-[15px] font-bold text-gray-900 shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_2px_6px_-2px_rgba(200,140,0,.5)] hover:from-[#ffd21f] hover:to-[#ffb800]"
+          className="hidden h-9 flex-none rounded-md bg-gray-900 px-4 text-[12px] font-bold uppercase tracking-[0.08em] text-white hover:bg-brand-600 sm:block"
         >
           {t('header.search')}
         </button>

@@ -11,7 +11,7 @@ function Icon({ size = 20, children, ...props }: IconProps & { children: ReactNo
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.7}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
@@ -137,5 +137,44 @@ export const ArrowUpLeftIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M17 17 7 7" />
     <path d="M7 15V7h8" />
+  </Icon>
+);
+
+/** Shopping bag (header + cart drawer). */
+export const BagIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 8h14l-1 12.2a1 1 0 0 1-1 .8H7a1 1 0 0 1-1-.8L5 8Z" />
+    <path d="M9 10V6.5a3 3 0 0 1 6 0V10" />
+  </Icon>
+);
+
+export const CloseIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Icon>
+);
+
+export const MinusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 12h12" />
+  </Icon>
+);
+
+export const PlusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 6v12M6 12h12" />
+  </Icon>
+);
+
+export const RulerIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 15.5 15.5 3 21 8.5 8.5 21z" />
+    <path d="m7 12 2 2M10 9l2 2M13 6l2 2" />
+  </Icon>
+);
+
+export const ReturnIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" />
   </Icon>
 );

@@ -576,7 +576,7 @@ export function SupportWidget() {
         aria-expanded={open}
         aria-controls="support-panel"
         aria-label="Open support chat"
-        className={`fixed bottom-[88px] right-4 z-40 flex h-14 items-center gap-2 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 pl-4 pr-4 text-sm font-bold text-white shadow-[0_14px_30px_-10px_rgba(83,43,199,.7)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-10px_rgba(83,43,199,.8)] md:bottom-6 md:right-6 md:pr-5 ${
+        className={`fixed bottom-[88px] right-4 z-40 flex h-14 items-center gap-2 rounded-full bg-gray-900 pl-4 pr-4 text-sm font-bold text-white shadow-[0_14px_30px_-12px_rgba(23,21,19,.6)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-600 md:bottom-6 md:right-6 md:pr-5 [html[data-sticky-cta]_&]:bottom-[96px] md:[html[data-sticky-cta]_&]:bottom-[96px] ${
           open ? 'pointer-events-none scale-75 opacity-0' : 'scale-100 opacity-100'
         }`}
       >
@@ -590,7 +590,7 @@ export function SupportWidget() {
         id="support-panel"
         aria-label="Customer support chat"
         aria-hidden={!open}
-        className={`fixed inset-x-2 bottom-2 z-50 flex h-[min(78vh,640px)] origin-bottom-right flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_24px_60px_-20px_rgba(27,15,73,.45)] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] md:inset-x-auto md:bottom-6 md:right-6 md:h-[min(640px,calc(100vh-var(--header-h)-48px))] md:w-[390px] ${
+        className={`fixed inset-x-2 bottom-2 z-50 flex h-[min(78vh,640px)] origin-bottom-right flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_24px_60px_-20px_rgba(23,21,19,.45)] transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] md:inset-x-auto md:bottom-6 md:right-6 md:h-[min(640px,calc(100vh-var(--header-h)-48px))] md:w-[390px] ${
           open
             ? 'translate-y-0 scale-100 opacity-100'
             : 'pointer-events-none translate-y-4 scale-95 opacity-0'

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@ecommerce/ui';
 import { useCart, useMe } from '@/hooks/use-cart';
 import { useLocale } from '@/components/locale/locale-provider';
-import { CartIcon, GridIcon, HomeIcon, TagIcon, UserIcon } from '@/components/icons';
+import { BagIcon, GridIcon, HomeIcon, TagIcon, UserIcon } from '@/components/icons';
 
 /** Bottom tab bar on phones (hidden from md up). */
 export function MobileTabBar() {
@@ -21,11 +21,11 @@ export function MobileTabBar() {
       icon: GridIcon,
       active: pathname.startsWith('/products') || pathname.startsWith('/categories'),
     },
-    { href: '/products?sort=popular', label: t('header.deals'), icon: TagIcon, active: false },
+    { href: '/products?onSale=true', label: t('header.deals'), icon: TagIcon, active: false },
     {
       href: '/cart',
       label: t('header.cart'),
-      icon: CartIcon,
+      icon: BagIcon,
       badge: count,
       active: pathname.startsWith('/cart'),
     },
@@ -50,19 +50,20 @@ export function MobileTabBar() {
             href={tab.href}
             aria-current={tab.active ? 'page' : undefined}
             className={cn(
-              'flex flex-col items-center gap-1 py-1 text-[11px] font-semibold',
-              tab.active ? 'text-brand-600' : 'text-gray-500',
+              'relative flex flex-col items-center gap-1 py-1 text-[10.5px] font-semibold uppercase tracking-[0.06em]',
+              tab.active ? 'text-gray-900' : 'text-gray-500',
             )}
           >
             <span
               className={cn(
-                'relative flex h-8 w-12 items-center justify-center rounded-full transition-colors',
-                tab.active && 'bg-brand-100',
+                'relative flex h-8 w-12 items-center justify-center transition-colors',
+                tab.active &&
+                  'after:absolute after:-top-1.5 after:h-[2px] after:w-6 after:rounded-full after:bg-gray-900',
               )}
             >
               <TabIcon size={21} />
               {badge ? (
-                <span className="absolute -top-0.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
+                <span className="absolute -top-0.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] font-bold text-white ring-2 ring-white">
                   {badge}
                 </span>
               ) : null}

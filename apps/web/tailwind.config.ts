@@ -2,8 +2,12 @@ import type { Config } from 'tailwindcss';
 import preset from '@ecommerce/config/tailwind/preset.js';
 
 /**
- * Storefront theme ("Bazaar Bright"). Only the web app uses these values: the shared
+ * Storefront theme — "KADAM" (footwear). Only the web app uses these values: the shared
  * @ecommerce/ui components are compiled per app, so admin and vendor keep the base preset.
+ *
+ * Palette: bone canvas, near-black ink, terracotta clay (primary), marigold (highlight).
+ * Shape: tight corners (2–12px) — pills stay round. Type: Archivo, condensed for display.
+ * Every token is also documented in apps/web/DESIGN_SYSTEM.md.
  */
 const config: Config = {
   presets: [preset],
@@ -11,55 +15,72 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Violet — oklch(0.52 0.22 285) is 600 (primary buttons, header).
+        // Clay — 600 is the primary action colour (buttons, links, active states).
         brand: {
-          50: '#f3f4ff',
-          100: '#ebebff',
-          200: '#d8d7ff',
-          300: '#bcb9ff',
-          400: '#958aff',
-          500: '#7963f5',
-          600: '#6445df',
-          700: '#532bc7',
-          800: '#40239b',
-          900: '#2e1b72',
-          950: '#1b0f49',
+          50: '#fdf4ef',
+          100: '#fae5d9',
+          200: '#f3c6ad',
+          300: '#e9a07c',
+          400: '#dd774b',
+          500: '#cf5a2a',
+          600: '#b6461c',
+          700: '#933818',
+          800: '#772f19',
+          900: '#622918',
+          950: '#36130a',
         },
-        // Signal yellow — oklch(0.88 0.17 92): search button, discount pills, highlights.
-        accent: { DEFAULT: '#ffd32e', soft: '#ffefb1', strong: '#f2bc00' },
-        // Violet-tinted neutrals: ink #1B1830, muted #6C6883, lines #E6E3F0, canvas #F5F4FA.
+        // Marigold — highlights, count badges, "new season" moments. Always with ink text.
+        accent: { DEFAULT: '#f0bd3f', soft: '#f9e7b4', strong: '#d9a21f' },
+        // Warm neutrals: ink #171513, muted #756D62, lines #E4DED4, canvas #F6F3EE.
         gray: {
-          50: '#f5f4fa',
-          100: '#eeecf5',
-          200: '#e6e3f0',
-          300: '#d4d0e3',
-          400: '#a7a1c9',
-          500: '#6c6883',
-          600: '#4a4663',
-          700: '#3a3652',
-          800: '#2a2642',
-          900: '#1b1830',
-          950: '#110f20',
+          50: '#f6f3ee',
+          100: '#efebe4',
+          200: '#e4ded4',
+          300: '#cfc7ba',
+          400: '#a39a8c',
+          500: '#756d62',
+          600: '#554f47',
+          700: '#3d3934',
+          800: '#282522',
+          900: '#171513',
+          950: '#0d0c0b',
         },
-        // Soft tiles (categories, trust badges, store avatars).
+        // Sale / price-drop red-orange, kept apart from the clay primary so deals read as deals.
+        sale: { DEFAULT: '#c8321e', soft: '#fbe3dd' },
+        // Soft tiles (categories, trust badges, store avatars). Keys kept for compatibility.
         tint: {
-          violet: '#e3e3ff',
-          yellow: '#f6e7bb',
-          mint: '#c6f5da',
-          rose: '#ffd9d7',
-          sky: '#c0f0ff',
-          pink: '#ffdafb',
+          violet: '#e8e2da', // stone
+          yellow: '#f6e6bd', // straw
+          mint: '#dde6d2', // sage
+          rose: '#f5dccf', // clay wash
+          sky: '#d9e3e6', // slate
+          pink: '#efdfe1', // blush
         },
+        // Product imagery sits on this (photos are multiplied onto it).
+        canvas: { DEFAULT: '#efebe4', deep: '#e7e1d8' },
+      },
+      fontFamily: {
+        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        lg: '0.875rem',
-        xl: '1rem',
-        '2xl': '1.375rem',
-        '3xl': '1.75rem',
-        '4xl': '2rem',
+        sm: '2px',
+        DEFAULT: '3px',
+        md: '4px',
+        lg: '6px',
+        xl: '8px',
+        '2xl': '10px',
+        '3xl': '12px',
+        '4xl': '14px',
       },
       boxShadow: {
-        card: '0 14px 34px -16px rgba(60, 40, 140, 0.35)',
+        card: '0 18px 40px -24px rgba(23, 21, 19, 0.35)',
+        pop: '0 0 0 1px rgba(23,21,19,.06), 0 24px 60px -18px rgba(23,21,19,.32)',
+        drawer: '-24px 0 60px -20px rgba(23,21,19,.35)',
+      },
+      transitionTimingFunction: {
+        // One curve for the whole store: quick start, soft landing.
+        out: 'cubic-bezier(.22,1,.36,1)',
+        'in-out': 'cubic-bezier(.65,0,.35,1)',
       },
       // Screen and panel transitions (all disabled under prefers-reduced-motion in globals.css).
       keyframes: {
@@ -73,6 +94,16 @@ const config: Config = {
           to: { opacity: '1', transform: 'none' },
         },
         'sheet-up': { from: { transform: 'translateY(100%)' }, to: { transform: 'none' } },
+        'slide-in-right': { from: { transform: 'translateX(100%)' }, to: { transform: 'none' } },
+        'rise-in': {
+          from: { opacity: '0', transform: 'translateY(14px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+        ticker: {
+          from: { transform: 'translateY(100%)', opacity: '0' },
+          to: { transform: 'none', opacity: '1' },
+        },
+        shimmer: { from: { backgroundPosition: '200% 0' }, to: { backgroundPosition: '-200% 0' } },
         bump: {
           '0%': { transform: 'scale(1)' },
           '40%': { transform: 'scale(1.35)' },
@@ -91,12 +122,16 @@ const config: Config = {
         'fade-in': 'fade-in .2s ease-out both',
         'pop-in': 'pop-in .18s cubic-bezier(.22,1,.36,1) both',
         'sheet-up': 'sheet-up .3s cubic-bezier(.22,1,.36,1) both',
+        'rise-in': 'rise-in .5s cubic-bezier(.22,1,.36,1) backwards',
+        ticker: 'ticker .45s cubic-bezier(.22,1,.36,1) both',
+        shimmer: 'shimmer 1.6s linear infinite',
         progress: 'progress 2.5s cubic-bezier(.1,.6,.3,1) both',
         bump: 'bump .35s cubic-bezier(.22,1,.36,1)',
       },
       letterSpacing: {
-        display: '-0.04em',
-        heading: '-0.03em',
+        display: '-0.01em',
+        heading: '-0.015em',
+        label: '0.08em',
       },
     },
   },

@@ -39,7 +39,7 @@ export function OrderPlaced() {
 
   return (
     <div className={`${container} max-w-[720px] py-[clamp(24px,5vw,56px)]`}>
-      <div className="overflow-hidden rounded-[28px] bg-white shadow-card">
+      <div className="overflow-hidden rounded-[12px] bg-white shadow-card">
         {/* Celebration header */}
         <div className="relative overflow-hidden bg-brand-600 px-6 pb-8 pt-10 text-center text-white">
           <span

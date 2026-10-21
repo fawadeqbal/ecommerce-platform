@@ -5,7 +5,32 @@ import { Tooltip, cn } from '@ecommerce/ui';
 import { useMe } from '@/hooks/use-cart';
 import { useToggleWishlist, useWishlist } from '@/hooks/use-wishlist';
 
-/** `button` = text button, `icon` = round heart on product cards, `square` = 54px tile (product page). */
+/** Outline heart that fills (with a small pop) when saved. */
+function Heart({ filled, size = 20 }: { filled: boolean; size?: number }) {
+  return (
+    <svg
+      key={filled ? 'on' : 'off'}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      aria-hidden
+      className={cn(filled && 'animate-bump')}
+    >
+      <path
+        d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z"
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * `button` = outlined text button, `icon` = heart over a product photo (cards),
+ * `square` = 52px tile beside "Add to bag" (product page).
+ */
 export function WishlistButton({
   productId,
   variantId,
@@ -22,36 +47,40 @@ export function WishlistButton({
   const toggle = useToggleWishlist();
   const saved = data?.productIds.includes(productId) ?? false;
   const base =
-    'inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition';
+    'inline-flex h-11 items-center justify-center gap-2 rounded-md border px-4 text-[13px] font-semibold uppercase tracking-[0.06em] transition';
 
   if (variant !== 'button') {
     const shape =
       variant === 'icon'
-        ? 'h-[34px] w-[34px] rounded-full text-base shadow-[0_2px_8px_rgba(27,24,48,.12)]'
-        : 'h-[54px] w-[54px] rounded-2xl text-xl';
+        ? 'h-9 w-9 rounded-full bg-white/0 hover:bg-white'
+        : 'h-[52px] w-[52px] rounded-md border border-gray-300 bg-white hover:border-gray-900';
     const cls = cn(
-      'inline-flex items-center justify-center bg-white transition-colors',
+      'inline-flex items-center justify-center transition-colors',
       shape,
-      saved ? 'text-rose-600' : 'text-gray-600 hover:text-rose-600',
+      saved ? 'text-brand-600' : 'text-gray-900',
     );
     const tip = saved ? 'Remove from wishlist' : 'Save to wishlist';
+    const size = variant === 'icon' ? 19 : 22;
     return me.data ? (
       <Tooltip content={tip}>
         <button
           type="button"
-          aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
+          aria-label={tip}
           aria-pressed={saved}
           disabled={toggle.isPending}
-          onClick={() => toggle.mutate({ productId, variantId, saved })}
+          onClick={(e) => {
+            e.preventDefault();
+            toggle.mutate({ productId, variantId, saved });
+          }}
           className={cls}
         >
-          {saved ? '♥' : '♡'}
+          <Heart filled={saved} size={size} />
         </button>
       </Tooltip>
     ) : (
       <Tooltip content="Sign in to save">
         <Link href={`/login?next=/products/${slug}`} aria-label="Save to wishlist" className={cls}>
-          ♡
+          <Heart filled={false} size={size} />
         </Link>
       </Tooltip>
     );
@@ -61,9 +90,9 @@ export function WishlistButton({
     return (
       <Link
         href={`/login?next=/products/${slug}`}
-        className={cn(base, 'border-gray-300 text-gray-700 hover:border-brand-400')}
+        className={cn(base, 'border-gray-300 text-gray-900 hover:border-gray-900')}
       >
-        ♡ Save
+        <Heart filled={false} size={17} /> Save
       </Link>
     );
   }
@@ -76,11 +105,11 @@ export function WishlistButton({
       className={cn(
         base,
         saved
-          ? 'border-rose-300 bg-rose-50 text-rose-700'
-          : 'border-gray-300 text-gray-700 hover:border-brand-400',
+          ? 'border-brand-600 bg-brand-50 text-brand-700'
+          : 'border-gray-300 text-gray-900 hover:border-gray-900',
       )}
     >
-      {saved ? '♥ Saved' : '♡ Save'}
+      <Heart filled={saved} size={17} /> {saved ? 'Saved' : 'Save'}
     </button>
   );
 }

@@ -96,7 +96,7 @@ export function AddressesView() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+        <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading text-gray-900">
           Addresses
         </h1>
         <Button onClick={() => open('new')}>Add address</Button>
@@ -168,7 +168,7 @@ export function AddressesView() {
       <Modal
         open={editing !== null}
         size="lg"
-        className="animate-pop-in rounded-[28px] [&_#modal-title]:text-xl [&_#modal-title]:font-extrabold [&>div:first-child]:border-0 [&>div:first-child]:px-7 [&>div:first-child]:pt-6 [&>div:last-child]:border-0 [&>div:last-child]:px-7 [&>div:last-child]:pb-6 [&>div:nth-child(2)]:px-7"
+        className="animate-pop-in rounded-[12px] [&_#modal-title]:text-xl [&_#modal-title]:font-extrabold [&>div:first-child]:border-0 [&>div:first-child]:px-7 [&>div:first-child]:pt-6 [&>div:last-child]:border-0 [&>div:last-child]:px-7 [&>div:last-child]:pb-6 [&>div:nth-child(2)]:px-7"
         overlayClassName="animate-fade-in bg-gray-900/50 backdrop-blur-sm"
         description="Where should we deliver? You can pick it at checkout."
         title={editing === 'new' ? 'New address' : 'Edit address'}
@@ -223,7 +223,7 @@ export function AddressesView() {
           <AddressInputs
             fieldProps={(name) => ({ ...register(name), error: errors[name]?.message })}
           />
-          <label className="flex cursor-pointer items-center justify-between rounded-[14px] bg-gray-50 px-4 py-3 text-sm font-semibold">
+          <label className="flex cursor-pointer items-center justify-between rounded-[8px] bg-gray-50 px-4 py-3 text-sm font-semibold">
             Use as my default address
             <input type="checkbox" className="peer sr-only" {...register('isDefault')} />
             <span

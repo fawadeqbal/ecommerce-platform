@@ -34,7 +34,7 @@ export function WishlistView() {
   return (
     <>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em]">Wishlist</h1>
+        <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading">Wishlist</h1>
         {data && data.items.length > 0 ? (
           <span className="text-sm text-gray-500">
             {data.items.length} saved · we’ll email you when prices drop
@@ -46,7 +46,12 @@ export function WishlistView() {
       {isLoading ? <Spinner /> : null}
       {data && data.items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-3xl bg-white px-6 py-14 text-center ring-1 ring-black/[.04]">
-          <span aria-hidden className="grid h-16 w-16 place-items-center rounded-3xl bg-tint-rose text-3xl text-rose-500">♡</span>
+          <span
+            aria-hidden
+            className="grid h-16 w-16 place-items-center rounded-3xl bg-tint-rose text-3xl text-rose-500"
+          >
+            ♡
+          </span>
           <h2 className="text-xl font-extrabold">Your wishlist is empty</h2>
           <p className="max-w-sm text-gray-500">
             Tap ♡ on a product to keep it here. We email you when a saved item gets cheaper.
@@ -63,8 +68,11 @@ export function WishlistView() {
         {data?.items.map((i) => {
           const canMove = !i.unavailable && i.inStock;
           return (
-            <div key={i.id} className="group flex flex-col gap-2 rounded-3xl bg-white p-2 ring-1 ring-black/[.04] transition-shadow duration-300 hover:shadow-[0_14px_30px_-18px_rgba(30,26,51,.4)]">
-              <div className="relative aspect-square overflow-hidden rounded-[20px] bg-[#f6f6f8]">
+            <div
+              key={i.id}
+              className="group flex flex-col gap-2 rounded-3xl bg-white p-2 ring-1 ring-black/[.04] transition-shadow duration-300 hover:shadow-[0_14px_30px_-18px_rgba(23,21,19,.4)]"
+            >
+              <div className="relative aspect-square overflow-hidden rounded-[10px] bg-[#efebe4]">
                 <Link href={`/products/${i.slug}`} className="block h-full">
                   {i.imageUrl ? (
                     <img
@@ -84,7 +92,7 @@ export function WishlistView() {
                   aria-label="Remove from wishlist"
                   disabled={remove.isPending && remove.variables === i.id}
                   onClick={() => remove.mutate(i.id)}
-                  className="absolute right-2 top-2 flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white text-base text-rose-600 shadow-[0_2px_8px_rgba(27,24,48,.12)]"
+                  className="absolute right-2 top-2 flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white text-base text-rose-600 shadow-[0_2px_8px_rgba(23,21,19,.12)]"
                 >
                   ♥
                 </button>

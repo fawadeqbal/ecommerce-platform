@@ -33,11 +33,11 @@ export function LoyaltyView() {
 
   return (
     <>
-      <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em]">
+      <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading">
         Points &amp; rewards
       </h1>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-3">
-        <div className="flex flex-col gap-2 rounded-[28px] bg-gray-900 p-6 text-white">
+        <div className="flex flex-col gap-2 rounded-[12px] bg-gray-900 p-6 text-white">
           <span className="text-sm text-gray-300">Available balance</span>
           <span className="text-[52px] font-extrabold leading-none tracking-display">
             {s.points.toLocaleString()}
@@ -46,7 +46,7 @@ export function LoyaltyView() {
             = {formatMoney(s.value, s.currency)} at checkout
           </span>
         </div>
-        <div className="flex flex-col gap-2.5 rounded-[28px] bg-white p-6">
+        <div className="flex flex-col gap-2.5 rounded-[12px] bg-white p-6">
           <div className="flex justify-between font-bold">
             <span>{s.tier?.name ?? 'Member'}</span>
             <span className="text-gray-500">{s.nextTier?.name ?? 'Top tier'}</span>
@@ -66,15 +66,15 @@ export function LoyaltyView() {
             {s.tier && s.tier.multiplier !== 1 ? ` ${s.tier.multiplier}× points on purchases.` : ''}
           </span>
         </div>
-        <div className="flex flex-col gap-2.5 rounded-[28px] bg-brand-100 p-6">
+        <div className="flex flex-col gap-2.5 rounded-[12px] bg-brand-100 p-6">
           <b className="text-[17px]">Invite friends, get {s.rules.referralPoints} each</b>
-          <div className="flex h-[46px] items-center overflow-hidden rounded-[14px] border-[1.5px] border-dashed border-brand-400 px-3.5 text-sm font-semibold">
+          <div className="flex h-[46px] items-center overflow-hidden rounded-[8px] border-[1.5px] border-dashed border-brand-400 px-3.5 text-sm font-semibold">
             <span className="truncate">{s.referralUrl}</span>
           </div>
           <button
             type="button"
             onClick={copy}
-            className="h-11 rounded-[14px] bg-brand-600 font-bold text-white hover:bg-brand-700"
+            className="h-11 rounded-[8px] bg-brand-600 font-bold text-white hover:bg-brand-700"
           >
             {copied ? 'Link copied ✓' : 'Copy link'}
           </button>

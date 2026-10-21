@@ -79,24 +79,24 @@ export function AccountMenu({
           onClick={() => setOpen((o) => !o)}
           aria-label={greeting}
           className={cn(
-            'flex h-12 items-center gap-2.5 rounded-[14px] border border-transparent pl-1.5 pr-2 text-white transition-colors hover:border-white/15 hover:bg-white/10',
-            open && 'border-white/15 bg-white/10',
+            'flex h-11 items-center gap-2 rounded-lg px-2 text-gray-900 transition-colors hover:bg-gray-100',
+            open && 'bg-gray-100',
           )}
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-gray-900 shadow-[inset_0_1px_0_rgba(255,255,255,.6)]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold tracking-wide text-white">
             {initials}
           </span>
-          <span className="hidden flex-col text-left leading-[1.15] lg:flex">
-            <span className="hidden text-xs text-brand-100 xl:inline">Hello, {firstName}</span>
-            <span className="text-[15px] font-semibold">Account</span>
-          </span>
-          <ChevronDownIcon size={16} className={cn('transition-transform', open && 'rotate-180')} />
+          <span className="hidden text-[13px] font-semibold xl:inline">{firstName}</span>
+          <ChevronDownIcon
+            size={15}
+            className={cn('transition-transform duration-200', open && 'rotate-180')}
+          />
         </button>
       </Tooltip>
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-full z-40 mt-2 w-64 animate-pop-in overflow-hidden rounded-2xl border border-gray-200 bg-white p-1.5 text-gray-900 shadow-card"
+          className="absolute right-0 top-full z-40 mt-2 w-64 animate-pop-in overflow-hidden rounded-lg bg-white p-1.5 text-gray-900 shadow-pop"
         >
           <div className="px-3 pb-2 pt-1.5">
             <p className="font-bold">
@@ -111,8 +111,8 @@ export function AccountMenu({
               href={href}
               role="menuitem"
               className={cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-gray-50 hover:text-gray-900',
-                pathname.startsWith(href) && 'bg-brand-50 text-brand-700 hover:text-brand-700',
+                'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium hover:bg-gray-50 hover:text-gray-900',
+                pathname.startsWith(href) && 'bg-gray-100 font-semibold',
               )}
             >
               <ItemIcon size={18} className="text-gray-500" />
@@ -129,7 +129,7 @@ export function AccountMenu({
             type="button"
             role="menuitem"
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-sale hover:bg-sale-soft"
           >
             <LogoutIcon size={18} />
             Sign out

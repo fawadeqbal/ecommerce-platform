@@ -58,10 +58,8 @@ export function RecentlyViewed({ slug }: { slug: string }) {
 
   if (!data || data.length === 0) return null;
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="text-[clamp(24px,2.8vw,34px)] font-extrabold tracking-heading">
-        Recently viewed
-      </h2>
+    <section className="flex flex-col gap-7">
+      <h2 className="type-display text-[clamp(36px,4.4vw,60px)]">Recently viewed</h2>
       <div className={productGrid}>
         {data.map((p) => (
           <ProductCard key={p.id} product={p} />

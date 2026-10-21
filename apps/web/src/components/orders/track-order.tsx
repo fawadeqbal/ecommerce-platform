@@ -32,7 +32,7 @@ export function TrackOrder() {
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
       <Card className="mx-auto max-w-xl space-y-4">
         <div>
-          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading text-gray-900">
             Track your order
           </h1>
           <p className="text-sm text-gray-600">

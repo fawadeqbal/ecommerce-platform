@@ -9,7 +9,7 @@ export async function MaintenanceGate({ children }: { children: ReactNode }) {
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md text-center">
         <p className="text-5xl">🛠️</p>
-        <h1 className="mt-4 text-[clamp(26px,3vw,36px)] font-extrabold tracking-[-0.035em] text-gray-900">
+        <h1 className="mt-4 text-[clamp(26px,3vw,36px)] font-extrabold tracking-heading text-gray-900">
           {settings.name} will be back soon
         </h1>
         <p className="mt-2 text-gray-600">
